@@ -1,5 +1,6 @@
 /* ── Lifetracker theme ─────────────────────────────────────────
-   Dark, vibrant, mobile-first. All colors flow from these tokens.
+   Professional dark: monochrome neutral surfaces, shadow-elevated
+   cards, color confined to six vibrant trims (Tactorius menu set).
    Chart series colors (--series-*) are a CVD-validated categorical
    palette (dark-mode steps) — do not eyeball-edit; revalidate if
    changed (dataviz validator).                                    */
@@ -7,20 +8,23 @@
 :root {
   color-scheme: dark;
 
-  --bg: #0e1016;
-  --surface-1: #161925;
-  --surface-2: #1e2231;
-  --surface-3: #272c3f;
-  --border: #2e3348;
+  --bg: #0b0c0e;
+  --surface-1: #131418;
+  --surface-2: #191a1f;
+  --surface-3: #1f2026;
+  --border: #26272d;
 
-  --text-primary: #f4f5f9;
-  --text-secondary: #a8adc4;
-  --text-muted: #6c7292;
+  --text-primary: #e8e9ec;
+  --text-secondary: #9a9ca6;
+  --text-muted: #63656e;
 
-  --accent: #7048e8;
-  --accent-soft: rgba(112, 72, 232, 0.16);
-  --gold: #ffd43b;
-  --good: #37b24d;
+  /* Tactorius menu trims — the ONLY saturated color in the app */
+  --trim-r: #c53939;
+  --trim-o: #c77c35;
+  --trim-y: #d9b800;
+  --trim-g: #34aa48;
+  --trim-b: #3f48cc;
+  --trim-v: #a043a2;
 
   /* validated categorical series (dark) */
   --series-1: #3987e5;
@@ -32,9 +36,15 @@
   --series-7: #9085e9;
   --series-8: #e66767;
 
-  --radius: 16px;
-  --radius-sm: 10px;
+  /* elevation */
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.55), 0 4px 16px rgba(0, 0, 0, 0.35);
+  --shadow-sheet: 0 1px 2px rgba(0, 0, 0, 0.55), 0 4px 16px rgba(0, 0, 0, 0.35),
+    0 12px 40px rgba(0, 0, 0, 0.5);
+
+  --radius: 8px;
+  --radius-sm: 6px;
   --nav-h: 64px;
+  --sidebar-w: 232px;
 
   font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
   font-synthesis: none;
@@ -57,11 +67,7 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 
-#root {
-  max-width: 640px;
-  margin: 0 auto;
-  min-height: 100dvh;
-}
+#root { min-height: 100dvh; }
 
 button {
   font: inherit;
@@ -80,7 +86,7 @@ input, textarea {
   border-radius: var(--radius-sm);
   outline: none;
 }
-input:focus, textarea:focus { border-color: var(--accent); }
+input:focus, textarea:focus { border-color: var(--text-muted); }
 
 ::placeholder { color: var(--text-muted); }
 
