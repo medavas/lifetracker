@@ -1,5 +1,6 @@
 import { HashRouter, Routes, Route } from 'react-router-dom'
 import { useState } from 'react'
+import AppShell from './components/AppShell'
 import BottomNav from './components/BottomNav'
 import QuickAdd from './components/QuickAdd'
 import Dashboard from './views/Dashboard'
@@ -19,13 +20,15 @@ export default function App() {
 
   return (
     <HashRouter>
-      <Routes>
-        <Route path="/" element={<Dashboard />} />
-        <Route path="/areas" element={<AreasGrid />} />
-        <Route path="/area/:areaId" element={<AreaView />} />
-        <Route path="/journal" element={<Journal />} />
-        <Route path="/habits" element={<Habits />} />
-      </Routes>
+      <AppShell onAdd={() => setQuickAddOpen(true)}>
+        <Routes>
+          <Route path="/" element={<Dashboard />} />
+          <Route path="/areas" element={<AreasGrid />} />
+          <Route path="/area/:areaId" element={<AreaView />} />
+          <Route path="/journal" element={<Journal />} />
+          <Route path="/habits" element={<Habits />} />
+        </Routes>
+      </AppShell>
       <BottomNav onAdd={() => setQuickAddOpen(true)} />
       {quickAddOpen && <QuickAdd onClose={() => setQuickAddOpen(false)} />}
     </HashRouter>
