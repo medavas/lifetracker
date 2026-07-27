@@ -1,0 +1,87 @@
+/* ── Lifetracker theme ─────────────────────────────────────────
+   Dark, vibrant, mobile-first. All colors flow from these tokens.
+   Chart series colors (--series-*) are a CVD-validated categorical
+   palette (dark-mode steps) — do not eyeball-edit; revalidate if
+   changed (dataviz validator).                                    */
+
+:root {
+  color-scheme: dark;
+
+  --bg: #0e1016;
+  --surface-1: #161925;
+  --surface-2: #1e2231;
+  --surface-3: #272c3f;
+  --border: #2e3348;
+
+  --text-primary: #f4f5f9;
+  --text-secondary: #a8adc4;
+  --text-muted: #6c7292;
+
+  --accent: #7048e8;
+  --accent-soft: rgba(112, 72, 232, 0.16);
+  --gold: #ffd43b;
+  --good: #37b24d;
+
+  /* validated categorical series (dark) */
+  --series-1: #3987e5;
+  --series-2: #d95926;
+  --series-3: #199e70;
+  --series-4: #c98500;
+  --series-5: #d55181;
+  --series-6: #008300;
+  --series-7: #9085e9;
+  --series-8: #e66767;
+
+  --radius: 16px;
+  --radius-sm: 10px;
+  --nav-h: 64px;
+
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--text-primary);
+  min-height: 100dvh;
+}
+
+body {
+  overscroll-behavior-y: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+#root {
+  max-width: 640px;
+  margin: 0 auto;
+  min-height: 100dvh;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+
+input, textarea {
+  font: inherit;
+  color: var(--text-primary);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  outline: none;
+}
+input:focus, textarea:focus { border-color: var(--accent); }
+
+::placeholder { color: var(--text-muted); }
+
+a { color: inherit; text-decoration: none; }
