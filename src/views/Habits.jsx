@@ -1,8 +1,10 @@
 import { useState } from 'react'
+import { Check, ChevronRight, Flame, Plus } from 'lucide-react'
 import { useShallow } from 'zustand/react/shallow'
 import { useStore, selectAreaItems } from '../lib/store'
 import { habitStreak, daysAgoKey } from '../lib/rewards'
 import ItemSheet from '../components/ItemSheet'
+import AreaIcon from '../components/AreaIcon'
 
 /** Keystone habits: daily checks, streaks, 7-day dot history per habit. */
 export default function Habits() {
@@ -23,9 +25,9 @@ export default function Habits() {
     logs.some((l) => l.itemId === habitId && l.kind === 'habit-check' && l.date === date)
 
   return (
-    <div className="page" style={{ '--area-c1': '#f59f00' }}>
+    <div className="page" style={{ '--area-c1': 'var(--trim-y)' }}>
       <div className="page-head">
-        <div className="icon-chip" style={{ background: 'linear-gradient(135deg,#f59f0033,#ffd43b22)' }}>🔑</div>
+        <div className="icon-chip"><AreaIcon name="KeyRound" /></div>
         <h1>Keystone Habits</h1>
       </div>
 
@@ -47,7 +49,7 @@ export default function Habits() {
                 onClick={() => toggleHabitToday(h.id)}
                 aria-label={`Check ${h.title} for today`}
               >
-                ✓
+                <Check size={16} strokeWidth={2.5} />
               </button>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div className="item-title">{h.title}</div>
@@ -57,14 +59,14 @@ export default function Habits() {
                       key={d}
                       style={{
                         width: 8, height: 8, borderRadius: '50%',
-                        background: checkedOn(h.id, daysAgoKey(d)) ? 'var(--gold)' : 'var(--surface-3)',
+                        background: checkedOn(h.id, daysAgoKey(d)) ? 'var(--trim-y)' : 'var(--surface-3)',
                       }}
                     />
                   ))}
                 </div>
               </div>
-              <div className="streak"><b>{streak}</b>🔥</div>
-              <button className="detail-btn" onClick={() => setOpen(h)} aria-label="Details">›</button>
+              <div className="streak"><Flame size={13} strokeWidth={1.75} /><b>{streak}</b></div>
+              <button className="detail-btn" onClick={() => setOpen(h)} aria-label="Details"><ChevronRight size={17} strokeWidth={1.75} /></button>
             </div>
           )
         })}
@@ -77,7 +79,7 @@ export default function Habits() {
           onChange={(e) => setDraft(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && add()}
         />
-        <button onClick={add} aria-label="Add">+</button>
+        <button onClick={add} aria-label="Add"><Plus size={20} strokeWidth={2} /></button>
       </div>
 
       {open && <ItemSheet item={open} onClose={() => setOpen(null)} />}

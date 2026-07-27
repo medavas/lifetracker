@@ -1,9 +1,11 @@
 import { useMemo, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
+import { ChevronLeft, Plus } from 'lucide-react'
 import { useShallow } from 'zustand/react/shallow'
 import { useStore, selectAreaItems } from '../lib/store'
 import { areaById } from '../data/areas'
 import ItemList from '../components/ItemList'
+import AreaIcon from '../components/AreaIcon'
 
 /** One generic view renders every 'list' and 'library' area. */
 export default function AreaView() {
@@ -34,13 +36,11 @@ export default function AreaView() {
   return (
     <div
       className="page"
-      style={{ '--area-c1': area.grad[0], '--area-soft': `${area.grad[0]}29` }}
+      style={{ '--area-c1': `var(--trim-${area.trim})` }}
     >
       <div className="page-head">
-        <button className="back-btn" onClick={() => navigate(-1)}>‹ Back</button>
-        <div className="icon-chip" style={{ background: `linear-gradient(135deg, ${area.grad[0]}33, ${area.grad[1]}22)` }}>
-          {area.icon}
-        </div>
+        <button className="back-btn" onClick={() => navigate(-1)}><ChevronLeft size={16} strokeWidth={1.75} />Back</button>
+        <div className="icon-chip"><AreaIcon name={area.icon} /></div>
         <h1>{area.name}</h1>
       </div>
 
@@ -63,11 +63,11 @@ export default function AreaView() {
           onChange={(e) => setDraft(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && add()}
         />
-        <button onClick={add} aria-label="Add">+</button>
+        <button onClick={add} aria-label="Add"><Plus size={20} strokeWidth={2} /></button>
       </div>
 
       <button className="archived-toggle" onClick={() => setShowArchived(!showArchived)}>
-        {showArchived ? '← Back to active' : 'View archived'}
+        {showArchived ? 'Back to active' : 'View archived'}
       </button>
     </div>
   )

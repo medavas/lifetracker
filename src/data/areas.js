@@ -3,10 +3,10 @@
  * Adding an area = adding a row here. Every view is generic over this config.
  *
  * kind:
- *  - 'list'    → items (tasks/entries) with buckets
- *  - 'habits'  → recurring items with daily check-ins + streaks
- *  - 'journal' → dated notes
- *  - 'library' → items where each entry carries its own notes (books, videos…)
+ *  - 'list'    - items (tasks/entries) with buckets
+ *  - 'habits'  - recurring items with daily check-ins + streaks
+ *  - 'journal' - dated notes
+ *  - 'library' - items where each entry carries its own notes (books, videos…)
  *
  * `icon` is a lucide-react component name rendered via <AreaIcon>.
  * `trim` picks one of the six --trim-* tokens (theme in index.css); it is the

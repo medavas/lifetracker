@@ -6,6 +6,7 @@ import {
   SortableContext, verticalListSortingStrategy, useSortable, arrayMove,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
+import { Check, ChevronRight, GripVertical } from 'lucide-react'
 import { useStore } from '../lib/store'
 import ItemSheet from './ItemSheet'
 
@@ -35,7 +36,7 @@ function SortableRow({ item, onOpen }) {
         onClick={() => toggleDone(item.id)}
         aria-label={item.status === 'done' ? 'Mark not done' : 'Mark done'}
       >
-        ✓
+        <Check size={14} strokeWidth={2.5} />
       </button>
       <div className="item-title" onClick={() => !editing && setEditing(true)}>
         {editing ? (
@@ -51,10 +52,10 @@ function SortableRow({ item, onOpen }) {
         )}
       </div>
       <button className="detail-btn" onClick={() => onOpen(item)} aria-label="Details">
-        ›
+        <ChevronRight size={17} strokeWidth={1.75} />
       </button>
       <span className="drag-handle" {...attributes} {...listeners} aria-label="Reorder">
-        ⋮⋮
+        <GripVertical size={15} strokeWidth={1.75} />
       </span>
     </div>
   )

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useStore } from '../lib/store'
 import { suggestAreas } from '../lib/fuzzy'
 import { AREAS } from '../data/areas'
+import AreaIcon from './AreaIcon'
 
 /**
  * Quick capture from anywhere: type a thought, fuzzy-match suggests the
@@ -46,7 +47,7 @@ export default function QuickAdd({ onClose }) {
             <div className="link-chips">
               {suggestions.map((a) => (
                 <button key={a.id} className="chip on" onClick={() => fileTo(a)}>
-                  {a.icon} {a.name}
+                  <AreaIcon name={a.icon} size={13} /> {a.name}
                 </button>
               ))}
             </div>
@@ -54,7 +55,7 @@ export default function QuickAdd({ onClose }) {
             <div className="link-chips">
               {fallback.map((a) => (
                 <button key={a.id} className="chip" onClick={() => fileTo(a)}>
-                  {a.icon} {a.name}
+                  <AreaIcon name={a.icon} size={13} /> {a.name}
                 </button>
               ))}
             </div>

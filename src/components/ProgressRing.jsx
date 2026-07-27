@@ -1,5 +1,5 @@
 /** SVG progress ring; progress 0..1. Label goes in the center. */
-export default function ProgressRing({ progress, label, size = 84, stroke = 8, color = 'var(--gold)' }) {
+export default function ProgressRing({ progress, label, size = 84, stroke = 8, color = 'var(--trim-y)' }) {
   const r = (size - stroke) / 2
   const c = 2 * Math.PI * r
   const clamped = Math.min(1, Math.max(0, progress))

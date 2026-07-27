@@ -1,13 +1,13 @@
 /**
  * Central store — the 4-primitive schema.
  *
- *  Area  → static config (src/data/areas.js), not stored.
- *  Item  → anything listed: task, habit, book, bill…   { id, areaId, bucket,
+ *  Area  - static config (src/data/areas.js), not stored.
+ *  Item  - anything listed: task, habit, book, bill…   { id, areaId, bucket,
  *          title, details, type, status, order, createdAt, updatedAt,
  *          completedAt }
- *  Log   → a dated record: habit check-ins, completions { id, itemId, areaId,
+ *  Log   - a dated record: habit check-ins, completions { id, itemId, areaId,
  *          kind, date, createdAt }
- *  Note  → journal entries, per-item notes, quotes      { id, areaId, itemId?,
+ *  Note  - journal entries, per-item notes, quotes      { id, areaId, itemId?,
  *          text, createdAt, updatedAt }
  *
  * status: 'open' | 'done' | 'archived'  — archive is EXPLICIT, never implied

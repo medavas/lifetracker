@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { useShallow } from 'zustand/react/shallow'
 import { useStore, selectJournal } from '../lib/store'
 import { suggestAreas } from '../lib/fuzzy'
+import AreaIcon from '../components/AreaIcon'
 
 /**
  * Journal: write freely; fuzzy-match surfaces related areas so a line like
@@ -50,7 +51,7 @@ export default function Journal() {
                   )
                 }
               >
-                + {a.icon} {a.name}
+                <AreaIcon name={a.icon} size={13} /> {a.name}
               </button>
             ))}
           </div>

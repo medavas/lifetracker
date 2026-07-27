@@ -9,7 +9,7 @@ export const POINTS = {
   journal: 15, // first journal entry of the day
 }
 
-/** Level curve: gently super-linear. Level 1 → 0 pts, 2 → 100, 3 → 283, 4 → 520… */
+/** Level curve: gently super-linear. Level 1 -> 0 pts, 2 -> 100, 3 -> 283, 4 -> 520… */
 export function levelForPoints(points) {
   return Math.max(1, Math.floor(Math.sqrt(points / 100) + 1))
 }

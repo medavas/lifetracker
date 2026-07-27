@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { AREAS } from '../data/areas'
 import { useStore } from '../lib/store'
+import AreaIcon from '../components/AreaIcon'
 
 export default function AreasGrid() {
   const items = useStore((s) => s.items)
@@ -22,10 +23,8 @@ export default function AreasGrid() {
             key={a.id}
             to={a.kind === 'journal' ? '/journal' : a.kind === 'habits' ? '/habits' : `/area/${a.id}`}
           >
-            <div className="card area-card" style={{ '--area-c1': a.grad[0] }}>
-              <div className="a-icon" style={{ background: `linear-gradient(135deg, ${a.grad[0]}33, ${a.grad[1]}22)` }}>
-                {a.icon}
-              </div>
+            <div className="card area-card" style={{ '--area-c1': `var(--trim-${a.trim})` }}>
+              <div className="a-icon"><AreaIcon name={a.icon} /></div>
               <div>
                 <div className="a-name">{a.name}</div>
                 <div className="a-count">

@@ -1,7 +1,9 @@
 import { useState } from 'react'
+import { Plus } from 'lucide-react'
 import { useShallow } from 'zustand/react/shallow'
 import { useStore, selectItemNotes } from '../lib/store'
 import { areaById } from '../data/areas'
+import AreaIcon from './AreaIcon'
 
 /** Bottom sheet: item details, per-item notes, bucket, archive/delete. */
 export default function ItemSheet({ item, onClose }) {
@@ -31,7 +33,7 @@ export default function ItemSheet({ item, onClose }) {
       <div className="sheet" role="dialog" aria-label="Item details">
         <div className="sheet-grab" />
         <h2>
-          {area?.icon} {area?.name}
+          <AreaIcon name={area?.icon} size={16} /> {area?.name}
         </h2>
 
         <div className="field">
@@ -89,7 +91,7 @@ export default function ItemSheet({ item, onClose }) {
                 }
               }}
             >
-              +
+              <Plus size={18} strokeWidth={2} />
             </button>
           </div>
         </div>

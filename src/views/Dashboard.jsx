@@ -1,10 +1,10 @@
 import { Link } from 'react-router-dom'
+import { Check } from 'lucide-react'
 import { useShallow } from 'zustand/react/shallow'
 import { useStore, selectJournal } from '../lib/store'
 import { levelForPoints, levelProgress, habitStreak, activityByDay, todayKey } from '../lib/rewards'
 import ProgressRing from '../components/ProgressRing'
 import ActivityChart from '../components/ActivityChart'
-import { areaById } from '../data/areas'
 
 export default function Dashboard() {
   const points = useStore((s) => s.points)
@@ -46,8 +46,8 @@ export default function Dashboard() {
               <div className="stat-label">habits today</div>
             </div>
             <div className="card stat-tile">
-              <div className="stat-value">{bestStreak}🔥</div>
-              <div className="stat-label">best streak</div>
+              <div className="stat-value">{bestStreak}</div>
+              <div className="stat-label">best streak (days)</div>
             </div>
             <div className="card stat-tile">
               <div className="stat-value">{doneToday}</div>
@@ -67,7 +67,7 @@ export default function Dashboard() {
                   const on = checkedToday.some((c) => c.id === h.id)
                   return (
                     <div key={h.id} className="item-row habit-row">
-                      <button className={`habit-check ${on ? 'on' : ''}`} onClick={() => toggleHabitToday(h.id)} aria-label={`Check ${h.title}`}>✓</button>
+                      <button className={`habit-check ${on ? 'on' : ''}`} onClick={() => toggleHabitToday(h.id)} aria-label={`Check ${h.title}`}><Check size={15} strokeWidth={2.5} /></button>
                       <div className="item-title">{h.title}</div>
                       <div className="streak"><b>{habitStreak(logs, h.id)}</b> day streak</div>
                     </div>
@@ -104,10 +104,9 @@ export default function Dashboard() {
               .items.filter((i) => i.areaId === 'philosophy' && i.status !== 'archived')
             if (quotes.length === 0) return null
             const q = quotes[new Date().getDate() % quotes.length]
-            const area = areaById('philosophy')
             return (
               <>
-                <div className="section-label">{area.icon} Thought of the day</div>
+                <div className="section-label">Thought of the day</div>
                 <Link to="/area/philosophy">
                   <div className="card note-card">
                     <div className="note-text" style={{ fontStyle: 'italic' }}>“{q.title}”</div>

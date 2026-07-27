@@ -4,7 +4,7 @@
  * v1: local-first. All state lives in IndexedDB on this device via idb-keyval.
  *
  * ─────────────────────────────────────────────────────────────────────────
- * 🚩 DEPLOY / SYNC FLAG — this file is the swap point for phone↔desktop sync.
+ * DEPLOY / SYNC FLAG — this file is the swap point for phone/desktop sync.
  *
  * When you're ready to deploy (rdeyo site):
  *   1. Stand up the API (see server/ placeholder + README roadmap):
