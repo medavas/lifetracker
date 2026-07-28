@@ -16,7 +16,8 @@
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
 import { idbStorage } from './storage'
-import { POINTS, todayKey } from './rewards'
+import { todayKey, computePoints } from './rewards'
+import { toEntities, fromEntities, merge } from './merge'
 
 // crypto.randomUUID only exists in secure contexts (HTTPS or localhost) —
 // fall back to a manual v4 UUID so a plain-HTTP tunnel URL doesn't throw on
@@ -56,6 +57,7 @@ export const useStore = create(
           createdAt: now(),
           updatedAt: now(),
           completedAt: null,
+          deletedAt: null,
         }
         set({ items: [...items, item] })
         return item
@@ -73,25 +75,29 @@ export const useStore = create(
         const item = get().items.find((i) => i.id === id)
         if (!item) return
         if (item.status === 'done') {
+          const logs = get().logs.map((l) =>
+            l.itemId === id && l.kind === 'complete' && l.date === todayKey() && !l.deletedAt
+              ? { ...l, deletedAt: now(), updatedAt: now() }
+              : l,
+          )
           set({
             items: get().items.map((i) =>
               i.id === id ? { ...i, status: 'open', completedAt: null, updatedAt: now() } : i,
             ),
-            logs: get().logs.filter(
-              (l) => !(l.itemId === id && l.kind === 'complete' && l.date === todayKey()),
-            ),
-            points: Math.max(0, get().points - POINTS.task),
+            logs,
+            points: computePoints(logs),
           })
         } else {
+          const logs = [
+            ...get().logs,
+            { id: uid(), itemId: id, areaId: item.areaId, kind: 'complete', date: todayKey(), createdAt: now(), updatedAt: now(), deletedAt: null },
+          ]
           set({
             items: get().items.map((i) =>
               i.id === id ? { ...i, status: 'done', completedAt: now(), updatedAt: now() } : i,
             ),
-            logs: [
-              ...get().logs,
-              { id: uid(), itemId: id, areaId: item.areaId, kind: 'complete', date: todayKey(), createdAt: now() },
-            ],
-            points: get().points + POINTS.task,
+            logs,
+            points: computePoints(logs),
           })
         }
       },
@@ -99,12 +105,16 @@ export const useStore = create(
       /** Explicit archive/restore — separate from done. */
       archiveItem: (id) => get().updateItem(id, { status: 'archived' }),
       restoreItem: (id) => get().updateItem(id, { status: 'open' }),
-      deleteItem: (id) =>
+      deleteItem: (id) => {
+        const stamp = now()
+        const logs = get().logs.map((l) => (l.itemId === id && !l.deletedAt ? { ...l, deletedAt: stamp, updatedAt: stamp } : l))
         set({
-          items: get().items.filter((i) => i.id !== id),
-          notes: get().notes.filter((n) => n.itemId !== id),
-          logs: get().logs.filter((l) => l.itemId !== id),
-        }),
+          items: get().items.map((i) => (i.id === id ? { ...i, deletedAt: stamp, updatedAt: stamp } : i)),
+          notes: get().notes.map((n) => (n.itemId === id && !n.deletedAt ? { ...n, deletedAt: stamp, updatedAt: stamp } : n)),
+          logs,
+          points: computePoints(logs),
+        })
+      },
 
       reorderItems: (areaId, orderedIds) =>
         set({
@@ -120,45 +130,37 @@ export const useStore = create(
         const { logs, items } = get()
         const date = todayKey()
         const existing = logs.find(
-          (l) => l.itemId === itemId && l.kind === 'habit-check' && l.date === date,
+          (l) => l.itemId === itemId && l.kind === 'habit-check' && l.date === date && !l.deletedAt,
         )
         if (existing) {
-          set({
-            logs: logs.filter((l) => l.id !== existing.id),
-            points: Math.max(0, get().points - POINTS.habit),
-          })
+          const next = logs.map((l) => (l.id === existing.id ? { ...l, deletedAt: now(), updatedAt: now() } : l))
+          set({ logs: next, points: computePoints(next) })
         } else {
           const item = items.find((i) => i.id === itemId)
-          set({
-            logs: [
-              ...logs,
-              { id: uid(), itemId, areaId: item?.areaId ?? 'habits', kind: 'habit-check', date, createdAt: now() },
-            ],
-            points: get().points + POINTS.habit,
-          })
+          const next = [
+            ...logs,
+            { id: uid(), itemId, areaId: item?.areaId ?? 'habits', kind: 'habit-check', date, createdAt: now(), updatedAt: now(), deletedAt: null },
+          ]
+          set({ logs: next, points: computePoints(next) })
         }
       },
 
       isHabitCheckedToday: (itemId) =>
         get().logs.some(
-          (l) => l.itemId === itemId && l.kind === 'habit-check' && l.date === todayKey(),
+          (l) => l.itemId === itemId && l.kind === 'habit-check' && l.date === todayKey() && !l.deletedAt,
         ),
 
       // ── Notes / Journal ──────────────────────────────────────
       addNote: (areaId, text, itemId = null) => {
-        const firstToday =
-          areaId === 'journal' &&
-          !get().notes.some(
-            (n) => n.areaId === 'journal' && todayKey(new Date(n.createdAt)) === todayKey(),
-          )
-        const note = { id: uid(), areaId, itemId, text: text.trim(), createdAt: now(), updatedAt: now() }
+        const note = { id: uid(), areaId, itemId, text: text.trim(), createdAt: now(), updatedAt: now(), deletedAt: null }
+        const logs =
+          areaId === 'journal'
+            ? [...get().logs, { id: uid(), itemId: null, areaId, kind: 'journal', date: todayKey(), createdAt: now(), updatedAt: now(), deletedAt: null }]
+            : get().logs
         set({
           notes: [...get().notes, note],
-          points: get().points + (firstToday ? POINTS.journal : 0),
-          logs:
-            areaId === 'journal'
-              ? [...get().logs, { id: uid(), itemId: null, areaId, kind: 'journal', date: todayKey(), createdAt: now() }]
-              : get().logs,
+          logs,
+          points: computePoints(logs),
         })
         return note
       },
@@ -168,12 +170,21 @@ export const useStore = create(
           notes: get().notes.map((n) => (n.id === id ? { ...n, text, updatedAt: now() } : n)),
         }),
 
-      deleteNote: (id) => set({ notes: get().notes.filter((n) => n.id !== id) }),
+      deleteNote: (id) =>
+        set({
+          notes: get().notes.map((n) => (n.id === id ? { ...n, deletedAt: now(), updatedAt: now() } : n)),
+        }),
+
+      mergeRemote: (remoteEntities) => {
+        const local = toEntities({ items: get().items, notes: get().notes, logs: get().logs })
+        const merged = fromEntities(merge(local, remoteEntities))
+        set({ items: merged.items, notes: merged.notes, logs: merged.logs, points: computePoints(merged.logs) })
+      },
     }),
     {
       name: 'stoa',
       storage: createJSONStorage(() => idbStorage),
-      version: 1,
+      version: 2,
     },
   ),
 )
@@ -181,11 +192,11 @@ export const useStore = create(
 // ── Selectors ─────────────────────────────────────────────────
 export const selectAreaItems = (areaId, showArchived = false) => (s) =>
   s.items
-    .filter((i) => i.areaId === areaId && (showArchived ? i.status === 'archived' : i.status !== 'archived'))
+    .filter((i) => !i.deletedAt && i.areaId === areaId && (showArchived ? i.status === 'archived' : i.status !== 'archived'))
     .sort((a, b) => a.order - b.order)
 
 export const selectItemNotes = (itemId) => (s) =>
-  s.notes.filter((n) => n.itemId === itemId).sort((a, b) => b.createdAt - a.createdAt)
+  s.notes.filter((n) => !n.deletedAt && n.itemId === itemId).sort((a, b) => b.createdAt - a.createdAt)
 
 export const selectJournal = (s) =>
-  s.notes.filter((n) => n.areaId === 'journal' && !n.itemId).sort((a, b) => b.createdAt - a.createdAt)
+  s.notes.filter((n) => !n.deletedAt && n.areaId === 'journal' && !n.itemId).sort((a, b) => b.createdAt - a.createdAt)
