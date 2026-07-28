@@ -68,8 +68,9 @@ export function activityByDay(logs, n = 7) {
 
 /**
  * Points are DERIVED from logs so they never need cross-device merging.
- * complete → POINTS.task, habit-check → POINTS.habit, and each distinct
- * journal day → POINTS.journal once. Tombstoned logs don't count.
+ * Each 'complete' log awards POINTS.task, each 'habit-check' log awards
+ * POINTS.habit, and each distinct journal day awards POINTS.journal once.
+ * Tombstoned logs don't count.
  */
 export function computePoints(logs) {
   const live = logs.filter((l) => !l.deletedAt)
