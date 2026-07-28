@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom'
-import { House, LayoutGrid, KeyRound, NotebookPen, Plus } from 'lucide-react'
+import { House, LayoutGrid, KeyRound, NotebookPen, Plus, Settings as SettingsIcon } from 'lucide-react'
 
 export default function BottomNav({ onAdd }) {
   return (
@@ -18,6 +18,9 @@ export default function BottomNav({ onAdd }) {
       </NavLink>
       <NavLink to="/journal">
         <NotebookPen size={20} strokeWidth={1.75} />Journal
+      </NavLink>
+      <NavLink to="/settings">
+        <SettingsIcon size={20} strokeWidth={1.75} />Sync
       </NavLink>
     </nav>
   )

@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom'
-import { House, LayoutGrid, KeyRound, NotebookPen, Plus } from 'lucide-react'
+import { House, LayoutGrid, KeyRound, NotebookPen, Plus, Settings as SettingsIcon } from 'lucide-react'
 import { useStore } from '../lib/store'
 import { levelForPoints, levelProgress } from '../lib/rewards'
 
@@ -21,6 +21,7 @@ export default function AppShell({ onAdd, children }) {
           <NavLink to="/areas"><LayoutGrid size={17} strokeWidth={1.75} />Areas</NavLink>
           <NavLink to="/habits"><KeyRound size={17} strokeWidth={1.75} />Habits</NavLink>
           <NavLink to="/journal"><NotebookPen size={17} strokeWidth={1.75} />Journal</NavLink>
+          <NavLink to="/settings"><SettingsIcon size={17} strokeWidth={1.75} />Sync</NavLink>
         </nav>
         <button className="side-add" onClick={onAdd}>
           <Plus size={16} strokeWidth={2} />Quick add
