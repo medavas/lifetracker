@@ -185,6 +185,15 @@ export const useStore = create(
       name: 'stoa',
       storage: createJSONStorage(() => idbStorage),
       version: 2,
+      // Bumping `version` with no `migrate` makes zustand's persist middleware
+      // discard the persisted state entirely on the first load after the bump
+      // (it logs a console.error and merges `undefined` into the fresh initial
+      // state) — i.e. every existing item/log/note silently vanishes. Pre-v2
+      // records simply lack a `deletedAt` field, and every tombstone-filtering
+      // selector/computePoints already treats a missing `deletedAt` as "not
+      // deleted" (`!undefined` is falsy), so no transformation is needed —
+      // just hand the old state back unchanged.
+      migrate: (persistedState) => persistedState,
     },
   ),
 )
