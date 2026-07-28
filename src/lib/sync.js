@@ -11,6 +11,16 @@ export const useSyncStatus = create(() => ({ lastSyncedAt: null, error: null }))
 
 const baseUrl = () => import.meta.env.VITE_SYNC_URL || ''
 
+// Set while syncNow() is applying a remote pull via mergeRemote(), so the
+// store-change subscriber in startSync() can tell "the store changed
+// because a remote pull just merged in" apart from a genuine local edit.
+// Without this, every successful syncNow() would trigger mergeRemote's
+// set(...), which fires the subscriber, which schedules another debounced
+// syncNow() ~1500ms later — forever, even with zero local edits. That turns
+// "push on local change" into indefinite polling, contradicting the
+// no-realtime design intent.
+let applyingRemote = false
+
 export async function syncNow() {
   const token = getSyncToken()
   const url = baseUrl()
@@ -32,11 +42,19 @@ export async function syncNow() {
       return
     }
     const body = await res.json()
-    useStore.getState().mergeRemote(body.entities || [])
+    applyingRemote = true
+    try {
+      useStore.getState().mergeRemote(body.entities || [])
+    } finally {
+      applyingRemote = false
+    }
     useSyncStatus.setState({ lastSyncedAt: Date.now(), error: null })
   } catch {
-    // Offline / unreachable — stay local, retry on next focus/online.
-    useSyncStatus.setState({ error: null })
+    // Offline / unreachable — stay local, retry on next focus/online, but
+    // say so: leaving `error` null here would hide a real outage (and could
+    // silently paper over a still-broken token if a network hiccup lands
+    // right after a 401).
+    useSyncStatus.setState({ error: 'Offline — will retry' })
   }
 }
 
@@ -47,6 +65,7 @@ export function startSync() {
 
   let timer = null
   const push = () => {
+    if (applyingRemote) return // remote-applied change, not a local edit — don't reschedule
     clearTimeout(timer)
     timer = setTimeout(syncNow, 1500)
   }

@@ -43,4 +43,21 @@ describe('syncNow', () => {
     await syncNow()
     expect(useSyncStatus.getState().error).toMatch(/token/i)
   })
+
+  it('sets a non-null error on a network failure instead of clearing it', async () => {
+    setSyncToken('t')
+    globalThis.fetch = vi.fn().mockRejectedValue(new TypeError('Failed to fetch'))
+    await syncNow()
+    expect(useSyncStatus.getState().error).not.toBeNull()
+  })
+
+  it('does not silently erase a prior real error on a network failure', async () => {
+    setSyncToken('t')
+    useSyncStatus.setState({ error: 'Check your sync token' })
+    globalThis.fetch = vi.fn().mockRejectedValue(new TypeError('Failed to fetch'))
+    await syncNow()
+    // Whatever wording is chosen, it must communicate offline state — not
+    // silently keep the stale 401 message either.
+    expect(useSyncStatus.getState().error).not.toBeNull()
+  })
 })
