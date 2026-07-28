@@ -32,4 +32,29 @@ describe('store tombstones + points', () => {
     useStore.getState().mergeRemote(remote)
     expect(useStore.getState().items.find((i) => i.id === it.id).title).toBe('remote title')
   })
+
+  it('reorderItems bumps updatedAt on moved items so the reorder wins sync merges', async () => {
+    const a = useStore.getState().addItem('work', 'a')
+    const b = useStore.getState().addItem('work', 'b')
+    const staleUpdatedAt = useStore.getState().items.find((i) => i.id === a.id).updatedAt
+    // Ensure now() advances even under fast/mocked clocks.
+    await new Promise((r) => setTimeout(r, 5))
+    useStore.getState().reorderItems('work', [b.id, a.id])
+    const [movedA, movedB] = [a.id, b.id].map((id) => useStore.getState().items.find((i) => i.id === id))
+    expect(movedA.order).toBe(1)
+    expect(movedB.order).toBe(0)
+    expect(movedA.updatedAt).toBeGreaterThan(staleUpdatedAt)
+    expect(movedB.updatedAt).toBeGreaterThan(staleUpdatedAt)
+  })
+
+  it('reorderItems does not touch items outside the reordered area/ids', () => {
+    const a = useStore.getState().addItem('work', 'a')
+    const other = useStore.getState().addItem('home', 'other')
+    const untouched = useStore.getState().addItem('work', 'untouched')
+    const beforeOther = useStore.getState().items.find((i) => i.id === other.id).updatedAt
+    const beforeUntouched = useStore.getState().items.find((i) => i.id === untouched.id).updatedAt
+    useStore.getState().reorderItems('work', [a.id])
+    expect(useStore.getState().items.find((i) => i.id === other.id).updatedAt).toBe(beforeOther)
+    expect(useStore.getState().items.find((i) => i.id === untouched.id).updatedAt).toBe(beforeUntouched)
+  })
 })

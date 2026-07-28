@@ -120,7 +120,7 @@ export const useStore = create(
         set({
           items: get().items.map((i) =>
             i.areaId === areaId && orderedIds.includes(i.id)
-              ? { ...i, order: orderedIds.indexOf(i.id) }
+              ? { ...i, order: orderedIds.indexOf(i.id), updatedAt: now() }
               : i,
           ),
         }),
