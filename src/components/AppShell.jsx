@@ -15,7 +15,7 @@ export default function AppShell({ onAdd, children }) {
   return (
     <div className="app-shell">
       <aside className="sidebar">
-        <div className="wordmark">Lifetracker</div>
+        <div className="wordmark">Stoa</div>
         <nav className="side-nav">
           <NavLink to="/" end><House size={17} strokeWidth={1.75} />Home</NavLink>
           <NavLink to="/areas"><LayoutGrid size={17} strokeWidth={1.75} />Areas</NavLink>

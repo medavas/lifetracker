@@ -10,8 +10,8 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['icon.svg'],
       manifest: {
-        name: 'Lifetracker',
-        short_name: 'Lifetracker',
+        name: 'Stoa',
+        short_name: 'Stoa',
         description: 'Personal life dashboard — habits, journal, progress, everything.',
         theme_color: '#12141c',
         background_color: '#12141c',

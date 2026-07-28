@@ -20,8 +20,21 @@
  */
 import { get, set, del } from 'idb-keyval'
 
+// Rebrand (lifetracker -> stoa) renamed the persisted store key. Carry
+// existing on-device data over the first time it's read under the new name.
+const LEGACY_KEYS = { stoa: 'lifetracker' }
+
 export const idbStorage = {
-  getItem: async (name) => (await get(name)) ?? null,
+  getItem: async (name) => {
+    const current = await get(name)
+    if (current != null) return current
+    const legacyKey = LEGACY_KEYS[name]
+    if (!legacyKey) return null
+    const legacy = await get(legacyKey)
+    if (legacy == null) return null
+    await set(name, legacy)
+    return legacy
+  },
   setItem: async (name, value) => set(name, value),
   removeItem: async (name) => del(name),
 }

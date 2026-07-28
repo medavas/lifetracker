@@ -1,4 +1,4 @@
-# Lifetracker
+# Stoa
 
 Personal life dashboard — habits, journal, projects, finance, progress, everything in one place. Single user, local-first, built to eventually sync between desktop and phone.
 

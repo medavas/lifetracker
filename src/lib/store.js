@@ -18,7 +18,17 @@ import { persist, createJSONStorage } from 'zustand/middleware'
 import { idbStorage } from './storage'
 import { POINTS, todayKey } from './rewards'
 
-const uid = () => crypto.randomUUID()
+// crypto.randomUUID only exists in secure contexts (HTTPS or localhost) —
+// fall back to a manual v4 UUID so a plain-HTTP tunnel URL doesn't throw on
+// every add and take down the whole app.
+const uid = () =>
+  typeof crypto !== 'undefined' && crypto.randomUUID
+    ? crypto.randomUUID()
+    : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+        const r = (Math.random() * 16) | 0
+        const v = c === 'x' ? r : (r & 0x3) | 0x8
+        return v.toString(16)
+      })
 const now = () => Date.now()
 
 export const useStore = create(
@@ -161,7 +171,7 @@ export const useStore = create(
       deleteNote: (id) => set({ notes: get().notes.filter((n) => n.id !== id) }),
     }),
     {
-      name: 'lifetracker',
+      name: 'stoa',
       storage: createJSONStorage(() => idbStorage),
       version: 1,
     },
