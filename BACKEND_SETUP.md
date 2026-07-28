@@ -207,7 +207,7 @@ Anyone without the token can't read or write your sync data (`401` on every
 
 Client-side, this is driven by `syncNow()` / `startSync()` in
 [src/lib/sync.js](src/lib/sync.js) — debounced push on local change, pull on
-focus/online, silently a no-op if no token or `VITE_SYNC_URL` is set.
+focus/online, silently a no-op if no token or `VITE_SYNC_URL` is unset.
 
 ### Assistant server — `POST /api/assist`
 
