@@ -11,21 +11,24 @@ export default function Settings() {
   }
 
   return (
-    <main className="view settings">
-      <h1>Sync</h1>
+    <div className="page">
+      <div className="page-head"><h1>Sync</h1></div>
       <p>Paste your private sync token to link this device.</p>
-      <input
-        type="password"
-        value={token}
-        onChange={(e) => setToken(e.target.value)}
-        placeholder="sync token"
-        aria-label="Sync token"
-      />
-      <button onClick={save}>Save & sync</button>
-      {status.error && <p className="sync-error">{status.error}</p>}
+      <div className="settings-field">
+        <label htmlFor="sync-token">Sync token</label>
+        <input
+          id="sync-token"
+          type="password"
+          value={token}
+          onChange={(e) => setToken(e.target.value)}
+          placeholder="sync token"
+        />
+      </div>
+      <button className="btn-primary" onClick={save}>Save & sync</button>
+      {status.error && <p className="status-error">{status.error}</p>}
       {status.lastSyncedAt && !status.error && (
-        <p className="sync-ok">Last synced {new Date(status.lastSyncedAt).toLocaleTimeString()}</p>
+        <p className="status-ok">Last synced {new Date(status.lastSyncedAt).toLocaleTimeString()}</p>
       )}
-    </main>
+    </div>
   )
 }

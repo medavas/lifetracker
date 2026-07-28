@@ -262,6 +262,13 @@
 
 .archived-toggle { font-size: 13px; color: var(--text-muted); margin-top: 16px; text-align: center; width: 100%; }
 
+/* ── Settings ────────────────────────────────────────────── */
+.settings-field { margin: 16px 0; }
+.settings-field label { display: block; font-size: 11px; font-weight: 600; color: var(--text-muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.07em; }
+.settings-field input { width: 100%; padding: 10px 12px; }
+.status-error { color: var(--trim-r); font-size: 13px; margin-top: 12px; }
+.status-ok { color: var(--trim-g); font-size: 13px; margin-top: 12px; }
+
 /* ── Desktop (≥900px): sidebar on, bottom nav off ────────── */
 @media (min-width: 900px) {
   .sidebar { display: flex; }
