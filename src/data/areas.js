@@ -24,20 +24,8 @@ export const AREAS = [
   {
     id: 'finance', name: 'Finance', icon: 'Wallet', kind: 'list',
     trim: 'y',
-    keywords: ['money', 'bill', 'insurance', 'invest', 'savings', 'bank', 'pay'],
-    buckets: ['Bills', 'Insurance', 'Investments', 'Savings'],
-  },
-  {
-    id: 'budget', name: 'Budget', icon: 'ChartColumn', kind: 'list',
-    trim: 'g',
-    keywords: ['budget', 'spend', 'expense', 'cost'],
-    buckets: ['Fixed', 'Variable', 'Goals'],
-  },
-  {
-    id: 'work', name: 'Work', icon: 'Briefcase', kind: 'list',
-    trim: 'o',
-    keywords: ['work', 'job', 'meeting', 'career'],
-    buckets: ['Now', 'Next', 'Waiting'],
+    keywords: ['money', 'bill', 'insurance', 'invest', 'savings', 'bank', 'pay', 'budget', 'spend', 'expense', 'cost'],
+    buckets: ['Bills', 'Insurance', 'Investments', 'Savings', 'Fixed', 'Variable', 'Goals'],
   },
   {
     id: 'fitness', name: 'Fitness', icon: 'Dumbbell', kind: 'list',
@@ -56,12 +44,6 @@ export const AREAS = [
     trim: 'r',
     keywords: ['doctor', 'dentist', 'sleep', 'meds', 'appointment', 'health'],
     buckets: ['Upcoming', 'Tracking', 'Records'],
-  },
-  {
-    id: 'schedule', name: 'Schedule', icon: 'CalendarDays', kind: 'list',
-    trim: 'o',
-    keywords: ['today', 'tomorrow', 'week', 'plan', 'schedule'],
-    buckets: ['Today', 'This Week', 'Recurring'],
   },
   {
     id: 'habits', name: 'Keystone Habits', icon: 'KeyRound', kind: 'habits',
