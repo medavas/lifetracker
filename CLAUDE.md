@@ -6,14 +6,14 @@ Personal life dashboard PWA (habits, journal, finance, fitness, etc.).
 
 THE APP HAS 4 PRIMITIVES, NOT 12 MODULES.
 
-What looks like 12 sections (Projects, Finance, Budget, Work, Fitness, Diet,
-Health, Schedule, Keystone Habits, Journal, Philosophy/Quotes, Learnings) is
+What looks like 9 sections (Projects, Finance, Fitness, Diet, Health,
+Keystone Habits, Journal, Philosophy/Quotes, Learnings) is
 really just filtered views over 4 data primitives:
 
 1. **AREA** — static config only, never stored in the DB. One registry file
-   (`src/data/areas.js`) where each area is a row: id, name, icon, accent
-   gradient, kind (`'list' | 'habits' | 'journal' | 'library'`), bucket names
-   (e.g. Finance has Bills/Insurance/Investments/Savings), and fuzzy-match
+   (`src/data/areas.js`) where each area is a row: id, name, icon, kind
+   (`'list' | 'habits' | 'journal' | 'library'`), bucket names
+   (e.g. Finance has Bills/Insurance/Investments/Savings/Fixed/Variable/Goals), and fuzzy-match
    keywords. Adding a new life-area = adding a config row, zero new components.
 
 2. **ITEM** — anything listed: a task, a habit, a book, a bill, a quote.
