@@ -1,9 +1,11 @@
 import mongoose from 'mongoose'
 import dotenv from 'dotenv'
+import path from 'path'
+import { fileURLToPath } from 'url'
 import { createApp } from './app.js'
 import { mongoStore } from './mongoStore.js'
 
-dotenv.config()
+dotenv.config({ path: path.join(path.dirname(fileURLToPath(import.meta.url)), '.env') })
 
 const { MONGODB_URI, SYNC_TOKEN, PORT = 4000 } = process.env
 if (!MONGODB_URI || !SYNC_TOKEN) {
