@@ -2,14 +2,16 @@ import { Link } from 'react-router-dom'
 import { Check } from 'lucide-react'
 import { useShallow } from 'zustand/react/shallow'
 import { useStore, selectJournal } from '../lib/store'
-import { levelForPoints, levelProgress, habitStreak, activityByDay, todayKey } from '../lib/rewards'
+import { levelForPoints, levelProgress, habitStreak, dailyActivity, dailyPresence, todayKey } from '../lib/rewards'
 import ProgressRing from '../components/ProgressRing'
-import ActivityChart from '../components/ActivityChart'
+import DailyStack from '../components/DailyStack'
+import PracticeGrid from '../components/PracticeGrid'
 
 export default function Dashboard() {
   const points = useStore((s) => s.points)
   const items = useStore((s) => s.items)
   const logs = useStore((s) => s.logs)
+  const notes = useStore((s) => s.notes)
   const toggleHabitToday = useStore((s) => s.toggleHabitToday)
   const journal = useStore(useShallow(selectJournal))
 
@@ -79,7 +81,12 @@ export default function Dashboard() {
 
           <div className="section-label">Last 7 days</div>
           <div className="card">
-            <ActivityChart data={activityByDay(logs, 7)} />
+            <DailyStack data={dailyActivity(logs, notes, 7)} />
+          </div>
+
+          <div className="section-label">Last 5 weeks</div>
+          <div className="card">
+            <PracticeGrid weeks={dailyPresence(logs, notes, 5)} />
           </div>
         </div>
 

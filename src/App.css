@@ -248,10 +248,31 @@
   transform: translate(-50%, -110%);
 }
 .chart-tip b { display: block; font-size: 13px; }
+.chart-tip .tip-row { display: flex; align-items: center; gap: 6px; margin-top: 3px; }
+.chart-tip .tip-row b { display: inline; margin-left: auto; }
+.tip-dot { width: 8px; height: 8px; border-radius: 2px; flex: none; }
+.chart-legend { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 10px; }
+.legend-item { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; color: var(--text-secondary); }
+.legend-swatch { width: 9px; height: 9px; border-radius: 2px; flex: none; }
 .data-toggle { font-size: 12px; color: var(--text-muted); margin-top: 8px; }
 .data-toggle summary { cursor: pointer; }
 .data-toggle table { width: 100%; border-collapse: collapse; margin-top: 6px; }
 .data-toggle td, .data-toggle th { text-align: left; padding: 3px 6px; border-bottom: 1px solid var(--border); font-size: 12px; }
+
+/* ── Practice grid ───────────────────────────────────────── */
+.practice-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+.pg-head { font-size: 10px; color: var(--text-muted); text-align: center; margin-bottom: 2px; }
+.pg-cell {
+  display: flex; flex-direction: column; gap: 1px;
+  border-radius: 3px; overflow: hidden; cursor: default;
+}
+.pg-slot { display: block; height: 6px; background: var(--surface-3); }
+.pg-cell.future .pg-slot { background: transparent; box-shadow: inset 0 0 0 1px var(--border); }
+.pg-caption { font-size: 12px; color: var(--text-secondary); margin-top: 8px; min-height: 16px; }
+
+@media (max-width: 420px) {
+  .practice-grid { gap: 3px; }
+}
 
 /* ── Progress ring ───────────────────────────────────────── */
 .ring-wrap { position: relative; width: 84px; height: 84px; flex: none; }

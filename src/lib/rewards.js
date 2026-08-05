@@ -3,6 +3,8 @@
  * Pure functions over store state; tune the constants to taste.
  */
 
+import { DAILY_BANDS } from '../data/areas.js'
+
 export const POINTS = {
   task: 10, // completing any item
   habit: 5, // a daily habit check-in
@@ -56,12 +58,97 @@ export function habitStreak(logs, itemId) {
   return streak
 }
 
-/** Activity counts for the last n days (for the dashboard chart). */
-export function activityByDay(logs, n = 7) {
+/** Local day key for a note's createdAt timestamp, matching LOG `date` values. */
+const dayKeyOf = (ts) => todayKey(new Date(ts))
+
+/**
+ * Single-pass index over the live logs and notes, bucketed by day. Built once
+ * per caller (not once per day-cell), so `dayKeyOf` runs exactly once per
+ * note and every log is visited exactly once regardless of how many days are
+ * later queried against the index.
+ *
+ * `logsByDate` maps a day key to a Map of `${kind}|${areaId}` -> count.
+ * `notesByDate` maps a day key to a Map of `areaId` -> count (itemId-less,
+ * live notes only).
+ */
+function buildBandIndex(logs, notes) {
+  const logsByDate = new Map()
+  for (const l of logs) {
+    if (l.deletedAt) continue
+    if (l.kind !== 'complete' && l.kind !== 'habit-check') continue
+    let day = logsByDate.get(l.date)
+    if (!day) {
+      day = new Map()
+      logsByDate.set(l.date, day)
+    }
+    const key = `${l.kind}|${l.areaId}`
+    day.set(key, (day.get(key) || 0) + 1)
+  }
+
+  const notesByDate = new Map()
+  for (const n of notes) {
+    if (n.deletedAt || n.itemId) continue
+    const date = dayKeyOf(n.createdAt)
+    let day = notesByDate.get(date)
+    if (!day) {
+      day = new Map()
+      notesByDate.set(date, day)
+    }
+    day.set(n.areaId, (day.get(n.areaId) || 0) + 1)
+  }
+
+  return { logsByDate, notesByDate }
+}
+
+/**
+ * Counts for one day, one key per daily band, from a pre-built index.
+ * Switched on the area's `kind` so a fifth daily area needs no change here.
+ *
+ * Journal counts NOTEs, not the `kind:'journal'` day-marker log: the store
+ * writes at most one marker per day, which would cap the band at 1 while
+ * habits reach 6+, making journaling render as a permanent sliver.
+ */
+function countsForDate({ logsByDate, notesByDate }, date) {
+  const day = logsByDate.get(date)
+  const noteDay = notesByDate.get(date)
+  const out = {}
+  for (const area of DAILY_BANDS) {
+    if (area.kind === 'journal') {
+      out[area.id] = noteDay ? noteDay.get(area.id) || 0 : 0
+    } else if (area.kind === 'habits') {
+      out[area.id] = day ? day.get(`habit-check|${area.id}`) || 0 : 0
+    } else {
+      out[area.id] = day ? day.get(`complete|${area.id}`) || 0 : 0
+    }
+  }
+  return out
+}
+
+/**
+ * Counts for one day, one key per daily band. Thin wrapper over
+ * `buildBandIndex`/`countsForDate` for single-date callers (and tests); a
+ * caller that needs many dates from the same logs/notes should build the
+ * index once and call `countsForDate` directly instead of calling this in a
+ * loop — see `dailyActivity` and `dailyPresence`.
+ */
+export function bandCounts(logs, notes, date) {
+  return countsForDate(buildBandIndex(logs, notes), date)
+}
+
+/**
+ * Band counts for the last n days, oldest first. Every day in the window is
+ * present, including days with no activity, so the chart keeps a stable width.
+ *
+ * Scans `logs` and `notes` once (via `buildBandIndex`), not once per day.
+ */
+export function dailyActivity(logs, notes, n = 7) {
+  const index = buildBandIndex(logs, notes)
   const out = []
   for (let i = n - 1; i >= 0; i--) {
     const date = daysAgoKey(i)
-    out.push({ date, count: logs.filter((l) => l.date === date).length })
+    const bands = countsForDate(index, date)
+    const total = Object.values(bands).reduce((s, v) => s + v, 0)
+    out.push({ date, bands, total })
   }
   return out
 }
@@ -81,4 +168,41 @@ export function computePoints(logs) {
   }
   const journalDays = new Set(live.filter((l) => l.kind === 'journal').map((l) => l.date))
   return pts + journalDays.size * POINTS.journal
+}
+
+/** The Monday of d's week, as a local YYYY-MM-DD key. */
+export function startOfWeekKey(d = new Date()) {
+  const x = new Date(d)
+  x.setDate(x.getDate() - ((x.getDay() + 6) % 7))
+  return todayKey(x)
+}
+
+/**
+ * Presence booleans over a rolling window of `weeks` calendar weeks ending
+ * with the current one. Outer array is weeks oldest-first, inner is Mon..Sun,
+ * so the block is always exactly weeks x 7 and the oldest week drops off as a
+ * new one begins. Days after today are flagged `future` so the grid can render
+ * them as empty rather than as missed.
+ */
+export function dailyPresence(logs, notes, weeks = 5) {
+  const today = todayKey()
+  const first = new Date(startOfWeekKey() + 'T00:00:00')
+  first.setDate(first.getDate() - (weeks - 1) * 7)
+  const index = buildBandIndex(logs, notes)
+
+  const grid = []
+  for (let w = 0; w < weeks; w++) {
+    const row = []
+    for (let d = 0; d < 7; d++) {
+      const cell = new Date(first)
+      cell.setDate(first.getDate() + w * 7 + d)
+      const date = todayKey(cell)
+      const counts = countsForDate(index, date)
+      const bands = {}
+      for (const id of Object.keys(counts)) bands[id] = counts[id] > 0
+      row.push({ date, bands, future: date > today })
+    }
+    grid.push(row)
+  }
+  return grid
 }
