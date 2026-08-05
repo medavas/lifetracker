@@ -1,7 +1,9 @@
-import { describe, it, expect } from 'vitest'
-import { computePoints } from '../rewards.js'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
+import { computePoints, bandCounts, dailyActivity } from '../rewards.js'
 
 const log = (over) => ({ id: Math.random().toString(), itemId: 'i', areaId: 'a', date: '2026-07-26', createdAt: 1, updatedAt: 1, deletedAt: null, ...over })
+
+const note = (over) => ({ id: Math.random().toString(), areaId: 'journal', itemId: null, text: 't', createdAt: Date.parse('2026-08-04T09:00:00'), updatedAt: 1, deletedAt: null, ...over })
 
 describe('computePoints', () => {
   it('is 0 for no logs', () => {
@@ -20,5 +22,100 @@ describe('computePoints', () => {
   })
   it('ignores tombstoned logs', () => {
     expect(computePoints([log({ kind: 'complete', deletedAt: 5 })])).toBe(0)
+  })
+})
+
+describe('bandCounts', () => {
+  const D = '2026-08-04'
+
+  it('returns a zero for every band when nothing happened', () => {
+    expect(bandCounts([], [], D)).toEqual({ journal: 0, diet: 0, fitness: 0, habits: 0 })
+  })
+
+  it('counts journal NOTEs, not the day-marker log', () => {
+    const notes = [note({}), note({}), note({})]
+    const logs = [log({ kind: 'journal', areaId: 'journal', date: D })]
+    expect(bandCounts(logs, notes, D).journal).toBe(3)
+  })
+
+  it('ignores per-item notes and notes from other areas', () => {
+    const notes = [
+      note({ itemId: 'i1' }),
+      note({ areaId: 'fitness' }),
+      note({}),
+    ]
+    expect(bandCounts([], notes, D).journal).toBe(1)
+  })
+
+  it('counts completes per area without cross-contamination', () => {
+    const logs = [
+      log({ kind: 'complete', areaId: 'diet', date: D }),
+      log({ kind: 'complete', areaId: 'diet', date: D }),
+      log({ kind: 'complete', areaId: 'fitness', date: D }),
+      log({ kind: 'complete', areaId: 'finance', date: D }),
+    ]
+    const b = bandCounts(logs, [], D)
+    expect(b.diet).toBe(2)
+    expect(b.fitness).toBe(1)
+  })
+
+  it('counts habit-checks into the habits band', () => {
+    const logs = [
+      log({ kind: 'habit-check', areaId: 'habits', date: D }),
+      log({ kind: 'habit-check', areaId: 'habits', date: D }),
+    ]
+    expect(bandCounts(logs, [], D).habits).toBe(2)
+  })
+
+  it('excludes tombstoned logs and notes', () => {
+    const logs = [log({ kind: 'complete', areaId: 'diet', date: D, deletedAt: 5 })]
+    const notes = [note({ deletedAt: 5 })]
+    const b = bandCounts(logs, notes, D)
+    expect(b.diet).toBe(0)
+    expect(b.journal).toBe(0)
+  })
+
+  it('buckets notes by local day, matching log date keys', () => {
+    const notes = [note({ createdAt: Date.parse('2026-08-04T23:30:00') })]
+    expect(bandCounts([], notes, D).journal).toBe(1)
+    expect(bandCounts([], notes, '2026-08-05').journal).toBe(0)
+  })
+})
+
+describe('dailyActivity', () => {
+  beforeEach(() => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-08-04T12:00:00'))
+  })
+  afterEach(() => vi.useRealTimers())
+
+  it('returns n days oldest-first ending today', () => {
+    const out = dailyActivity([], [], 7)
+    expect(out).toHaveLength(7)
+    expect(out[0].date).toBe('2026-07-29')
+    expect(out[6].date).toBe('2026-08-04')
+  })
+
+  it('includes zero days rather than skipping them', () => {
+    const out = dailyActivity([log({ kind: 'complete', areaId: 'diet', date: '2026-08-04' })], [], 7)
+    expect(out).toHaveLength(7)
+    expect(out[0]).toEqual({ date: '2026-07-29', bands: { journal: 0, diet: 0, fitness: 0, habits: 0 }, total: 0 })
+  })
+
+  it('sums the four bands into total', () => {
+    const logs = [
+      log({ kind: 'complete', areaId: 'diet', date: '2026-08-04' }),
+      log({ kind: 'habit-check', areaId: 'habits', date: '2026-08-04' }),
+      log({ kind: 'habit-check', areaId: 'habits', date: '2026-08-04' }),
+    ]
+    const notes = [note({ createdAt: Date.parse('2026-08-04T09:00:00') })]
+    const today = dailyActivity(logs, notes, 7)[6]
+    expect(today.bands).toEqual({ journal: 1, diet: 1, fitness: 0, habits: 2 })
+    expect(today.total).toBe(4)
+  })
+
+  it('ignores activity in non-daily areas', () => {
+    const logs = [log({ kind: 'complete', areaId: 'finance', date: '2026-08-04' })]
+    expect(dailyActivity(logs, [], 7)[6].total).toBe(0)
   })
 })

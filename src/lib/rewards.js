@@ -3,6 +3,8 @@
  * Pure functions over store state; tune the constants to taste.
  */
 
+import { DAILY_BANDS } from '../data/areas.js'
+
 export const POINTS = {
   task: 10, // completing any item
   habit: 5, // a daily habit check-in
@@ -56,12 +58,50 @@ export function habitStreak(logs, itemId) {
   return streak
 }
 
-/** Activity counts for the last n days (for the dashboard chart). */
-export function activityByDay(logs, n = 7) {
+/** Local day key for a note's createdAt timestamp, matching LOG `date` values. */
+const dayKeyOf = (ts) => todayKey(new Date(ts))
+
+/**
+ * Counts for one day, one key per daily band. Switched on the area's `kind`
+ * so a fifth daily area needs no change here.
+ *
+ * Journal counts NOTEs, not the `kind:'journal'` day-marker log: the store
+ * writes at most one marker per day, which would cap the band at 1 while
+ * habits reach 6+, making journaling render as a permanent sliver.
+ */
+export function bandCounts(logs, notes, date) {
+  const live = logs.filter((l) => !l.deletedAt)
+  const liveNotes = notes.filter((n) => !n.deletedAt)
+  const out = {}
+  for (const area of DAILY_BANDS) {
+    if (area.kind === 'journal') {
+      out[area.id] = liveNotes.filter(
+        (n) => n.areaId === area.id && !n.itemId && dayKeyOf(n.createdAt) === date,
+      ).length
+    } else if (area.kind === 'habits') {
+      out[area.id] = live.filter(
+        (l) => l.kind === 'habit-check' && l.areaId === area.id && l.date === date,
+      ).length
+    } else {
+      out[area.id] = live.filter(
+        (l) => l.kind === 'complete' && l.areaId === area.id && l.date === date,
+      ).length
+    }
+  }
+  return out
+}
+
+/**
+ * Band counts for the last n days, oldest first. Every day in the window is
+ * present, including days with no activity, so the chart keeps a stable width.
+ */
+export function dailyActivity(logs, notes, n = 7) {
   const out = []
   for (let i = n - 1; i >= 0; i--) {
     const date = daysAgoKey(i)
-    out.push({ date, count: logs.filter((l) => l.date === date).length })
+    const bands = bandCounts(logs, notes, date)
+    const total = Object.values(bands).reduce((s, v) => s + v, 0)
+    out.push({ date, bands, total })
   }
   return out
 }
