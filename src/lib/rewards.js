@@ -122,3 +122,39 @@ export function computePoints(logs) {
   const journalDays = new Set(live.filter((l) => l.kind === 'journal').map((l) => l.date))
   return pts + journalDays.size * POINTS.journal
 }
+
+/** The Monday of d's week, as a local YYYY-MM-DD key. */
+export function startOfWeekKey(d = new Date()) {
+  const x = new Date(d)
+  x.setDate(x.getDate() - ((x.getDay() + 6) % 7))
+  return todayKey(x)
+}
+
+/**
+ * Presence booleans over a rolling window of `weeks` calendar weeks ending
+ * with the current one. Outer array is weeks oldest-first, inner is Mon..Sun,
+ * so the block is always exactly weeks x 7 and the oldest week drops off as a
+ * new one begins. Days after today are flagged `future` so the grid can render
+ * them as empty rather than as missed.
+ */
+export function dailyPresence(logs, notes, weeks = 5) {
+  const today = todayKey()
+  const first = new Date(startOfWeekKey() + 'T00:00:00')
+  first.setDate(first.getDate() - (weeks - 1) * 7)
+
+  const grid = []
+  for (let w = 0; w < weeks; w++) {
+    const row = []
+    for (let d = 0; d < 7; d++) {
+      const cell = new Date(first)
+      cell.setDate(first.getDate() + w * 7 + d)
+      const date = todayKey(cell)
+      const counts = bandCounts(logs, notes, date)
+      const bands = {}
+      for (const id of Object.keys(counts)) bands[id] = counts[id] > 0
+      row.push({ date, bands, future: date > today })
+    }
+    grid.push(row)
+  }
+  return grid
+}

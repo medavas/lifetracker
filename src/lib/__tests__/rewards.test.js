@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
-import { computePoints, bandCounts, dailyActivity } from '../rewards.js'
+import { computePoints, bandCounts, dailyActivity, startOfWeekKey, dailyPresence } from '../rewards.js'
 
 const log = (over) => ({ id: Math.random().toString(), itemId: 'i', areaId: 'a', date: '2026-07-26', createdAt: 1, updatedAt: 1, deletedAt: null, ...over })
 
@@ -117,5 +117,74 @@ describe('dailyActivity', () => {
   it('ignores activity in non-daily areas', () => {
     const logs = [log({ kind: 'complete', areaId: 'finance', date: '2026-08-04' })]
     expect(dailyActivity(logs, [], 7)[6].total).toBe(0)
+  })
+})
+
+describe('startOfWeekKey', () => {
+  it('returns the same day for a Monday', () => {
+    expect(startOfWeekKey(new Date('2026-08-03T12:00:00'))).toBe('2026-08-03')
+  })
+  it('walks back to Monday from midweek', () => {
+    expect(startOfWeekKey(new Date('2026-08-04T12:00:00'))).toBe('2026-08-03')
+  })
+  it('treats Sunday as the end of its week, not the start', () => {
+    expect(startOfWeekKey(new Date('2026-08-09T12:00:00'))).toBe('2026-08-03')
+  })
+})
+
+describe('dailyPresence', () => {
+  // 2026-08-04 is a Tuesday; its week starts Mon 2026-08-03.
+  beforeEach(() => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-08-04T12:00:00'))
+  })
+  afterEach(() => vi.useRealTimers())
+
+  it('returns exactly 5 weeks of 7 days', () => {
+    const grid = dailyPresence([], [], 5)
+    expect(grid).toHaveLength(5)
+    for (const week of grid) expect(week).toHaveLength(7)
+  })
+
+  it('starts four Mondays back and ends on the current week Sunday', () => {
+    const grid = dailyPresence([], [], 5)
+    expect(grid[0][0].date).toBe('2026-07-06')
+    expect(grid[4][0].date).toBe('2026-08-03')
+    expect(grid[4][6].date).toBe('2026-08-09')
+  })
+
+  it('flags days after today as future', () => {
+    const grid = dailyPresence([], [], 5)
+    expect(grid[4][0].future).toBe(false) // Mon 08-03
+    expect(grid[4][1].future).toBe(false) // Tue 08-04, today
+    expect(grid[4][2].future).toBe(true)  // Wed 08-05
+    expect(grid[0][0].future).toBe(false)
+  })
+
+  it('thresholds counts to booleans', () => {
+    const logs = [
+      log({ kind: 'complete', areaId: 'diet', date: '2026-08-03' }),
+      log({ kind: 'habit-check', areaId: 'habits', date: '2026-08-03' }),
+      log({ kind: 'habit-check', areaId: 'habits', date: '2026-08-03' }),
+    ]
+    const cell = dailyPresence(logs, [], 5)[4][0]
+    expect(cell.bands).toEqual({ journal: false, diet: true, fitness: false, habits: true })
+  })
+
+  it('puts a Sunday and the following Monday in different weeks', () => {
+    const logs = [
+      log({ kind: 'complete', areaId: 'diet', date: '2026-08-02' }), // Sunday
+      log({ kind: 'complete', areaId: 'diet', date: '2026-08-03' }), // Monday
+    ]
+    const grid = dailyPresence(logs, [], 5)
+    expect(grid[3][6].date).toBe('2026-08-02')
+    expect(grid[3][6].bands.diet).toBe(true)
+    expect(grid[4][0].bands.diet).toBe(true)
+    expect(grid[3][0].bands.diet).toBe(false)
+  })
+
+  it('excludes tombstoned records', () => {
+    const logs = [log({ kind: 'complete', areaId: 'diet', date: '2026-08-03', deletedAt: 5 })]
+    expect(dailyPresence(logs, [], 5)[4][0].bands.diet).toBe(false)
   })
 })
