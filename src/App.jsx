@@ -8,8 +8,10 @@ import AreasGrid from './views/AreasGrid'
 import AreaView from './views/AreaView'
 import Journal from './views/Journal'
 import Habits from './views/Habits'
+import Nudges from './views/Nudges'
 import Settings from './views/Settings'
 import { startSync } from './lib/sync'
+import { startNudges } from './lib/nudgeRunner'
 import './App.css'
 
 /**
@@ -21,6 +23,7 @@ export default function App() {
   const [quickAddOpen, setQuickAddOpen] = useState(false)
 
   useEffect(() => startSync(), [])
+  useEffect(() => startNudges(), [])
 
   return (
     <HashRouter>
@@ -30,6 +33,7 @@ export default function App() {
           <Route path="/areas" element={<AreasGrid />} />
           <Route path="/area/:areaId" element={<AreaView />} />
           <Route path="/journal" element={<Journal />} />
+          <Route path="/nudges" element={<Nudges />} />
           <Route path="/habits" element={<Habits />} />
           <Route path="/settings" element={<Settings />} />
         </Routes>

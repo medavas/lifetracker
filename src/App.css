@@ -300,3 +300,20 @@
 @media (min-width: 1200px) {
   .area-grid { grid-template-columns: repeat(4, 1fr); }
 }
+
+.nudge-power {
+  width: 30px; height: 30px; flex: none;
+  display: grid; place-items: center;
+  border-radius: 8px;
+  border: 1px solid var(--surface-3);
+  background: transparent;
+  color: var(--text-muted);
+}
+.nudge-power.on { border-color: var(--trim-o); color: var(--trim-o); }
+.nudge-meta { font-size: 12px; color: var(--text-muted); margin-top: 3px; }
+
+.quiet-block { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--surface-3); }
+.quiet-head { display: flex; align-items: center; gap: 8px; font-size: 14px; }
+.quiet-head span { flex: 1; }
+.quiet-times { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
+.quiet-times span { font-size: 13px; color: var(--text-muted); }
