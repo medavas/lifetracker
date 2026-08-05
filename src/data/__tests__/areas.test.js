@@ -1,17 +1,17 @@
 import { describe, it, expect } from 'vitest'
 import * as lucide from 'lucide-react'
-import { AREAS } from '../areas'
+import { AREAS, DAILY_BANDS } from '../areas'
 
 const EXPECTED = {
   projects: { trim: 'b', icon: 'Rocket' },
   finance: { trim: 'y', icon: 'Wallet' },
-  fitness: { trim: 'r', icon: 'Dumbbell' },
+  fitness: { trim: 'y', icon: 'Dumbbell' },
   diet: { trim: 'g', icon: 'Salad' },
   health: { trim: 'r', icon: 'Stethoscope' },
-  habits: { trim: 'y', icon: 'KeyRound' },
-  journal: { trim: 'v', icon: 'NotebookPen' },
+  habits: { trim: 'r', icon: 'KeyRound' },
+  journal: { trim: 'b', icon: 'NotebookPen' },
   philosophy: { trim: 'v', icon: 'Landmark' },
-  learnings: { trim: 'b', icon: 'Brain' },
+  learnings: { trim: 'o', icon: 'Brain' },
 }
 
 describe('area registry', () => {
@@ -45,5 +45,33 @@ describe('area registry', () => {
     expect(finance.keywords).toEqual(
       expect.arrayContaining(['money', 'bill', 'insurance', 'invest', 'savings', 'bank', 'pay', 'budget', 'spend', 'expense', 'cost'])
     )
+  })
+})
+
+describe('daily bands', () => {
+  it('marks exactly the four daily-practice areas', () => {
+    expect(AREAS.filter((a) => a.daily).map((a) => a.id).sort()).toEqual(
+      ['diet', 'fitness', 'habits', 'journal'],
+    )
+  })
+
+  it('assigns orders 1..4 with no duplicates', () => {
+    const orders = AREAS.filter((a) => a.daily).map((a) => a.daily.order).sort()
+    expect(orders).toEqual([1, 2, 3, 4])
+  })
+
+  it('assigns a distinct series slot to each band', () => {
+    const series = AREAS.filter((a) => a.daily).map((a) => a.daily.series)
+    expect(new Set(series).size).toBe(series.length)
+  })
+
+  it('exposes DAILY_BANDS sorted bottom-to-top', () => {
+    expect(DAILY_BANDS.map((a) => a.id)).toEqual(['journal', 'diet', 'fitness', 'habits'])
+  })
+
+  it('gives every band a trim matching its own identity color family', () => {
+    // journal blue, diet green, fitness amber, habits red - nav and chart agree
+    const trims = Object.fromEntries(DAILY_BANDS.map((a) => [a.id, a.trim]))
+    expect(trims).toEqual({ journal: 'b', diet: 'g', fitness: 'y', habits: 'r' })
   })
 })
