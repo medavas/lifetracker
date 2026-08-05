@@ -78,9 +78,21 @@ export const DAILY_BANDS = AREAS.filter((a) => a.daily)
 
 **Trim realignment.** `journal` moves violet→`b`, `fitness` red→`y`, `habits`
 yellow→`r`, so an area's nav/edge color matches its band color. Without this,
-journal is violet in the nav and blue in the chart. Trims are not unique per
-area today (`b` is already shared by projects and learnings), so this collides
-with nothing.
+journal is violet in the nav and blue in the chart.
+
+This forces a fourth change. `areas.test.js` asserts each trim is used at most
+twice; moving `journal` to `b` would make `b` appear three times (projects,
+learnings, journal). `learnings` therefore moves `b`→`o`, which no area
+currently uses. Final assignment:
+
+| Trim | Areas                  |
+| ---- | ---------------------- |
+| `b`  | projects, journal      |
+| `g`  | diet                   |
+| `o`  | learnings              |
+| `r`  | health, habits         |
+| `v`  | philosophy             |
+| `y`  | finance, fitness       |
 
 ### 2. Data — `src/lib/rewards.js`
 
@@ -162,6 +174,16 @@ Both read `notes` from the store in addition to `logs`.
 
 No existing test covers `activityByDay`, and `Dashboard.jsx` is the sole
 consumer of both it and `ActivityChart.jsx`, so both removals are clean.
+
+**Components are not unit-tested, deliberately.** `vitest.config.js` sets
+`environment: 'node'` with no jsdom, so a component that calls hooks throws if
+invoked directly (`AreaIcon.test.js` works only because that component is
+hook-free). This is why the stacked bar's geometry is extracted into a pure
+`stackGeometry` helper in a new `src/lib/chart.js` and tested there: it moves
+the only non-trivial component logic somewhere it can be exercised. The
+components themselves are maps over tested data and are verified by hand.
+Introducing jsdom is a reasonable follow-up but is a repo-wide config decision,
+not part of this work.
 
 ## Forward compatibility
 
