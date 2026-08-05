@@ -3,7 +3,7 @@ import { notifyPermission, requestNotifyPermission, fireNotification } from '../
 
 const clean = () => {
   delete globalThis.Notification
-  delete globalThis.__swRegistration
+  vi.unstubAllGlobals()
 }
 
 /** Minimal Notification stand-in; the node test env has no DOM. */
@@ -59,6 +59,21 @@ describe('fireNotification', () => {
   it('shows nothing and reports false when permission is not granted', async () => {
     stubNotification('default')
     await expect(fireNotification('drink water', 'a')).resolves.toBe(false)
+  })
+
+  it('uses service worker registration when available', async () => {
+    stubNotification('granted')
+    const showNotificationMock = vi.fn()
+    vi.stubGlobal('navigator', {
+      serviceWorker: {
+        getRegistration: vi.fn().mockResolvedValue({
+          showNotification: showNotificationMock
+        })
+      }
+    })
+    await expect(fireNotification('drink water', 'nudge-1')).resolves.toBe(true)
+    expect(showNotificationMock).toHaveBeenCalledOnce()
+    expect(showNotificationMock).toHaveBeenCalledWith('Stoa', { body: 'drink water', tag: 'nudge-1' })
   })
 
   it('constructs a notification with the message as the body', async () => {
