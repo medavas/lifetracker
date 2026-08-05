@@ -116,12 +116,10 @@ specific day.
 **Route params vs. internal day keys — do not conflate these.** Route
 segments for month and day are unpadded integers as strings (`'8'`, not
 `'08'`; `'4'`, not `'04'`) — this is purely a URL-readability choice.
-Internally, matching a note to a specific day still uses the zero-padded
-`'YYYY-MM-DD'` key `todayKey()` already produces elsewhere in this codebase
-(`rewards.js`). `journalCalendar.js`'s functions take the unpadded route
-values and pad them internally before comparing against a note's derived
-day key — the padding conversion belongs entirely inside this module, never
-in a view component.
+Internally, matching a note to a specific day compares local numeric date
+parts directly (`year`/`month`/`day` as numbers) — no zero-padded day-key
+string is ever constructed. Route segments stay unpadded integers
+throughout; there is nothing to pad.
 
 ## Files
 

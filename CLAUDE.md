@@ -50,3 +50,6 @@ really just filtered views over 4 data primitives:
 - New features should be expressible as: a new area kind, a new log kind,
   or a new view over existing primitives — in that order of preference.
   If a feature seems to need a 5th primitive, stop and flag it.
+- Journal NOTEs are immutable once written. No edit or delete UI anywhere.
+  `updateNote`/`deleteNote` remain in `store.js` with zero callers —
+  deliberately, not by accident. Do not wire them back up.
