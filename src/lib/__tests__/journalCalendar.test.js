@@ -86,6 +86,10 @@ describe('daysInMonth', () => {
     const notes = [note({ createdAt: Date.parse('2026-08-04T09:00:00') })]
     expect(daysInMonth(notes, '2026', '8')[3]).toBe(true)
   })
+
+  it('returns an empty array rather than throwing for a malformed month', () => {
+    expect(daysInMonth([], '2026', 'not-a-month')).toEqual([])
+  })
 })
 
 describe('entriesForDay', () => {

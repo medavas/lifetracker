@@ -40,6 +40,7 @@ export function monthEntryFlags(notes, year) {
 /** Which days of `year`/`month` have at least one live entry. Sized to that month's real day count. */
 export function daysInMonth(notes, year, month) {
   const count = new Date(Number(year), Number(month), 0).getDate()
+  if (!Number.isFinite(count)) return []
   const flags = new Array(count).fill(false)
   for (const n of notes) {
     if (!isJournalEntry(n)) continue
