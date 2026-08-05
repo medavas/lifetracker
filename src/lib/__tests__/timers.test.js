@@ -80,7 +80,10 @@ describe('tickPlan', () => {
 
   it('fires once when many intervals are overdue, never a burst', () => {
     const now = at(12)
-    const plan = tickPlan([nudge('a', 45)], { a: now - 8 * 45 * MIN }, OFF, now)
+    // Offset is NOT an exact multiple of the interval so this assertion can
+    // tell "reset to now" apart from "advanced by 8 intervals" -- both would
+    // land on the same anchors:{a:now} if the overdue amount were exact.
+    const plan = tickPlan([nudge('a', 45)], { a: now - (8 * 45 * MIN + 10 * MIN) }, OFF, now)
     expect(plan.fire).toEqual(['a'])
     expect(plan.anchors).toEqual({ a: now })
   })

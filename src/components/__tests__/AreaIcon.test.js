@@ -1,8 +1,13 @@
 import { describe, it, expect } from 'vitest'
 import { Rocket } from 'lucide-react'
-import AreaIcon from '../AreaIcon'
+import AreaIcon, { ICONS } from '../AreaIcon'
+import { AREAS } from '../../data/areas'
 
 describe('AreaIcon', () => {
+  it('has a registry entry for every area icon', () => {
+    for (const a of AREAS) expect(ICONS[a.icon], a.icon).toBeTruthy()
+  })
+
   it('resolves a lucide icon by name with defaults', () => {
     const el = AreaIcon({ name: 'Rocket' })
     expect(el.type).toBe(Rocket)

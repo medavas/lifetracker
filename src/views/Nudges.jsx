@@ -12,9 +12,11 @@ const PRESETS = [15, 30, 45, 60, 120]
 const hhmm = (mins) =>
   `${String(Math.floor(mins / 60)).padStart(2, '0')}:${String(mins % 60).padStart(2, '0')}`
 
+// Returns null on an incomplete/cleared time input rather than NaN, so a
+// caller can ignore the change instead of persisting a corrupt quiet window.
 const toMins = (value) => {
   const [h, m] = value.split(':').map(Number)
-  return h * 60 + m
+  return Number.isFinite(h) && Number.isFinite(m) ? h * 60 + m : null
 }
 
 /** "in 42m" / "in 1h 12m" / "any moment now" */
@@ -141,11 +143,12 @@ export default function Nudges() {
                 <div className="item-title">{n.title}</div>
                 <div className="nudge-meta">
                   every {n.intervalMin}m{n.enabled && due ? ` · ${due}` : ''}
+                  {n.enabled && permission !== 'granted' ? ' (blocked)' : ''}
                 </div>
               </div>
               <button
                 className="detail-btn"
-                onClick={() => deleteItem(n.id)}
+                onClick={() => { clearAnchor(n.id); deleteItem(n.id) }}
                 aria-label={`Delete ${n.title}`}
               >
                 <Trash2 size={16} strokeWidth={1.75} />
@@ -191,14 +194,22 @@ export default function Nudges() {
           <input
             type="time"
             value={hhmm(quiet.startMin)}
-            onChange={(e) => saveQuiet({ ...quiet, startMin: toMins(e.target.value) })}
+            onChange={(e) => {
+              const startMin = toMins(e.target.value)
+              // Clearing the field yields null -- ignore it rather than
+              // persisting a corrupt quiet window (see nudge-timers finding #3).
+              if (startMin != null) saveQuiet({ ...quiet, startMin })
+            }}
             aria-label="Quiet hours start"
           />
           <span>to</span>
           <input
             type="time"
             value={hhmm(quiet.endMin)}
-            onChange={(e) => saveQuiet({ ...quiet, endMin: toMins(e.target.value) })}
+            onChange={(e) => {
+              const endMin = toMins(e.target.value)
+              if (endMin != null) saveQuiet({ ...quiet, endMin })
+            }}
             aria-label="Quiet hours end"
           />
         </div>

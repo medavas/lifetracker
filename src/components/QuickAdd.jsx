@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStore } from '../lib/store'
 import { suggestAreas } from '../lib/fuzzy'
-import { AREAS } from '../data/areas'
+import { AREAS, routeFor } from '../data/areas'
 import AreaIcon from './AreaIcon'
 
 /**
@@ -15,15 +15,24 @@ export default function QuickAdd({ onClose }) {
   const addNote = useStore((s) => s.addNote)
   const navigate = useNavigate()
 
-  const suggestions = useMemo(() => suggestAreas(text), [text])
-  const fallback = AREAS.filter((a) => !suggestions.includes(a)).slice(0, suggestions.length ? 2 : 5)
+  // A nudge needs an interval, which free-text capture never supplies, so
+  // 'timers' areas are not a valid QuickAdd destination -- they're excluded
+  // from both the fuzzy-matched suggestions and the fallback chips.
+  const suggestions = useMemo(
+    () => suggestAreas(text).filter((a) => a.kind !== 'timers'),
+    [text],
+  )
+  const fallback = AREAS.filter((a) => a.kind !== 'timers' && !suggestions.includes(a)).slice(
+    0,
+    suggestions.length ? 2 : 5,
+  )
 
   const fileTo = (area) => {
     if (!text.trim()) return
     if (area.kind === 'journal') addNote('journal', text)
     else addItem(area.id, text)
     onClose()
-    navigate(area.kind === 'journal' ? '/journal' : `/area/${area.id}`)
+    navigate(routeFor(area))
   }
 
   return (

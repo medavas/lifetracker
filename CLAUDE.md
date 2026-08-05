@@ -12,13 +12,15 @@ really just filtered views over 4 data primitives:
 
 1. **AREA** — static config only, never stored in the DB. One registry file
    (`src/data/areas.js`) where each area is a row: id, name, icon, kind
-   (`'list' | 'habits' | 'journal' | 'library'`), bucket names
+   (`'list' | 'habits' | 'journal' | 'library' | 'timers'`), bucket names
    (e.g. Finance has Bills/Insurance/Investments/Savings/Fixed/Variable/Goals), and fuzzy-match
    keywords. Adding a new life-area = adding a config row, zero new components.
 
 2. **ITEM** — anything listed: a task, a habit, a book, a bill, a quote.
    `{ id, areaId, bucket, title, details, type, status: 'open'|'done'|'archived',
      order, createdAt, updatedAt, completedAt }`
+   Nudge timers (`kind: 'timers'`) additionally carry `{ intervalMin, enabled }`
+   — a deliberate two-scalar concession on ITEM rather than a 5th primitive.
 
 3. **LOG** — a dated record of something happening: habit check-in, item
    completion, journal-day marker.

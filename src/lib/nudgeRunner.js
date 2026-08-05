@@ -16,11 +16,12 @@ export function createRunner({ getNudges, getLastFired, setLastFired, getQuiet, 
   return {
     tick() {
       const nudges = getNudges()
-      const plan = tickPlan(nudges, getLastFired(), getQuiet(), now())
+      const lastFired = getLastFired()
+      const plan = tickPlan(nudges, lastFired, getQuiet(), now())
       if (Object.keys(plan.anchors).length === 0) return plan
       // Persist BEFORE firing: if `fire` throws or the permission was revoked,
       // the anchor has still moved, so the next tick cannot re-fire in a loop.
-      setLastFired({ ...getLastFired(), ...plan.anchors })
+      setLastFired({ ...lastFired, ...plan.anchors })
       const byId = new Map(nudges.map((n) => [n.id, n]))
       for (const id of plan.fire) {
         Promise.resolve(fire(byId.get(id).title, id)).catch(() => {})
