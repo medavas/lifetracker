@@ -22,13 +22,19 @@ export default function DailyStack({ data }) {
 
   return (
     <div className="chart-wrap">
-      <svg viewBox={`0 0 ${W} ${H + 18}`} width="100%" role="img" aria-label="Daily practice, last 7 days by area">
+      {/* onMouseLeave belongs on the svg, not the per-column hit targets: leaving
+          one column and entering the next are separate events, so a per-column
+          handler renders a null frame between them and the tooltip blinks. */}
+      <svg
+        viewBox={`0 0 ${W} ${H + 18}`} width="100%" role="img"
+        aria-label="Daily practice, last 7 days by area"
+        onMouseLeave={() => setTip(null)}
+      >
         {cols.map((c, i) => (
           <g key={c.date}>
             <rect
               x={c.colX} y={0} width={c.colW} height={H + 18} fill="transparent"
               onMouseEnter={() => setTip({ i, x: ((c.colX + c.colW / 2) / W) * 100, c })}
-              onMouseLeave={() => setTip(null)}
               onTouchStart={() => setTip({ i, x: ((c.colX + c.colW / 2) / W) * 100, c })}
             />
             {c.total === 0 && (
@@ -75,28 +81,6 @@ export default function DailyStack({ data }) {
           </span>
         ))}
       </div>
-
-      <details className="data-toggle">
-        <summary>View data</summary>
-        <table>
-          <thead>
-            <tr>
-              <th>Day</th>
-              {DAILY_BANDS.map((b) => <th key={b.id}>{b.name}</th>)}
-              <th>Total</th>
-            </tr>
-          </thead>
-          <tbody>
-            {data.map((d) => (
-              <tr key={d.date}>
-                <td>{d.date}</td>
-                {DAILY_BANDS.map((b) => <td key={b.id}>{d.bands[b.id]}</td>)}
-                <td>{d.total}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </details>
     </div>
   )
 }

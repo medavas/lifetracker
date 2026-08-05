@@ -254,10 +254,6 @@
 .chart-legend { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 10px; }
 .legend-item { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; color: var(--text-secondary); }
 .legend-swatch { width: 9px; height: 9px; border-radius: 2px; flex: none; }
-.data-toggle { font-size: 12px; color: var(--text-muted); margin-top: 8px; }
-.data-toggle summary { cursor: pointer; }
-.data-toggle table { width: 100%; border-collapse: collapse; margin-top: 6px; }
-.data-toggle td, .data-toggle th { text-align: left; padding: 3px 6px; border-bottom: 1px solid var(--border); font-size: 12px; }
 
 /* ── Practice grid ───────────────────────────────────────── */
 .practice-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }

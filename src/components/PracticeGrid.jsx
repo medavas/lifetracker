@@ -19,7 +19,14 @@ export default function PracticeGrid({ weeks }) {
 
   return (
     <div className="chart-wrap">
-      <div className="practice-grid" role="img" aria-label="Daily practice, last 5 weeks">
+      {/* onMouseLeave belongs on the grid, not the cells: leaving one cell and
+          entering the next are separate events, so a per-cell handler renders a
+          null frame between them, unmounting the caption and jumping the layout
+          24px on every move. */}
+      <div
+        className="practice-grid" role="img" aria-label="Daily practice, last 5 weeks"
+        onMouseLeave={() => setTip(null)}
+      >
         {DAY_INITIALS.map((d, i) => (
           <div key={i} className="pg-head">{d}</div>
         ))}
@@ -29,7 +36,6 @@ export default function PracticeGrid({ weeks }) {
               key={cell.date}
               className={`pg-cell ${cell.future ? 'future' : ''}`}
               onMouseEnter={() => setTip(cell)}
-              onMouseLeave={() => setTip(null)}
               onTouchStart={() => setTip(cell)}
             >
               {DAILY_BANDS.map((b) => (
@@ -44,30 +50,18 @@ export default function PracticeGrid({ weeks }) {
         )}
       </div>
 
-      {tip && (
-        <div className="pg-caption">
-          {new Date(tip.date + 'T00:00:00').toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}
-          {' - '}
-          {tip.future ? 'not yet' : cellLabel(tip)}
-        </div>
-      )}
-
-      <details className="data-toggle">
-        <summary>View data</summary>
-        <table>
-          <thead>
-            <tr><th>Day</th>{DAILY_BANDS.map((b) => <th key={b.id}>{b.name}</th>)}</tr>
-          </thead>
-          <tbody>
-            {weeks.flat().filter((c) => !c.future).map((c) => (
-              <tr key={c.date}>
-                <td>{c.date}</td>
-                {DAILY_BANDS.map((b) => <td key={b.id}>{c.bands[b.id] ? 'yes' : 'no'}</td>)}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </details>
+      {/* Always rendered so its reserved min-height holds the layout steady;
+          only the text toggles. Mounting it on hover shifted everything below
+          it by 24px. */}
+      <div className="pg-caption">
+        {tip && (
+          <>
+            {new Date(tip.date + 'T00:00:00').toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })}
+            {' - '}
+            {tip.future ? 'not yet' : cellLabel(tip)}
+          </>
+        )}
+      </div>
     </div>
   )
 }

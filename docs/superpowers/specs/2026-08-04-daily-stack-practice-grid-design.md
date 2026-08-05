@@ -145,10 +145,12 @@ A `startOfWeekKey(d = new Date())` helper handles the Monday offset
 Dashboard slot. `ActivityChart.jsx` is deleted; Dashboard is its only consumer.
 
 - Stacked SVG bars, 7 days, band order bottom-to-top per `daily.order`.
-- Keeps the existing accessibility pattern: oversized transparent hit target
-  per day, hover/tap tooltip, `<details>` "View data" table. The table gains a
-  column per band.
-- Tooltip lists all four band counts, not just a total.
+- Oversized transparent hit target per day, plus a hover/tap tooltip listing
+  all four band counts.
+- `onMouseLeave` is bound to the `<svg>`, NOT to the per-column hit targets.
+  Leaving one column and entering the next are separate native events, so a
+  per-column handler renders a null frame between them and the tooltip blinks
+  on every boundary crossing.
 - **Gains a legend.** The old chart was single-series and named by its title;
   four series cannot be identified that way. Legend is icon + name + swatch,
   reusing `<AreaIcon>` so identity stays icon-and-name-first, with color as
@@ -165,9 +167,20 @@ Dashboard slot. `ActivityChart.jsx` is deleted; Dashboard is its only consumer.
 - Weekday initials label the columns; no row labels.
 - Tap/hover a cell for a fixed caption below the grid (`.pg-caption`) naming
   the date and which bands were touched, rather than a per-cell tooltip: a
-  tooltip would overlay the very texture the grid exists to show, and a fixed
-  caption slot reserves `min-height` so revealing it doesn't shift layout.
-- Same `<details>` data-table escape hatch for accessibility.
+  tooltip would overlay the very texture the grid exists to show.
+- The caption element is ALWAYS rendered; only its text toggles. Its reserved
+  `min-height` only holds layout steady while it is in the DOM, so mounting it
+  conditionally shifted everything below it by 24px on every hover.
+- `onMouseLeave` is bound to `.practice-grid`, NOT to the cells, for the same
+  separate-events reason as the chart. With a per-cell handler the caption
+  unmounted and remounted on every cell-to-cell move.
+
+**No `<details>` data tables.** Both components originally carried a "View data"
+table as an accessibility escape hatch. Removed 2026-08-04 at Ryan's request —
+this is a single-user personal dashboard, and the tables were visual clutter
+under every chart. Both views keep `role="img"` with a descriptive `aria-label`.
+Restoring a tabular fallback is the obvious move if the app ever gains users
+who need it.
 
 **`src/views/Dashboard.jsx`** — the "Last 7 days" card now renders
 `<DailyStack>`; a new "Last 5 weeks" card below it renders `<PracticeGrid>`.
