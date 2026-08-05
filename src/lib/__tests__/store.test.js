@@ -96,3 +96,15 @@ describe('nudge fields on items', () => {
     expect(merged.intervalMin).toBe(90)
   })
 })
+
+describe('habit check-ins outside the Habits area', () => {
+  beforeEach(reset)
+
+  it('a habit-check on a fitness priority item lands in the fitness band, not habits', () => {
+    const item = useStore.getState().addItem('fitness', 'squats', { bucket: 'Top Priorities' })
+    useStore.getState().toggleHabitToday(item.id)
+    const log = useStore.getState().logs.find((l) => l.kind === 'habit-check')
+    expect(log.areaId).toBe('fitness')
+    expect(useStore.getState().points).toBe(5)
+  })
+})

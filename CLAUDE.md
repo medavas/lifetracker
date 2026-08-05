@@ -15,12 +15,19 @@ really just filtered views over 4 data primitives:
    (`'list' | 'habits' | 'journal' | 'library' | 'timers'`), bucket names
    (e.g. Finance has Bills/Insurance/Investments/Savings/Fixed/Variable/Goals), and fuzzy-match
    keywords. Adding a new life-area = adding a config row, zero new components.
+   An area may also name a `habitBucket` — the one bucket (if any) whose
+   items get Habit-style daily check-off instead of one-shot completion
+   (e.g. Fitness's `habitBucket: 'Top Priorities'`).
 
 2. **ITEM** — anything listed: a task, a habit, a book, a bill, a quote.
    `{ id, areaId, bucket, title, details, type, status: 'open'|'done'|'archived',
      order, createdAt, updatedAt, completedAt }`
    Nudge timers (`kind: 'timers'`) additionally carry `{ intervalMin, enabled }`
    — a deliberate two-scalar concession on ITEM rather than a 5th primitive.
+   `bucket` is not purely a cosmetic label: when it matches the item's area's
+   `habitBucket`, it determines which store action the UI wires the item to
+   (`toggleHabitToday` instead of `toggleDone`) — moving an item into or out
+   of that bucket switches its behavior with it, with no new ITEM field.
 
 3. **LOG** — a dated record of something happening: habit check-in, item
    completion, journal-day marker.
