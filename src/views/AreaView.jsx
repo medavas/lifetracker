@@ -13,12 +13,15 @@ export default function AreaView() {
   const navigate = useNavigate()
   const area = areaById(areaId)
 
-  const [bucket, setBucket] = useState(area?.habitBucket ?? 'All')
   const [showArchived, setShowArchived] = useState(false)
   const [draft, setDraft] = useState('')
 
   const addItem = useStore((s) => s.addItem)
   const allItems = useStore(useShallow(selectAreaItems(areaId, showArchived)))
+
+  const [bucket, setBucket] = useState(() =>
+    area?.habitBucket && allItems.some((i) => i.bucket === area.habitBucket) ? area.habitBucket : 'All',
+  )
 
   const items = useMemo(
     () => (bucket === 'All' ? allItems : allItems.filter((i) => i.bucket === bucket)),

@@ -39,7 +39,7 @@ function SortableRow({ item, onOpen, habitBucket }) {
   return (
     <div
       ref={setNodeRef}
-      className={`item-row ${isPriority ? 'habit-row' : ''} ${item.status === 'done' ? 'done' : ''} ${isDragging ? 'dragging' : ''}`}
+      className={`item-row ${isPriority ? 'habit-row' : ''} ${!isPriority && item.status === 'done' ? 'done' : ''} ${isDragging ? 'dragging' : ''}`}
       style={{ transform: CSS.Transform.toString(transform), transition }}
     >
       {isPriority ? (
