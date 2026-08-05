@@ -317,3 +317,9 @@
 .quiet-head span { flex: 1; }
 .quiet-times { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
 .quiet-times span { font-size: 13px; color: var(--text-muted); }
+
+a.item-row { text-decoration: none; color: inherit; }
+.day-row:not(.has-entry) { cursor: default; }
+.day-row:not(.has-entry) .item-title { color: var(--text-muted); }
+.day-row.has-entry { cursor: pointer; }
+.day-row.today .item-title { font-weight: 600; }
