@@ -7,6 +7,10 @@ import Dashboard from './views/Dashboard'
 import AreasGrid from './views/AreasGrid'
 import AreaView from './views/AreaView'
 import Journal from './views/Journal'
+import YearList from './views/journal/YearList'
+import MonthList from './views/journal/MonthList'
+import DayList from './views/journal/DayList'
+import DayDetail from './views/journal/DayDetail'
 import Habits from './views/Habits'
 import Nudges from './views/Nudges'
 import Settings from './views/Settings'
@@ -33,6 +37,10 @@ export default function App() {
           <Route path="/areas" element={<AreasGrid />} />
           <Route path="/area/:areaId" element={<AreaView />} />
           <Route path="/journal" element={<Journal />} />
+          <Route path="/journal/years" element={<YearList />} />
+          <Route path="/journal/years/:year" element={<MonthList />} />
+          <Route path="/journal/years/:year/:month" element={<DayList />} />
+          <Route path="/journal/years/:year/:month/:day" element={<DayDetail />} />
           <Route path="/nudges" element={<Nudges />} />
           <Route path="/habits" element={<Habits />} />
           <Route path="/settings" element={<Settings />} />
