@@ -68,9 +68,22 @@ export default function Nudges() {
     }
     let perm = notifyPermission()
     if (perm === 'default') {
-      perm = await requestNotifyPermission() // must come from this click
+      // First ask. Must come from this click -- iOS requires a live user
+      // gesture, and asking on load is the reliable way to get permanently
+      // denied.
+      perm = await requestNotifyPermission()
       setPermission(perm)
+      // Dismissed the prompt (still 'default') or just got 'denied': per
+      // spec, the nudge stays OFF rather than switching on with no way to
+      // ever fire silently. Do not seed the anchor or enable.
+      if (perm !== 'granted') return
     }
+    // Reaching here means either: permission was just granted above, or it
+    // was ALREADY 'granted'/'denied'/'unsupported' before this click (not
+    // 'default'). The already-denied/unsupported case is intentionally let
+    // through -- nudges must stay creatable and toggleable even when
+    // permission is denied, so they can be configured ahead of time; the
+    // banners above already make clear that nothing will fire until then.
     seedAnchor(n.id)
     updateItem(n.id, { enabled: true })
   }
@@ -94,6 +107,13 @@ export default function Nudges() {
         <div className="status-error">
           Notifications are blocked. Re-enable them for this site in your browser
           settings — nudges will not fire until you do.
+        </div>
+      )}
+      {permission === 'default' && (
+        <div className="status-error">
+          Notifications have not been allowed yet. Switching a nudge on will ask
+          your browser for permission — if you dismiss that prompt, the nudge
+          stays off.
         </div>
       )}
 
