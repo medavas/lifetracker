@@ -1,5 +1,14 @@
-import { describe, it, expect, vi } from 'vitest'
-import { createRunner, TICK_MS } from '../nudgeRunner.js'
+import { describe, it, expect, vi, afterEach } from 'vitest'
+import {
+  createRunner,
+  TICK_MS,
+  readLastFired,
+  writeLastFired,
+  seedAnchor,
+  clearAnchor,
+  readQuiet,
+  writeQuiet,
+} from '../nudgeRunner.js'
 import { DEFAULT_QUIET } from '../timers.js'
 
 const MIN = 60_000
@@ -92,5 +101,82 @@ describe('createRunner', () => {
     expect(() => runner.tick()).not.toThrow()
     await Promise.resolve()
     expect(anchors).toEqual({ a: now })
+  })
+})
+
+// ── Device-local storage ────────────────────────────────────────
+// The localStorage-backed half of nudgeRunner.js (readJson/writeJson and the
+// six functions built on them) was previously untested -- see nudge-timers
+// final review finding #6. A Map-backed stub makes it testable under the
+// node vitest environment, the same `vi.stubGlobal` pattern notify.test.js
+// already uses for browser globals.
+const LAST_KEY = 'stoa.nudge.lastFired'
+const QUIET_KEY = 'stoa.nudge.quiet'
+
+const stubLocalStorage = () => {
+  const map = new Map()
+  const storage = {
+    getItem: (key) => (map.has(key) ? map.get(key) : null),
+    setItem: (key, value) => map.set(key, String(value)),
+    removeItem: (key) => map.delete(key),
+  }
+  vi.stubGlobal('localStorage', storage)
+  return storage
+}
+
+describe('device-local storage', () => {
+  afterEach(() => vi.unstubAllGlobals())
+
+  it('seedAnchor sets the anchor to now', () => {
+    stubLocalStorage()
+    vi.spyOn(Date, 'now').mockReturnValue(12345)
+    seedAnchor('a')
+    expect(readLastFired()).toEqual({ a: 12345 })
+    vi.spyOn(Date, 'now').mockRestore()
+  })
+
+  it('clearAnchor deletes only its own id', () => {
+    stubLocalStorage()
+    writeLastFired({ a: 1, b: 2 })
+    clearAnchor('a')
+    expect(readLastFired()).toEqual({ b: 2 })
+  })
+
+  it('readQuiet merges a partial stored config over DEFAULT_QUIET', () => {
+    const storage = stubLocalStorage()
+    storage.setItem(QUIET_KEY, JSON.stringify({ on: false }))
+    expect(readQuiet()).toEqual({ ...DEFAULT_QUIET, on: false })
+  })
+
+  it('readQuiet repairs a non-finite startMin/endMin back to the default', () => {
+    const storage = stubLocalStorage()
+    // The exact corruption from finding #3: clearing a quiet-hours input
+    // persists `null` (JSON.stringify(NaN) -> null), which a plain spread
+    // over DEFAULT_QUIET does not repair -- spread skips absent keys, not
+    // null-valued ones.
+    storage.setItem(QUIET_KEY, JSON.stringify({ on: true, startMin: null, endMin: 420 }))
+    expect(readQuiet()).toEqual({ on: true, startMin: DEFAULT_QUIET.startMin, endMin: 420 })
+  })
+
+  it('readLastFired returns the fallback on corrupt JSON', () => {
+    const storage = stubLocalStorage()
+    storage.setItem(LAST_KEY, '{not json')
+    expect(readLastFired()).toEqual({})
+  })
+
+  it('writeLastFired swallows a throwing setItem (quota) without propagating', () => {
+    stubLocalStorage()
+    vi.stubGlobal('localStorage', {
+      getItem: () => null,
+      setItem: () => { throw new Error('quota exceeded') },
+      removeItem: () => {},
+    })
+    expect(() => writeLastFired({ a: 1 })).not.toThrow()
+  })
+
+  it('writeQuiet round-trips through readQuiet', () => {
+    stubLocalStorage()
+    writeQuiet({ on: false, startMin: 60, endMin: 120 })
+    expect(readQuiet()).toEqual({ on: false, startMin: 60, endMin: 120 })
   })
 })

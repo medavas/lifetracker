@@ -68,7 +68,21 @@ export const clearAnchor = (id) => {
   writeLastFired(next)
 }
 
-export const readQuiet = () => ({ ...DEFAULT_QUIET, ...readJson(QUIET_KEY, {}) })
+// A cleared quiet-hours input persists `startMin`/`endMin` as `null`
+// (JSON.stringify(NaN) -> null), and a plain spread over DEFAULT_QUIET does
+// NOT repair that: spread only fills in absent keys, not null-valued ones.
+// Coerce back to the default here so a corrupt stored value self-heals
+// instead of silently narrowing or defeating the quiet window.
+const finiteOr = (value, fallback) => (Number.isFinite(value) ? value : fallback)
+
+export const readQuiet = () => {
+  const merged = { ...DEFAULT_QUIET, ...readJson(QUIET_KEY, {}) }
+  return {
+    ...merged,
+    startMin: finiteOr(merged.startMin, DEFAULT_QUIET.startMin),
+    endMin: finiteOr(merged.endMin, DEFAULT_QUIET.endMin),
+  }
+}
 export const writeQuiet = (quiet) => writeJson(QUIET_KEY, quiet)
 
 /** Start the single app-wide tick. Returns a cleanup function. */

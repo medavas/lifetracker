@@ -39,8 +39,13 @@ export function inQuietHours(now, quiet) {
  * 2. Quiet hours suppress the notification but STILL advance the anchor, so
  *    07:00 is not an avalanche of everything that came due overnight.
  *
- * A nudge with no anchor is never due: enabling one seeds its anchor, so
- * "every 45m" means 45 minutes from when it was switched on.
+ * A nudge with no anchor is never due on the tick it is first seen: it seeds
+ * its anchor to `now` instead of firing. Toggling on locally already does
+ * this via `seedAnchor`, but an `enabled:true` that arrives through sync
+ * (another device toggled it on) has no local `lastFired` entry either --
+ * without self-healing here it would stay dead on this device forever. So
+ * "every 45m" means 45 minutes from whichever came first: the local toggle,
+ * or the first tick this device saw the nudge enabled.
  */
 export function tickPlan(nudges, lastFired, quiet, now) {
   const quietNow = inQuietHours(now, quiet)
@@ -49,7 +54,10 @@ export function tickPlan(nudges, lastFired, quiet, now) {
   for (const n of nudges) {
     if (!n.enabled || !(n.intervalMin > 0)) continue
     const anchor = lastFired[n.id]
-    if (anchor == null) continue
+    if (anchor == null) {
+      anchors[n.id] = now // first sighting on this device -- seed, do not fire
+      continue
+    }
     if (now - anchor < n.intervalMin * MS_PER_MIN) continue
     anchors[n.id] = now
     if (!quietNow) fire.push(n.id)

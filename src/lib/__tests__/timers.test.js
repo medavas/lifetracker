@@ -64,11 +64,31 @@ describe('tickPlan', () => {
     expect(plan.anchors).toEqual({})
   })
 
-  it('never fires a nudge with no anchor, so enabling seeds the interval', () => {
+  it('never fires a nudge with no anchor, seeding it on first sighting instead', () => {
     const now = at(12)
     const plan = tickPlan([nudge('a', 45)], {}, OFF, now)
     expect(plan.fire).toEqual([])
-    expect(plan.anchors).toEqual({})
+    expect(plan.anchors).toEqual({ a: now })
+  })
+
+  it('a newly-seeded anchor does not fire on the same tick but does one interval later', () => {
+    const seedNow = at(12)
+    // A synced `enabled:true` with no local lastFired entry (e.g. toggled on
+    // from another device) must self-heal by seeding here, not stay dead
+    // forever -- see nudge-timers final review finding #1.
+    const seeded = tickPlan([nudge('a', 45)], {}, OFF, seedNow)
+    expect(seeded.fire).toEqual([])
+    expect(seeded.anchors).toEqual({ a: seedNow })
+
+    const lastFired = { ...seeded.anchors }
+    const tooSoon = tickPlan([nudge('a', 45)], lastFired, OFF, seedNow + 44 * MIN)
+    expect(tooSoon.fire).toEqual([])
+    expect(tooSoon.anchors).toEqual({})
+
+    const dueNow = seedNow + 45 * MIN
+    const due = tickPlan([nudge('a', 45)], lastFired, OFF, dueNow)
+    expect(due.fire).toEqual(['a'])
+    expect(due.anchors).toEqual({ a: dueNow })
   })
 
   it('ignores a nudge with a missing or zero interval', () => {
