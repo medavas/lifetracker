@@ -47,7 +47,7 @@ export function daysAgoKey(n) {
  */
 export function habitStreak(logs, itemId) {
   const days = new Set(
-    logs.filter((l) => l.itemId === itemId && l.kind === 'habit-check').map((l) => l.date),
+    logs.filter((l) => l.itemId === itemId && l.kind === 'habit-check' && !l.deletedAt).map((l) => l.date),
   )
   let streak = 0
   let offset = days.has(todayKey()) ? 0 : 1

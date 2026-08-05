@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
-import { computePoints, bandCounts, dailyActivity, startOfWeekKey, dailyPresence } from '../rewards.js'
+import { computePoints, bandCounts, dailyActivity, startOfWeekKey, dailyPresence, habitStreak } from '../rewards.js'
 
 const log = (over) => ({ id: Math.random().toString(), itemId: 'i', areaId: 'a', date: '2026-07-26', createdAt: 1, updatedAt: 1, deletedAt: null, ...over })
 
@@ -22,6 +22,15 @@ describe('computePoints', () => {
   })
   it('ignores tombstoned logs', () => {
     expect(computePoints([log({ kind: 'complete', deletedAt: 5 })])).toBe(0)
+  })
+})
+
+describe('habitStreak', () => {
+  it('does not count a tombstoned habit-check toward the streak', () => {
+    const logs = [
+      log({ itemId: 'h1', kind: 'habit-check', date: '2026-08-04', deletedAt: 5 }),
+    ]
+    expect(habitStreak(logs, 'h1')).toBe(0)
   })
 })
 
