@@ -103,3 +103,18 @@ describe('routing', () => {
     expect(DAILY_BANDS.map((a) => a.id)).toEqual(['journal', 'diet', 'fitness', 'habits'])
   })
 })
+
+describe('fitness top priorities', () => {
+  it('names Top Priorities as the fitness habit bucket, listed first', () => {
+    const fitness = AREAS.find((a) => a.id === 'fitness')
+    expect(fitness.habitBucket).toBe('Top Priorities')
+    expect(fitness.buckets[0]).toBe('Top Priorities')
+  })
+
+  it('leaves every other area without a habit bucket', () => {
+    for (const a of AREAS) {
+      if (a.id === 'fitness') continue
+      expect(a.habitBucket).toBeUndefined()
+    }
+  })
+})

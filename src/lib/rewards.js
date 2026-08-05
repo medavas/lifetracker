@@ -107,6 +107,13 @@ function buildBandIndex(logs, notes) {
  * Journal counts NOTEs, not the `kind:'journal'` day-marker log: the store
  * writes at most one marker per day, which would cap the band at 1 while
  * habits reach 6+, making journaling render as a permanent sliver.
+ *
+ * A non-habits-kind band (list/library) sums BOTH `complete` and
+ * `habit-check` logs for its area: `complete` fires once per item on
+ * completion; `habit-check` re-arms daily for any item filed under the
+ * area's `habitBucket`, if it has one. This is what lets a bucket like
+ * Fitness's "Top Priorities" repeat on the chart instead of contributing
+ * exactly once, ever.
  */
 function countsForDate({ logsByDate, notesByDate }, date) {
   const day = logsByDate.get(date)
@@ -118,7 +125,9 @@ function countsForDate({ logsByDate, notesByDate }, date) {
     } else if (area.kind === 'habits') {
       out[area.id] = day ? day.get(`habit-check|${area.id}`) || 0 : 0
     } else {
-      out[area.id] = day ? day.get(`complete|${area.id}`) || 0 : 0
+      const complete = day ? day.get(`complete|${area.id}`) || 0 : 0
+      const checks = day ? day.get(`habit-check|${area.id}`) || 0 : 0
+      out[area.id] = complete + checks
     }
   }
   return out

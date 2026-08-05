@@ -80,6 +80,23 @@ describe('bandCounts', () => {
     expect(bandCounts([], notes, D).journal).toBe(1)
     expect(bandCounts([], notes, '2026-08-05').journal).toBe(0)
   })
+
+  it('counts habit-checks into a non-habits-kind band (the top-priorities case)', () => {
+    const logs = [
+      log({ kind: 'habit-check', areaId: 'fitness', date: D }),
+      log({ kind: 'habit-check', areaId: 'fitness', date: D }),
+    ]
+    expect(bandCounts(logs, [], D).fitness).toBe(2)
+  })
+
+  it('sums completes and habit-checks in the same area on the same day', () => {
+    const logs = [
+      log({ kind: 'complete', areaId: 'fitness', date: D }),
+      log({ kind: 'habit-check', areaId: 'fitness', date: D }),
+      log({ kind: 'habit-check', areaId: 'fitness', date: D }),
+    ]
+    expect(bandCounts(logs, [], D).fitness).toBe(3)
+  })
 })
 
 describe('dailyActivity', () => {

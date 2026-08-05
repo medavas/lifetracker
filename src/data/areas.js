@@ -26,6 +26,12 @@
  * `route` overrides the destination the areas grid links to. Areas without it
  * fall through to the generic /area/:id view. It exists so adding an area with
  * its own page stays a config change rather than another branch in a ternary.
+ *
+ * `habitBucket` names the one bucket (if any) whose items check off daily
+ * like a Habit instead of completing once like a task — the item's own
+ * `bucket` field is the source of truth, so moving an item into or out of
+ * that bucket switches its behavior with it. Undefined for every area that
+ * doesn't opt in. Only `fitness` does today.
  */
 export const AREAS = [
   {
@@ -44,8 +50,9 @@ export const AREAS = [
     id: 'fitness', name: 'Fitness', icon: 'Dumbbell', kind: 'list',
     trim: 'y',
     daily: { order: 3, series: 4 },
+    habitBucket: 'Top Priorities',
     keywords: ['workout', 'gym', 'run', 'lift', 'exercise', 'training'],
-    buckets: ['Routine', 'Goals', 'PRs'],
+    buckets: ['Top Priorities', 'Routine', 'Goals', 'PRs'],
   },
   {
     id: 'diet', name: 'Diet', icon: 'Salad', kind: 'list',
