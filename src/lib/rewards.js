@@ -62,44 +62,91 @@ export function habitStreak(logs, itemId) {
 const dayKeyOf = (ts) => todayKey(new Date(ts))
 
 /**
- * Counts for one day, one key per daily band. Switched on the area's `kind`
- * so a fifth daily area needs no change here.
+ * Single-pass index over the live logs and notes, bucketed by day. Built once
+ * per caller (not once per day-cell), so `dayKeyOf` runs exactly once per
+ * note and every log is visited exactly once regardless of how many days are
+ * later queried against the index.
+ *
+ * `logsByDate` maps a day key to a Map of `${kind}|${areaId}` -> count.
+ * `notesByDate` maps a day key to a Map of `areaId` -> count (itemId-less,
+ * live notes only).
+ */
+function buildBandIndex(logs, notes) {
+  const logsByDate = new Map()
+  for (const l of logs) {
+    if (l.deletedAt) continue
+    if (l.kind !== 'complete' && l.kind !== 'habit-check') continue
+    let day = logsByDate.get(l.date)
+    if (!day) {
+      day = new Map()
+      logsByDate.set(l.date, day)
+    }
+    const key = `${l.kind}|${l.areaId}`
+    day.set(key, (day.get(key) || 0) + 1)
+  }
+
+  const notesByDate = new Map()
+  for (const n of notes) {
+    if (n.deletedAt || n.itemId) continue
+    const date = dayKeyOf(n.createdAt)
+    let day = notesByDate.get(date)
+    if (!day) {
+      day = new Map()
+      notesByDate.set(date, day)
+    }
+    day.set(n.areaId, (day.get(n.areaId) || 0) + 1)
+  }
+
+  return { logsByDate, notesByDate }
+}
+
+/**
+ * Counts for one day, one key per daily band, from a pre-built index.
+ * Switched on the area's `kind` so a fifth daily area needs no change here.
  *
  * Journal counts NOTEs, not the `kind:'journal'` day-marker log: the store
  * writes at most one marker per day, which would cap the band at 1 while
  * habits reach 6+, making journaling render as a permanent sliver.
  */
-export function bandCounts(logs, notes, date) {
-  const live = logs.filter((l) => !l.deletedAt)
-  const liveNotes = notes.filter((n) => !n.deletedAt)
+function countsForDate({ logsByDate, notesByDate }, date) {
+  const day = logsByDate.get(date)
+  const noteDay = notesByDate.get(date)
   const out = {}
   for (const area of DAILY_BANDS) {
     if (area.kind === 'journal') {
-      out[area.id] = liveNotes.filter(
-        (n) => n.areaId === area.id && !n.itemId && dayKeyOf(n.createdAt) === date,
-      ).length
+      out[area.id] = noteDay ? noteDay.get(area.id) || 0 : 0
     } else if (area.kind === 'habits') {
-      out[area.id] = live.filter(
-        (l) => l.kind === 'habit-check' && l.areaId === area.id && l.date === date,
-      ).length
+      out[area.id] = day ? day.get(`habit-check|${area.id}`) || 0 : 0
     } else {
-      out[area.id] = live.filter(
-        (l) => l.kind === 'complete' && l.areaId === area.id && l.date === date,
-      ).length
+      out[area.id] = day ? day.get(`complete|${area.id}`) || 0 : 0
     }
   }
   return out
 }
 
 /**
+ * Counts for one day, one key per daily band. Thin wrapper over
+ * `buildBandIndex`/`countsForDate` for single-date callers (and tests); a
+ * caller that needs many dates from the same logs/notes should build the
+ * index once and call `countsForDate` directly instead of calling this in a
+ * loop — see `dailyActivity` and `dailyPresence`.
+ */
+export function bandCounts(logs, notes, date) {
+  return countsForDate(buildBandIndex(logs, notes), date)
+}
+
+/**
  * Band counts for the last n days, oldest first. Every day in the window is
  * present, including days with no activity, so the chart keeps a stable width.
+ *
+ * Scans `logs` and `notes` once (via `buildBandIndex`), not once per day.
  */
 export function dailyActivity(logs, notes, n = 7) {
+  const index = buildBandIndex(logs, notes)
   const out = []
   for (let i = n - 1; i >= 0; i--) {
     const date = daysAgoKey(i)
-    const bands = bandCounts(logs, notes, date)
+    const bands = countsForDate(index, date)
     const total = Object.values(bands).reduce((s, v) => s + v, 0)
     out.push({ date, bands, total })
   }
@@ -141,6 +188,7 @@ export function dailyPresence(logs, notes, weeks = 5) {
   const today = todayKey()
   const first = new Date(startOfWeekKey() + 'T00:00:00')
   first.setDate(first.getDate() - (weeks - 1) * 7)
+  const index = buildBandIndex(logs, notes)
 
   const grid = []
   for (let w = 0; w < weeks; w++) {
@@ -149,7 +197,7 @@ export function dailyPresence(logs, notes, weeks = 5) {
       const cell = new Date(first)
       cell.setDate(first.getDate() + w * 7 + d)
       const date = todayKey(cell)
-      const counts = bandCounts(logs, notes, date)
+      const counts = countsForDate(index, date)
       const bands = {}
       for (const id of Object.keys(counts)) bands[id] = counts[id] > 0
       row.push({ date, bands, future: date > today })

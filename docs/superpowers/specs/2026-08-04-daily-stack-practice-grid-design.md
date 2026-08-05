@@ -46,8 +46,23 @@ written. Counting notes makes three entries show as three.
 
 Consequence: journal is the only band sourced from NOTEs, so both data
 functions take `(logs, notes)`. Notes have no `date` field — they carry a
-`createdAt` timestamp — so they are bucketed with `todayKey(new Date(n.createdAt))`,
-which yields a local-time day key consistent with LOG `date` values.
+`createdAt` timestamp — so they are bucketed with `todayKey(new Date(n.createdAt))`.
+
+**Known limitation: cross-timezone day agreement.** This bucketing only agrees
+with LOG `date` values on a single device in a single timezone. `LOG.date` is
+frozen at WRITE time by the authoring device. NOTE has no `date` field, so the
+journal band derives one at READ time using the *viewing* device's offset.
+Across timezones the two can diverge: an entry written at 23:00 in Denver
+lands on the 4th for a Denver viewer and the 5th for a London viewer, while a
+diet completion logged the same minute stays on the 4th for both, because its
+`date` was fixed at write time and travels with it unchanged.
+
+This is not a sync bug — nothing here writes, `merge.js` is untouched, and
+`createdAt` survives merges intact. It is a read-time interpretation gap. The
+honest fix is a `date` field written on NOTE at creation time, matching how
+LOG already works; that is a schema addition this design deliberately avoids
+to stay a pure view over existing data. Revisit if a second timezone ever
+enters the picture (e.g. multi-device use while traveling).
 
 ## Design
 
@@ -133,7 +148,7 @@ Dashboard slot. `ActivityChart.jsx` is deleted; Dashboard is its only consumer.
 - Keeps the existing accessibility pattern: oversized transparent hit target
   per day, hover/tap tooltip, `<details>` "View data" table. The table gains a
   column per band.
-- Tooltip lists all four band counts plus the total, not just a total.
+- Tooltip lists all four band counts, not just a total.
 - **Gains a legend.** The old chart was single-series and named by its title;
   four series cannot be identified that way. Legend is icon + name + swatch,
   reusing `<AreaIcon>` so identity stays icon-and-name-first, with color as
@@ -148,7 +163,10 @@ Dashboard slot. `ActivityChart.jsx` is deleted; Dashboard is its only consumer.
   `--surface-3`. Constant height is the point: the grid reads as texture, so
   gaps and runs are visible at a glance.
 - Weekday initials label the columns; no row labels.
-- Tap/hover a cell for a tooltip naming the date and which bands were touched.
+- Tap/hover a cell for a fixed caption below the grid (`.pg-caption`) naming
+  the date and which bands were touched, rather than a per-cell tooltip: a
+  tooltip would overlay the very texture the grid exists to show, and a fixed
+  caption slot reserves `min-height` so revealing it doesn't shift layout.
 - Same `<details>` data-table escape hatch for accessibility.
 
 **`src/views/Dashboard.jsx`** — the "Last 7 days" card now renders
@@ -193,8 +211,15 @@ feature is the intended source. When it lands, only the fitness branch of the
 band-counting logic narrows to priority items — the band table, the components,
 the grid, and the config are all untouched.
 
-**A fifth daily area** is one config row in `areas.js` plus a fifth `--series-*`
-token. Both components iterate `DAILY_BANDS`; neither hardcodes four.
+**A fifth daily area** is one config row in `areas.js`. Both components and
+`rewards.js` iterate `DAILY_BANDS` — verified, nothing there hardcodes four.
+`--series-5` through `--series-8` already exist in `index.css`, so no new
+token is needed; what is owed is CVD re-validation of the palette as a
+five-color set, not picking a new color. What *does* hardcode four is the test
+suite: roughly seven expectations across `src/data/__tests__/areas.test.js`
+and `src/lib/__tests__/rewards.test.js` assert on the literal four-band shape
+(e.g. `['diet', 'fitness', 'habits', 'journal']`, `{ journal: 0, diet: 0,
+fitness: 0, habits: 0 }`). Those tests need updating alongside the config row.
 
 ## Risks
 

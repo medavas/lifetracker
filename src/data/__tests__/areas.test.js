@@ -56,7 +56,7 @@ describe('daily bands', () => {
   })
 
   it('assigns orders 1..4 with no duplicates', () => {
-    const orders = AREAS.filter((a) => a.daily).map((a) => a.daily.order).sort()
+    const orders = AREAS.filter((a) => a.daily).map((a) => a.daily.order).sort((a, b) => a - b)
     expect(orders).toEqual([1, 2, 3, 4])
   })
 

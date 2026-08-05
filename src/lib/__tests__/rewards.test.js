@@ -118,6 +118,25 @@ describe('dailyActivity', () => {
     const logs = [log({ kind: 'complete', areaId: 'finance', date: '2026-08-04' })]
     expect(dailyActivity(logs, [], 7)[6].total).toBe(0)
   })
+
+  it('keeps each day isolated when multiple days have activity (indexing path)', () => {
+    const logs = [
+      log({ kind: 'complete', areaId: 'diet', date: '2026-08-01' }),
+      log({ kind: 'complete', areaId: 'diet', date: '2026-08-01' }),
+      log({ kind: 'habit-check', areaId: 'habits', date: '2026-08-02' }),
+      log({ kind: 'complete', areaId: 'fitness', date: '2026-08-03' }),
+    ]
+    const notes = [
+      note({ createdAt: Date.parse('2026-08-01T08:00:00') }),
+      note({ createdAt: Date.parse('2026-08-04T08:00:00') }),
+    ]
+    const out = dailyActivity(logs, notes, 7)
+    const byDate = Object.fromEntries(out.map((d) => [d.date, d.bands]))
+    expect(byDate['2026-08-01']).toEqual({ journal: 1, diet: 2, fitness: 0, habits: 0 })
+    expect(byDate['2026-08-02']).toEqual({ journal: 0, diet: 0, fitness: 0, habits: 1 })
+    expect(byDate['2026-08-03']).toEqual({ journal: 0, diet: 0, fitness: 1, habits: 0 })
+    expect(byDate['2026-08-04']).toEqual({ journal: 1, diet: 0, fitness: 0, habits: 0 })
+  })
 })
 
 describe('startOfWeekKey', () => {
@@ -186,5 +205,20 @@ describe('dailyPresence', () => {
   it('excludes tombstoned records', () => {
     const logs = [log({ kind: 'complete', areaId: 'diet', date: '2026-08-03', deletedAt: 5 })]
     expect(dailyPresence(logs, [], 5)[4][0].bands.diet).toBe(false)
+  })
+
+  it('does not bleed activity across days when multiple days are touched (indexing path)', () => {
+    const logs = [
+      log({ kind: 'complete', areaId: 'diet', date: '2026-07-20' }),
+      log({ kind: 'habit-check', areaId: 'habits', date: '2026-07-27' }),
+      log({ kind: 'complete', areaId: 'fitness', date: '2026-08-03' }),
+    ]
+    const notes = [note({ createdAt: Date.parse('2026-08-04T08:00:00') })]
+    const grid = dailyPresence(logs, notes, 5)
+    const byDate = Object.fromEntries(grid.flat().map((c) => [c.date, c.bands]))
+    expect(byDate['2026-07-20']).toEqual({ journal: false, diet: true, fitness: false, habits: false })
+    expect(byDate['2026-07-27']).toEqual({ journal: false, diet: false, fitness: false, habits: true })
+    expect(byDate['2026-08-03']).toEqual({ journal: false, diet: false, fitness: true, habits: false })
+    expect(byDate['2026-08-04']).toEqual({ journal: true, diet: false, fitness: false, habits: false })
   })
 })
