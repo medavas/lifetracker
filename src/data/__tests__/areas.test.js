@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import * as lucide from 'lucide-react'
-import { AREAS, DAILY_BANDS } from '../areas'
+import { AREAS, DAILY_BANDS, routeFor } from '../areas'
 
 const EXPECTED = {
   projects: { trim: 'b', icon: 'Rocket' },
@@ -12,10 +12,11 @@ const EXPECTED = {
   journal: { trim: 'b', icon: 'NotebookPen' },
   philosophy: { trim: 'v', icon: 'Landmark' },
   learnings: { trim: 'o', icon: 'Brain' },
+  nudges: { trim: 'o', icon: 'BellRing' },
 }
 
 describe('area registry', () => {
-  it('has exactly the 9 known areas', () => {
+  it('has exactly the 10 known areas', () => {
     expect(AREAS.map((a) => a.id).sort()).toEqual(Object.keys(EXPECTED).sort())
   })
 
@@ -73,5 +74,32 @@ describe('daily bands', () => {
     // journal blue, diet green, fitness amber, habits red - nav and chart agree
     const trims = Object.fromEntries(DAILY_BANDS.map((a) => [a.id, a.trim]))
     expect(trims).toEqual({ journal: 'b', diet: 'g', fitness: 'y', habits: 'r' })
+  })
+})
+
+describe('routing', () => {
+  it('gives the nudges area the timers kind and no daily band', () => {
+    const nudges = AREAS.find((a) => a.id === 'nudges')
+    expect(nudges.kind).toBe('timers')
+    expect(nudges.daily).toBeUndefined()
+    expect(nudges.buckets).toEqual([])
+  })
+
+  it('routes the three non-generic areas to their own pages', () => {
+    const routes = Object.fromEntries(AREAS.map((a) => [a.id, routeFor(a)]))
+    expect(routes.journal).toBe('/journal')
+    expect(routes.habits).toBe('/habits')
+    expect(routes.nudges).toBe('/nudges')
+  })
+
+  it('routes every other area through the generic area view', () => {
+    for (const a of AREAS) {
+      if (['journal', 'habits', 'nudges'].includes(a.id)) continue
+      expect(routeFor(a)).toBe(`/area/${a.id}`)
+    }
+  })
+
+  it('leaves the daily bands untouched by the new area', () => {
+    expect(DAILY_BANDS.map((a) => a.id)).toEqual(['journal', 'diet', 'fitness', 'habits'])
   })
 })

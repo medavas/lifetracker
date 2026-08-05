@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { AREAS } from '../data/areas'
+import { AREAS, routeFor } from '../data/areas'
 import { useStore } from '../lib/store'
 import AreaIcon from '../components/AreaIcon'
 
@@ -21,7 +21,7 @@ export default function AreasGrid() {
         {AREAS.map((a) => (
           <Link
             key={a.id}
-            to={a.kind === 'journal' ? '/journal' : a.kind === 'habits' ? '/habits' : `/area/${a.id}`}
+            to={routeFor(a)}
           >
             <div className="card area-card" style={{ '--area-c1': `var(--trim-${a.trim})` }}>
               <div className="a-icon"><AreaIcon name={a.icon} /></div>

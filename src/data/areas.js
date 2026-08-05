@@ -7,6 +7,7 @@
  *  - 'habits'  - recurring items with daily check-ins + streaks
  *  - 'journal' - dated notes
  *  - 'library' - items where each entry carries its own notes (books, videos…)
+ *  - 'timers'  - interval nudges that fire a notification while the app is open
  *
  * `icon` is a lucide-react component name rendered via <AreaIcon>.
  * `trim` picks one of the six --trim-* tokens (theme in index.css); it is the
@@ -21,6 +22,10 @@
  * both views: finishing a bill is real work but is not a daily rhythm.
  * Adding a fifth daily area means adding this field plus a --series-5 check;
  * no component changes.
+ *
+ * `route` overrides the destination the areas grid links to. Areas without it
+ * fall through to the generic /area/:id view. It exists so adding an area with
+ * its own page stays a config change rather than another branch in a ternary.
  */
 export const AREAS = [
   {
@@ -57,14 +62,14 @@ export const AREAS = [
   },
   {
     id: 'habits', name: 'Keystone Habits', icon: 'KeyRound', kind: 'habits',
-    trim: 'r',
+    trim: 'r', route: '/habits',
     daily: { order: 4, series: 2 },
     keywords: ['habit', 'daily', 'streak', 'keystone'],
     buckets: [],
   },
   {
     id: 'journal', name: 'Journal', icon: 'NotebookPen', kind: 'journal',
-    trim: 'b',
+    trim: 'b', route: '/journal',
     daily: { order: 1, series: 1 },
     keywords: ['journal', 'today i', 'feeling', 'grateful', 'reflect'],
     buckets: [],
@@ -81,9 +86,18 @@ export const AREAS = [
     keywords: ['book', 'read', 'watch', 'listen', 'course', 'video', 'podcast', 'learn'],
     buckets: ['Read', 'Watch', 'Listen'],
   },
+  {
+    id: 'nudges', name: 'Nudges', icon: 'BellRing', kind: 'timers',
+    trim: 'o', route: '/nudges',
+    keywords: ['remind', 'nudge', 'timer', 'every', 'water', 'stretch', 'posture'],
+    buckets: [],
+  },
 ]
 
 export const areaById = (id) => AREAS.find((a) => a.id === id)
+
+/** Where the areas grid links this area. Generic list/library areas share one view. */
+export const routeFor = (area) => area.route ?? `/area/${area.id}`
 
 /** The daily-practice areas, pre-sorted bottom-to-top for the stack. */
 export const DAILY_BANDS = AREAS.filter((a) => a.daily).sort(
