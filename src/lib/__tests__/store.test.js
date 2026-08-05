@@ -58,3 +58,41 @@ describe('store tombstones + points', () => {
     expect(useStore.getState().items.find((i) => i.id === untouched.id).updatedAt).toBe(beforeUntouched)
   })
 })
+
+describe('nudge fields on items', () => {
+  beforeEach(reset)
+
+  it('persists intervalMin and enabled when an interval is supplied', () => {
+    const n = useStore.getState().addItem('nudges', 'drink water', {
+      type: 'timer', intervalMin: 120, enabled: true,
+    })
+    const stored = useStore.getState().items.find((i) => i.id === n.id)
+    expect(stored.intervalMin).toBe(120)
+    expect(stored.enabled).toBe(true)
+    expect(stored.type).toBe('timer')
+  })
+
+  it('defaults a new nudge to switched off', () => {
+    const n = useStore.getState().addItem('nudges', 'stand up', { type: 'timer', intervalMin: 45 })
+    expect(useStore.getState().items.find((i) => i.id === n.id).enabled).toBe(false)
+  })
+
+  it('leaves ordinary items free of nudge fields', () => {
+    const it = useStore.getState().addItem('projects', 'ship it')
+    const stored = useStore.getState().items.find((i) => i.id === it.id)
+    expect('intervalMin' in stored).toBe(false)
+    expect('enabled' in stored).toBe(false)
+  })
+
+  it('round-trips both fields through a sync merge', () => {
+    const n = useStore.getState().addItem('nudges', 'stretch', { type: 'timer', intervalMin: 30 })
+    const remote = [{
+      kind: 'item', id: n.id, updatedAt: n.updatedAt + 1000, deletedAt: null,
+      data: { ...n, enabled: true, intervalMin: 90, updatedAt: n.updatedAt + 1000 },
+    }]
+    useStore.getState().mergeRemote(remote)
+    const merged = useStore.getState().items.find((i) => i.id === n.id)
+    expect(merged.enabled).toBe(true)
+    expect(merged.intervalMin).toBe(90)
+  })
+})

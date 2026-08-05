@@ -5,6 +5,7 @@
  *  Item  - anything listed: task, habit, book, bill…   { id, areaId, bucket,
  *          title, details, type, status, order, createdAt, updatedAt,
  *          completedAt }
+ *          Nudge timers additionally carry { intervalMin, enabled }.
  *  Log   - a dated record: habit check-ins, completions { id, itemId, areaId,
  *          kind, date, createdAt }
  *  Note  - journal entries, per-item notes, quotes      { id, areaId, itemId?,
@@ -58,6 +59,13 @@ export const useStore = create(
           updatedAt: now(),
           completedAt: null,
           deletedAt: null,
+          // Nudge timers only. Attached conditionally so ordinary items don't
+          // all carry two dead columns; merge.js passes the whole `data`
+          // object through, so both fields sync with no sync-layer change.
+          ...(extra.intervalMin != null && {
+            intervalMin: extra.intervalMin,
+            enabled: extra.enabled ?? false,
+          }),
         }
         set({ items: [...items, item] })
         return item
