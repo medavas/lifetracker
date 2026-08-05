@@ -91,19 +91,22 @@ export default function Dashboard() {
         </div>
 
         <div className="dash-side">
-          {latestEntry && (
-            <>
-              <div className="section-label">Latest journal</div>
-              <Link to="/journal">
-                <div className="card note-card">
-                  <div className="note-date">{new Date(latestEntry.createdAt).toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })}</div>
-                  <div className="note-text">
-                    {latestEntry.text.length > 160 ? latestEntry.text.slice(0, 160) + '…' : latestEntry.text}
+          {latestEntry && (() => {
+            const d = new Date(latestEntry.createdAt)
+            return (
+              <>
+                <div className="section-label">Latest journal</div>
+                <Link to={`/journal/years/${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()}`}>
+                  <div className="card note-card">
+                    <div className="note-date">{d.toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })}</div>
+                    <div className="note-text">
+                      {latestEntry.text.length > 160 ? latestEntry.text.slice(0, 160) + '…' : latestEntry.text}
+                    </div>
                   </div>
-                </div>
-              </Link>
-            </>
-          )}
+                </Link>
+              </>
+            )
+          })()}
 
           {(() => {
             const quotes = useStore
