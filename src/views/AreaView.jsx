@@ -13,7 +13,7 @@ export default function AreaView() {
   const navigate = useNavigate()
   const area = areaById(areaId)
 
-  const [bucket, setBucket] = useState('All')
+  const [bucket, setBucket] = useState(area?.habitBucket ?? 'All')
   const [showArchived, setShowArchived] = useState(false)
   const [draft, setDraft] = useState('')
 
@@ -54,7 +54,7 @@ export default function AreaView() {
         </div>
       )}
 
-      <ItemList items={items} areaId={areaId} />
+      <ItemList items={items} areaId={areaId} habitBucket={area.habitBucket} />
 
       <div className="add-row">
         <input
