@@ -323,3 +323,5 @@ a.item-row { text-decoration: none; color: inherit; }
 .day-row:not(.has-entry) .item-title { color: var(--text-muted); }
 .day-row.has-entry { cursor: pointer; }
 .day-row.today .item-title { font-weight: 600; }
+
+.button-grid { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
