@@ -12,11 +12,15 @@ const MONTH_NAMES = [
   'July', 'August', 'September', 'October', 'November', 'December',
 ]
 
+const weekdayOf = (year, month, dayNum) =>
+  new Date(Number(year), Number(month) - 1, dayNum).toLocaleDateString(undefined, { weekday: 'long' })
+
 /**
- * Default Journal landing screen: every day of one month, oldest at the
- * top, scrolled to the bottom on mount so today is immediately visible.
- * Only days with a live entry are marked and clickable. The compose box
- * only appears when this screen represents the current month.
+ * Default Journal landing screen: only days with a live entry are listed,
+ * oldest at the top, scrolled to the bottom on mount so the most recent
+ * entry is immediately visible. A day with no entry does not appear at
+ * all. The compose box only appears when this screen represents the
+ * current month.
  */
 export default function DayList() {
   const { year, month } = useParams()
@@ -94,19 +98,20 @@ export default function DayList() {
       )}
 
       <div className="item-list" style={{ marginTop: 16 }}>
-        {flags.map((hasEntry, i) => {
-          const dayNum = i + 1
-          const isToday = isCurrentMonth && dayNum === today
-          const rowClass = `item-row day-row ${hasEntry ? 'has-entry' : ''} ${isToday ? 'today' : ''}`
-          const label = <span className="item-title">{dayNum}{isToday ? ' \u00b7 Today' : ''}</span>
-          return hasEntry ? (
-            <Link key={dayNum} to={`/journal/years/${year}/${month}/${dayNum}`} className={rowClass}>
-              {label}
-            </Link>
-          ) : (
-            <div key={dayNum} className={rowClass}>{label}</div>
-          )
-        })}
+        {flags
+          .map((hasEntry, i) => ({ hasEntry, dayNum: i + 1 }))
+          .filter((d) => d.hasEntry)
+          .map(({ dayNum }) => {
+            const isToday = isCurrentMonth && dayNum === today
+            const rowClass = `item-row day-row has-entry ${isToday ? 'today' : ''}`
+            return (
+              <Link key={dayNum} to={`/journal/years/${year}/${month}/${dayNum}`} className={rowClass}>
+                <span className="item-title">
+                  {dayNum}{' \u00b7 '}{weekdayOf(year, month, dayNum)}{isToday ? ' \u00b7 Today' : ''}
+                </span>
+              </Link>
+            )
+          })}
       </div>
     </div>
   )
