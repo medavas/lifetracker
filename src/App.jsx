@@ -1,4 +1,4 @@
-import { HashRouter, Routes, Route } from 'react-router-dom'
+import { HashRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import AppShell from './components/AppShell'
 import BottomNav from './components/BottomNav'
@@ -36,6 +36,7 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Dashboard />} />
           <Route path="/areas" element={<AreasGrid />} />
+          <Route path="/area/projects" element={<Navigate to="/projects" replace />} />
           <Route path="/area/:areaId" element={<AreaView />} />
           <Route path="/projects" element={<Projects />} />
           <Route path="/projects/:projectId" element={<Projects />} />

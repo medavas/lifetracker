@@ -1,6 +1,7 @@
 import { useParams } from 'react-router-dom'
 import ProjectList from './projects/ProjectList'
 import ProjectDetail from './projects/ProjectDetail'
+import { areaById } from '../data/areas'
 
 /**
  * One route tree serves both layouts. Desktop (>=900px, CSS): both panes
@@ -13,7 +14,7 @@ export default function Projects() {
   const { projectId } = useParams()
 
   return (
-    <div className="page" style={{ '--area-c1': 'var(--trim-b)' }}>
+    <div className="page" style={{ '--area-c1': `var(--trim-${areaById('projects').trim})` }}>
       <div className={`projects-shell ${projectId ? 'has-detail' : ''}`}>
         <div className="projects-list-pane"><ProjectList /></div>
         <div className="projects-detail-pane">
