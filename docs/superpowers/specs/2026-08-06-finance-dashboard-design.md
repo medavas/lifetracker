@@ -77,9 +77,11 @@ Money logs award **0 reward points**. The points economy is untouched.
   creates the `'bill-pay'` log and advances `nextDue` one cadence.
   Month-end clamp: due Jan 31 + monthly → Feb 28 (last day of month).
 - `contribute(goalId, amountCents, date?)`
-- Deleting a `'bill-pay'` log steps the bill's `nextDue` **back** one
-  cadence — mark-paid is fully reversible, matching the app's
-  uncheck-takes-back-exactly rule.
+- The `'bill-pay'` log records `prevDue` (the bill's `nextDue` before
+  advancing); deleting the log restores exactly that date — mark-paid is
+  fully reversible, matching the app's uncheck-takes-back-exactly rule.
+  (A clamped date alone can't be walked back: Jan 31 → Feb 28 would
+  "retreat" to Jan 28.)
 
 All deletes remain tombstones (`deletedAt`), never splices.
 
@@ -97,7 +99,8 @@ only render. Functions:
 - `upcomingBills(items, today, horizonDays = 14)` — sorted, overdue flagged
 - `goalProgress(logs, goalId)` — Σ contributions vs. target
 - `subscriptionRollup(items)` — total $/mo and $/yr
-- `advanceDue(dateStr, cadence, direction)` — shared by pay/un-pay
+- `advanceDue(dateStr, cadence)` — next occurrence, month-end clamped
+  (un-pay restores from the payment log's `prevDue`, not by reverse math)
 
 Currency parse/format in `src/lib/money.js` (cents ↔ display; positive
 amounts only, two-decimal validation at input edge). USD only — no
@@ -161,11 +164,11 @@ they surface with the "set amount" affordance.
 ## Testing
 
 - `src/lib/finance.js` — full unit coverage: monthlyize, budget summary,
-  unallocated math, due-date advance/retreat incl. month-end clamping
-  (Jan 31 → Feb 28 → Mar 31 round-trip), goal progress, rollups.
-- Store: `payBill` advances `nextDue`; deleting the payment log retreats
-  it; `logSpend`/`contribute` create correct log shapes; money logs award
-  0 points.
+  unallocated math, due-date advance incl. month-end clamping
+  (Jan 31 + monthly → Feb 28), goal progress, rollups.
+- Store: `payBill` advances `nextDue`; deleting the payment log restores
+  the exact prior due date via the log's `prevDue`; `logSpend`/
+  `contribute` create correct log shapes; money logs award 0 points.
 - Migration: bucket remap, `updatedAt` refresh, non-finance items
   untouched.
 - Registry invariants (`src/data/__tests__/areas.test.js`) updated:
