@@ -203,6 +203,21 @@
 .habit-check.on { background: var(--text-primary); border-color: var(--text-primary); color: var(--bg); }
 
 /* ── Journal ─────────────────────────────────────────────── */
+.journal-compose { margin-bottom: 16px; }
+.year-row.current .item-title { font-weight: 600; }
+.month-row.current .item-title { font-weight: 600; }
+.month-row.inert { cursor: default; }
+.month-row.inert .item-title { color: var(--text-muted); }
+
+.month-list { display: flex; flex-direction: column; gap: 8px; }
+
+@media (min-width: 900px) {
+  .month-list { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  .month-list .item-row {
+    flex-direction: column; justify-content: center; text-align: center;
+    padding: 20px 12px; border-left: 1px solid var(--border); border-top: 3px solid var(--area-c1, var(--border));
+  }
+}
 .journal-compose textarea {
   width: 100%; min-height: 88px; padding: 12px 14px; font-size: 15px; resize: vertical;
 }
@@ -338,8 +353,6 @@ a.item-row { text-decoration: none; color: inherit; }
 .day-row:not(.has-entry) .item-title { color: var(--text-muted); }
 .day-row.has-entry { cursor: pointer; }
 .day-row.today .item-title { font-weight: 600; }
-
-.button-grid { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
 
 /* ── Finance dashboard ─────────────────────────────── */
 .fin-month {
