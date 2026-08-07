@@ -162,6 +162,15 @@ describe('project sub-tasks', () => {
     expect(useStore.getState().points).toBe(0)
   })
 
+  it('does not un-archive a project when its last live sub-task completes', () => {
+    const project = useStore.getState().addItem('projects', 'Redesign kitchen')
+    const a = useStore.getState().addItem('projects', 'Pick paint', { parentId: project.id })
+    useStore.getState().archiveItem(project.id)
+    useStore.getState().toggleDone(a.id)
+    expect(useStore.getState().items.find((i) => i.id === project.id).status).toBe('archived')
+    expect(useStore.getState().points).toBe(0)
+  })
+
   it('adding a new open sub-task to an already-completed project reopens it', () => {
     const project = useStore.getState().addItem('projects', 'Redesign kitchen')
     const a = useStore.getState().addItem('projects', 'Pick paint', { parentId: project.id })

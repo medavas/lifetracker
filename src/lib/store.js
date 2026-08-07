@@ -145,11 +145,14 @@ export const useStore = create(
        * points-award/log-write/tombstone logic rather than duplicating it.
        * A project with zero live sub-tasks is untouched: it stays
        * independently toggleable exactly as before this feature existed.
+       * An archived project is frozen out of the cascade entirely — archive
+       * is an explicit user action, never implied by a sub-task changing
+       * underneath it (see the file-level invariant at the top).
        */
       syncParentCompletion: (parentId) => {
         if (!parentId) return
         const parent = get().items.find((i) => i.id === parentId && !i.deletedAt)
-        if (!parent) return
+        if (!parent || parent.status === 'archived') return
         const subItems = get().items.filter(
           (i) => i.parentId === parentId && !i.deletedAt && i.status !== 'archived',
         )
