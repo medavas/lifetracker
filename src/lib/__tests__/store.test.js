@@ -108,3 +108,102 @@ describe('habit check-ins outside the Habits area', () => {
     expect(useStore.getState().points).toBe(5)
   })
 })
+
+describe('money fields on items', () => {
+  beforeEach(reset)
+
+  it('persists amount, cadence, and nextDue when supplied', () => {
+    const b = useStore.getState().addItem('finance', 'Rent', {
+      bucket: 'Bills', amount: 120000, cadence: 'monthly', nextDue: '2026-09-01',
+    })
+    const stored = useStore.getState().items.find((i) => i.id === b.id)
+    expect(stored.amount).toBe(120000)
+    expect(stored.cadence).toBe('monthly')
+    expect(stored.nextDue).toBe('2026-09-01')
+  })
+
+  it('leaves ordinary items free of money fields', () => {
+    const it_ = useStore.getState().addItem('projects', 'ship it')
+    const stored = useStore.getState().items.find((i) => i.id === it_.id)
+    expect('amount' in stored).toBe(false)
+    expect('cadence' in stored).toBe(false)
+    expect('nextDue' in stored).toBe(false)
+  })
+})
+
+describe('money logs', () => {
+  beforeEach(reset)
+
+  it('logSpend writes a spend log and awards no points', () => {
+    const cat = useStore.getState().addItem('finance', 'Groceries', { bucket: 'Spending', amount: 40000 })
+    useStore.getState().logSpend(cat.id, 1450, 'coffee')
+    const log = useStore.getState().logs.find((l) => l.kind === 'spend')
+    expect(log.itemId).toBe(cat.id)
+    expect(log.amount).toBe(1450)
+    expect(log.note).toBe('coffee')
+    expect(log.areaId).toBe('finance')
+    expect(useStore.getState().points).toBe(0)
+  })
+
+  it('logSpend without a category or note stays uncategorized and note-free', () => {
+    useStore.getState().logSpend(null, 300)
+    const log = useStore.getState().logs.find((l) => l.kind === 'spend')
+    expect(log.itemId).toBeNull()
+    expect('note' in log).toBe(false)
+  })
+
+  it('payBill logs the bill amount, stamps prevDue, and advances nextDue', () => {
+    const bill = useStore.getState().addItem('finance', 'Rent', {
+      bucket: 'Bills', amount: 120000, cadence: 'monthly', nextDue: '2026-01-31',
+    })
+    useStore.getState().payBill(bill.id)
+    const log = useStore.getState().logs.find((l) => l.kind === 'bill-pay')
+    expect(log.amount).toBe(120000)
+    expect(log.prevDue).toBe('2026-01-31')
+    expect(useStore.getState().items.find((i) => i.id === bill.id).nextDue).toBe('2026-02-28')
+    expect(useStore.getState().points).toBe(0)
+  })
+
+  it('payBill without any amount is a no-op', () => {
+    const bill = useStore.getState().addItem('finance', 'Mystery', {
+      bucket: 'Bills', cadence: 'monthly', nextDue: '2026-09-01',
+    })
+    useStore.getState().payBill(bill.id)
+    expect(useStore.getState().logs).toHaveLength(0)
+    expect(useStore.getState().items.find((i) => i.id === bill.id).nextDue).toBe('2026-09-01')
+  })
+
+  it('deleteMoneyLog on a payment restores the exact prior due date', () => {
+    const bill = useStore.getState().addItem('finance', 'Rent', {
+      bucket: 'Bills', amount: 120000, cadence: 'monthly', nextDue: '2026-01-31',
+    })
+    useStore.getState().payBill(bill.id)
+    const log = useStore.getState().logs.find((l) => l.kind === 'bill-pay')
+    useStore.getState().deleteMoneyLog(log.id)
+    expect(useStore.getState().logs.find((l) => l.id === log.id).deletedAt).toBeTruthy()
+    expect(useStore.getState().items.find((i) => i.id === bill.id).nextDue).toBe('2026-01-31')
+  })
+
+  it('contribute writes a contribute log toward the goal', () => {
+    const goal = useStore.getState().addItem('finance', 'Emergency fund', { bucket: 'Goals', amount: 500000 })
+    useStore.getState().contribute(goal.id, 25000)
+    const log = useStore.getState().logs.find((l) => l.kind === 'contribute')
+    expect(log.itemId).toBe(goal.id)
+    expect(log.amount).toBe(25000)
+    expect(useStore.getState().points).toBe(0)
+  })
+
+  it('money fields round-trip through a sync merge', () => {
+    const bill = useStore.getState().addItem('finance', 'Rent', {
+      bucket: 'Bills', amount: 120000, cadence: 'monthly', nextDue: '2026-09-01',
+    })
+    const remote = [{
+      kind: 'item', id: bill.id, updatedAt: bill.updatedAt + 1000, deletedAt: null,
+      data: { ...bill, amount: 125000, nextDue: '2026-10-01', updatedAt: bill.updatedAt + 1000 },
+    }]
+    useStore.getState().mergeRemote(remote)
+    const merged = useStore.getState().items.find((i) => i.id === bill.id)
+    expect(merged.amount).toBe(125000)
+    expect(merged.nextDue).toBe('2026-10-01')
+  })
+})

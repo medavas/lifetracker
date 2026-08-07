@@ -19,6 +19,7 @@ import { persist, createJSONStorage } from 'zustand/middleware'
 import { idbStorage } from './storage'
 import { todayKey, computePoints } from './rewards'
 import { toEntities, fromEntities, merge } from './merge'
+import { advanceDue } from './finance'
 
 // crypto.randomUUID only exists in secure contexts (HTTPS or localhost) —
 // fall back to a manual v4 UUID so a plain-HTTP tunnel URL doesn't throw on
@@ -66,6 +67,12 @@ export const useStore = create(
             intervalMin: extra.intervalMin,
             enabled: extra.enabled ?? false,
           }),
+          // Finance items only (money area kind). Same conditional-attachment
+          // pattern as intervalMin — bills carry all three, categories/goals
+          // just amount; merge.js syncs them with no sync-layer change.
+          ...(extra.amount != null && { amount: extra.amount }),
+          ...(extra.cadence != null && { cadence: extra.cadence }),
+          ...(extra.nextDue != null && { nextDue: extra.nextDue }),
         }
         set({ items: [...items, item] })
         return item
@@ -157,6 +164,69 @@ export const useStore = create(
         get().logs.some(
           (l) => l.itemId === itemId && l.kind === 'habit-check' && l.date === todayKey() && !l.deletedAt,
         ),
+
+      // ── Money (finance area) ─────────────────────────────────
+      // Money logs never touch points: computePoints only counts
+      // complete/habit-check/journal kinds, and that is deliberate.
+      logSpend: (categoryId, amount, note, date) =>
+        set({
+          logs: [
+            ...get().logs,
+            {
+              id: uid(), itemId: categoryId ?? null, areaId: 'finance', kind: 'spend',
+              amount, date: date ?? todayKey(), createdAt: now(), updatedAt: now(), deletedAt: null,
+              ...(note?.trim() && { note: note.trim() }),
+            },
+          ],
+        }),
+
+      /**
+       * Pay a bill/subscription: log the payment (bill amount unless
+       * overridden) and advance nextDue one cadence. The log stamps
+       * prevDue so deleteMoneyLog can restore the exact prior date —
+       * clamped dates (Jan 31 -> Feb 28) can't be reversed by math.
+       */
+      payBill: (billId, amountOverride, date) => {
+        const bill = get().items.find((i) => i.id === billId && !i.deletedAt)
+        if (!bill) return
+        const amount = amountOverride ?? bill.amount
+        if (amount == null) return
+        const recurs = bill.nextDue && bill.cadence
+        set({
+          logs: [
+            ...get().logs,
+            {
+              id: uid(), itemId: billId, areaId: 'finance', kind: 'bill-pay',
+              amount, date: date ?? todayKey(), createdAt: now(), updatedAt: now(), deletedAt: null,
+              ...(recurs && { prevDue: bill.nextDue }),
+            },
+          ],
+        })
+        if (recurs) get().updateItem(billId, { nextDue: advanceDue(bill.nextDue, bill.cadence) })
+      },
+
+      contribute: (goalId, amount, date) =>
+        set({
+          logs: [
+            ...get().logs,
+            {
+              id: uid(), itemId: goalId, areaId: 'finance', kind: 'contribute',
+              amount, date: date ?? todayKey(), createdAt: now(), updatedAt: now(), deletedAt: null,
+            },
+          ],
+        }),
+
+      /** Tombstone a money log; un-paying a bill restores its prior due date. */
+      deleteMoneyLog: (logId) => {
+        const log = get().logs.find((l) => l.id === logId && !l.deletedAt)
+        if (!log) return
+        set({
+          logs: get().logs.map((l) =>
+            l.id === logId ? { ...l, deletedAt: now(), updatedAt: now() } : l,
+          ),
+        })
+        if (log.kind === 'bill-pay' && log.prevDue) get().updateItem(log.itemId, { nextDue: log.prevDue })
+      },
 
       // ── Notes / Journal ──────────────────────────────────────
       addNote: (areaId, text, itemId = null) => {
