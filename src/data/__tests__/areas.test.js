@@ -40,12 +40,12 @@ describe('area registry', () => {
     for (const a of AREAS) expect(a.grad).toBeUndefined()
   })
 
-  it('finance absorbed budget\'s buckets and keywords', () => {
+  it('finance is the money kind with the dashboard buckets', () => {
     const finance = AREAS.find((a) => a.id === 'finance')
-    expect(finance.buckets).toEqual(['Bills', 'Insurance', 'Investments', 'Savings', 'Fixed', 'Variable', 'Goals'])
-    expect(finance.keywords).toEqual(
-      expect.arrayContaining(['money', 'bill', 'insurance', 'invest', 'savings', 'bank', 'pay', 'budget', 'spend', 'expense', 'cost'])
-    )
+    expect(finance.kind).toBe('money')
+    expect(finance.route).toBe('/finance')
+    expect(finance.buckets).toEqual(['Plan', 'Bills', 'Subscriptions', 'Spending', 'Goals', 'Other'])
+    expect(finance.keywords).toEqual(expect.arrayContaining(['money', 'bill', 'subscription', 'budget', 'spend']))
   })
 })
 
@@ -85,16 +85,17 @@ describe('routing', () => {
     expect(nudges.buckets).toEqual([])
   })
 
-  it('routes the three non-generic areas to their own pages', () => {
+  it('routes the four non-generic areas to their own pages', () => {
     const routes = Object.fromEntries(AREAS.map((a) => [a.id, routeFor(a)]))
     expect(routes.journal).toBe('/journal')
     expect(routes.habits).toBe('/habits')
     expect(routes.nudges).toBe('/nudges')
+    expect(routes.finance).toBe('/finance')
   })
 
   it('routes every other area through the generic area view', () => {
     for (const a of AREAS) {
-      if (['journal', 'habits', 'nudges'].includes(a.id)) continue
+      if (['journal', 'habits', 'nudges', 'finance'].includes(a.id)) continue
       expect(routeFor(a)).toBe(`/area/${a.id}`)
     }
   })

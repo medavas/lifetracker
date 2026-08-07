@@ -12,8 +12,8 @@ really just filtered views over 4 data primitives:
 
 1. **AREA** — static config only, never stored in the DB. One registry file
    (`src/data/areas.js`) where each area is a row: id, name, icon, kind
-   (`'list' | 'habits' | 'journal' | 'library' | 'timers'`), bucket names
-   (e.g. Finance has Bills/Insurance/Investments/Savings/Fixed/Variable/Goals), and fuzzy-match
+   (`'list' | 'habits' | 'journal' | 'library' | 'timers' | 'money'`), bucket names
+   (e.g. Finance has Plan/Bills/Subscriptions/Spending/Goals/Other), and fuzzy-match
    keywords. Adding a new life-area = adding a config row, zero new components.
    An area may also name a `habitBucket` — the one bucket (if any) whose
    items get Habit-style daily check-off instead of one-shot completion
@@ -24,6 +24,9 @@ really just filtered views over 4 data primitives:
      order, createdAt, updatedAt, completedAt }`
    Nudge timers (`kind: 'timers'`) additionally carry `{ intervalMin, enabled }`
    — a deliberate two-scalar concession on ITEM rather than a 5th primitive.
+   Finance (money) items additionally carry { amount, cadence, nextDue }
+   and money LOGs carry { amount, note?, prevDue? } — the same deliberate
+   concession, cents-integer amounts, no 5th primitive.
    `bucket` is not purely a cosmetic label: when it matches the item's area's
    `habitBucket`, it determines which store action the UI wires the item to
    (`toggleHabitToday` instead of `toggleDone`) — moving an item into or out

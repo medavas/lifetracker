@@ -13,6 +13,7 @@ import DayList from './views/journal/DayList'
 import DayDetail from './views/journal/DayDetail'
 import Habits from './views/Habits'
 import Nudges from './views/Nudges'
+import FinanceDashboard from './views/FinanceDashboard'
 import Settings from './views/Settings'
 import { startSync } from './lib/sync'
 import { startNudges } from './lib/nudgeRunner'
@@ -36,6 +37,7 @@ export default function App() {
           <Route path="/" element={<Dashboard />} />
           <Route path="/areas" element={<AreasGrid />} />
           <Route path="/area/:areaId" element={<AreaView />} />
+          <Route path="/finance" element={<FinanceDashboard />} />
           <Route path="/journal" element={<Journal />} />
           <Route path="/journal/years" element={<YearList />} />
           <Route path="/journal/years/:year" element={<MonthList />} />

@@ -340,3 +340,59 @@ a.item-row { text-decoration: none; color: inherit; }
 .day-row.today .item-title { font-weight: 600; }
 
 .button-grid { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+
+/* ── Finance dashboard ─────────────────────────────── */
+.fin-month {
+  display: flex; align-items: center; justify-content: center; gap: 12px;
+  margin: 4px 0 12px; color: var(--text-primary); font-weight: 600;
+}
+.fin-month button { color: var(--text-secondary); display: grid; place-items: center; padding: 4px; }
+.fin-section { padding: 14px; margin-bottom: 12px; }
+.fin-section h3 {
+  margin: 0 0 10px; font-size: 0.8rem; text-transform: uppercase;
+  letter-spacing: 0.06em; color: var(--text-secondary);
+}
+.fin-headline strong { font-size: 1.35rem; }
+.fin-sub { color: var(--text-secondary); font-size: 0.85rem; }
+.fin-track {
+  height: 6px; border-radius: 3px; background: var(--surface-3);
+  overflow: hidden; margin: 10px 0;
+}
+.fin-fill { height: 100%; background: var(--area-c1); border-radius: 3px; }
+.fin-planline {
+  display: flex; flex-wrap: wrap; gap: 4px 14px;
+  color: var(--text-secondary); font-size: 0.8rem;
+}
+.fin-neg { color: var(--trim-r); }
+.fin-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 0; border-bottom: 1px solid var(--border);
+}
+.fin-row:last-child { border-bottom: none; }
+.fin-row .fin-grow { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fin-amount { font-variant-numeric: tabular-nums; }
+.fin-due { font-size: 0.8rem; color: var(--text-secondary); }
+.fin-due.overdue { color: var(--trim-r); }
+.fin-minibar { height: 4px; border-radius: 2px; background: var(--surface-3); overflow: hidden; margin-top: 4px; }
+.fin-minibar > div { height: 100%; background: var(--area-c1); }
+.fin-minibar > div.over { background: var(--trim-r); }
+.fin-addrow { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
+.fin-addrow input { padding: 8px 10px; min-width: 0; }
+.fin-addrow input.fin-amt { width: 84px; flex: none; }
+.fin-addrow input.fin-title { flex: 2; min-width: 120px; }
+.fin-addrow select {
+  font: inherit; color: var(--text-primary); background: var(--surface-2);
+  border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 8px;
+}
+.fin-addrow button.fin-add {
+  padding: 8px 12px; border-radius: var(--radius-sm);
+  background: var(--surface-3); color: var(--text-primary);
+}
+.fin-pay {
+  padding: 5px 10px; border-radius: var(--radius-sm); font-size: 0.8rem;
+  background: var(--surface-3); color: var(--text-primary); flex: none;
+}
+@media (min-width: 900px) {
+  .fin-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 16px; align-items: start; }
+  .fin-grid > .fin-col { min-width: 0; }
+}

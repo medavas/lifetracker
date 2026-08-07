@@ -10,6 +10,13 @@
 
 export const monthKey = (dateStr) => dateStr.slice(0, 7)
 
+/** 'YYYY-MM' plus delta months. */
+export function shiftMonth(month, delta) {
+  const [y, m] = month.split('-').map(Number)
+  const total = y * 12 + (m - 1) + delta
+  return `${Math.floor(total / 12)}-${pad2((total % 12 + 12) % 12 + 1)}`
+}
+
 export function daysInMonth(month) {
   const [y, m] = month.split('-').map(Number)
   return new Date(Date.UTC(y, m, 0)).getUTCDate()

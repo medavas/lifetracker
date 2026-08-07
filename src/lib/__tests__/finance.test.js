@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { monthKey, daysInMonth, addDays, advanceDue, monthlyize } from '../finance.js'
+import { monthKey, shiftMonth, daysInMonth, addDays, advanceDue, monthlyize } from '../finance.js'
 
 describe('date helpers', () => {
   it('monthKey takes the YYYY-MM prefix', () => {
@@ -18,6 +18,14 @@ describe('date helpers', () => {
     expect(addDays('2026-08-06', 14)).toBe('2026-08-20')
     expect(addDays('2026-08-25', 14)).toBe('2026-09-08')
     expect(addDays('2026-12-31', 1)).toBe('2027-01-01')
+  })
+})
+
+describe('shiftMonth', () => {
+  it('steps across year boundaries in both directions', () => {
+    expect(shiftMonth('2026-08', 1)).toBe('2026-09')
+    expect(shiftMonth('2026-12', 1)).toBe('2027-01')
+    expect(shiftMonth('2026-01', -1)).toBe('2025-12')
   })
 })
 

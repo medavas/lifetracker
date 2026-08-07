@@ -8,6 +8,7 @@
  *  - 'journal' - dated notes
  *  - 'library' - items where each entry carries its own notes (books, videos…)
  *  - 'timers'  - interval nudges that fire a notification while the app is open
+ *  - 'money'   - the finance dashboard: budget plan, bills, spending, goals
  *
  * `icon` is a lucide-react component name rendered via <AreaIcon>.
  * `trim` picks one of the six --trim-* tokens (theme in index.css); it is the
@@ -41,10 +42,10 @@ export const AREAS = [
     buckets: ['Active', 'Backlog', 'Someday'],
   },
   {
-    id: 'finance', name: 'Finance', icon: 'Wallet', kind: 'list',
-    trim: 'y',
-    keywords: ['money', 'bill', 'insurance', 'invest', 'savings', 'bank', 'pay', 'budget', 'spend', 'expense', 'cost'],
-    buckets: ['Bills', 'Insurance', 'Investments', 'Savings', 'Fixed', 'Variable', 'Goals'],
+    id: 'finance', name: 'Finance', icon: 'Wallet', kind: 'money',
+    trim: 'y', route: '/finance',
+    keywords: ['money', 'bill', 'insurance', 'invest', 'savings', 'bank', 'pay', 'budget', 'spend', 'expense', 'cost', 'subscription'],
+    buckets: ['Plan', 'Bills', 'Subscriptions', 'Spending', 'Goals', 'Other'],
   },
   {
     id: 'fitness', name: 'Fitness', icon: 'Dumbbell', kind: 'list',
