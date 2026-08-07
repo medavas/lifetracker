@@ -3,10 +3,12 @@ import { ChevronLeft } from 'lucide-react'
 import { useShallow } from 'zustand/react/shallow'
 import { useStore } from '../../lib/store'
 import { entriesForDay } from '../../lib/journalCalendar'
+import TodayCompose from './TodayCompose'
 
 /**
  * Read-only: one day's journal entries. No edit, no delete -- once written,
- * an entry is permanent. Reached only by clicking a marked day in DayList.
+ * an entry is permanent. TodayCompose above the list always writes to
+ * today, not to the day being viewed here.
  */
 export default function DayDetail() {
   const { year, month, day } = useParams()
@@ -26,6 +28,8 @@ export default function DayDetail() {
         </button>
         <h1>{dateLabel}</h1>
       </div>
+
+      <TodayCompose />
 
       {entries.length === 0 && <div className="empty-note">No entries on this day.</div>}
 
