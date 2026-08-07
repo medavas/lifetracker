@@ -7,6 +7,10 @@ import { monthKey, shiftMonth, budgetSummary, daysInMonth } from '../lib/finance
 import { formatCents } from '../lib/money'
 import { todayKey } from '../lib/rewards'
 import AreaIcon from '../components/AreaIcon'
+import QuickSpend from '../components/finance/QuickSpend'
+import BudgetSection from '../components/finance/BudgetSection'
+import PlanSection from '../components/finance/PlanSection'
+import ItemSheet from '../components/ItemSheet'
 
 /**
  * The 'money' area kind's dedicated page — the one view not rendered by
@@ -16,6 +20,7 @@ import AreaIcon from '../components/AreaIcon'
 export default function FinanceDashboard() {
   const area = areaById('finance')
   const [month, setMonth] = useState(() => monthKey(todayKey()))
+  const [sheetItem, setSheetItem] = useState(null)
   const items = useStore(useShallow(selectAreaItems('finance')))
   const logs = useStore((s) => s.logs)
 
@@ -54,8 +59,19 @@ export default function FinanceDashboard() {
         </div>
       </section>
 
-      {/* Tasks 7-10 fill these in: QuickSpend, BillsSection, BudgetSection,
-          SubscriptionsSection, GoalsSection, SpendChart, PlanSection, Other */}
+      <QuickSpend categories={items.filter((i) => i.bucket === 'Spending')} />
+      <div className="fin-grid">
+        <div className="fin-col">
+          <BudgetSection items={items} logs={logs} month={month} onEdit={setSheetItem} />
+        </div>
+        <div className="fin-col">
+          <PlanSection items={items} onEdit={setSheetItem} />
+        </div>
+      </div>
+      {sheetItem && <ItemSheet item={sheetItem} onClose={() => setSheetItem(null)} />}
+
+      {/* Tasks 8-10 fill these in: BillsSection, SubscriptionsSection,
+          GoalsSection, SpendChart, Other */}
     </div>
   )
 }
