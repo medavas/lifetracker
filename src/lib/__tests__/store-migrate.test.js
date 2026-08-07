@@ -69,3 +69,39 @@ describe('persist migration does not lose pre-existing data', () => {
     expect(items[0].deletedAt).toBeFalsy()
   })
 })
+
+describe('v3 migration remaps old finance buckets', () => {
+  it('moves each old bucket to its dashboard home and stamps updatedAt', () => {
+    const { migrate } = useStore.persist.getOptions()
+    const mk = (id, bucket) => ({
+      id, areaId: 'finance', bucket, title: id, status: 'open',
+      order: 0, createdAt: 1, updatedAt: 1, completedAt: null, deletedAt: null,
+    })
+    const v2 = {
+      items: [
+        mk('a', 'Bills'), mk('b', 'Fixed'), mk('c', 'Variable'),
+        mk('d', 'Savings'), mk('e', 'Goals'), mk('f', 'Insurance'), mk('g', 'Investments'),
+        { ...mk('h', 'Active'), areaId: 'projects' },
+      ],
+      logs: [], notes: [], points: 0,
+    }
+    const out = migrate(v2, 2)
+    const bucketOf = (id) => out.items.find((i) => i.id === id).bucket
+    expect(bucketOf('a')).toBe('Bills')
+    expect(bucketOf('b')).toBe('Bills')
+    expect(bucketOf('c')).toBe('Spending')
+    expect(bucketOf('d')).toBe('Goals')
+    expect(bucketOf('e')).toBe('Goals')
+    expect(bucketOf('f')).toBe('Other')
+    expect(bucketOf('g')).toBe('Other')
+    expect(out.items.find((i) => i.id === 'h').bucket).toBe('Active')
+    expect(out.items.find((i) => i.id === 'b').updatedAt).toBeGreaterThan(1)
+    expect(out.items.find((i) => i.id === 'a').updatedAt).toBe(1) // already home — untouched
+  })
+
+  it('returns the same object when nothing needs remapping', () => {
+    const { migrate } = useStore.persist.getOptions()
+    const clean = { items: [{ id: 'x', areaId: 'projects', bucket: 'Active', updatedAt: 1 }], logs: [], notes: [], points: 0 }
+    expect(migrate(clean, 2)).toBe(clean)
+  })
+})

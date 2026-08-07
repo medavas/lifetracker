@@ -262,16 +262,29 @@ export const useStore = create(
     {
       name: 'stoa',
       storage: createJSONStorage(() => idbStorage),
-      version: 2,
-      // Bumping `version` with no `migrate` makes zustand's persist middleware
-      // discard the persisted state entirely on the first load after the bump
-      // (it logs a console.error and merges `undefined` into the fresh initial
-      // state) — i.e. every existing item/log/note silently vanishes. Pre-v2
-      // records simply lack a `deletedAt` field, and every tombstone-filtering
-      // selector/computePoints already treats a missing `deletedAt` as "not
-      // deleted" (`!undefined` is falsy), so no transformation is needed —
-      // just hand the old state back unchanged.
-      migrate: (persistedState) => persistedState,
+      version: 3,
+      // v1 -> v2 added tombstones: pre-v2 records simply lack `deletedAt`,
+      // and every consumer treats a missing field as "not deleted", so no
+      // transformation is needed. (Bumping `version` with no `migrate`
+      // would make zustand discard the whole store — never remove this.)
+      //
+      // v2 -> v3: the finance dashboard replaced the old list buckets.
+      // Old finance items are remapped to their new homes with a fresh
+      // updatedAt so the move wins last-write-wins sync merges. When
+      // nothing needs remapping the persisted object is returned as-is.
+      migrate: (persistedState, version) => {
+        if (version >= 3 || !persistedState?.items) return persistedState
+        const REMAP = { Fixed: 'Bills', Variable: 'Spending', Savings: 'Goals', Insurance: 'Other', Investments: 'Other' }
+        const needsRemap = (i) => i.areaId === 'finance' && REMAP[i.bucket]
+        if (!persistedState.items.some(needsRemap)) return persistedState
+        const stamp = Date.now()
+        return {
+          ...persistedState,
+          items: persistedState.items.map((i) =>
+            needsRemap(i) ? { ...i, bucket: REMAP[i.bucket], updatedAt: stamp } : i,
+          ),
+        }
+      },
     },
   ),
 )
