@@ -215,7 +215,7 @@
   .month-list { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
   .month-list .item-row {
     flex-direction: column; justify-content: center; text-align: center;
-    padding: 20px 12px; border-left: none; border-top: 3px solid var(--area-c1, var(--border));
+    padding: 20px 12px; border-left: 1px solid var(--border); border-top: 3px solid var(--area-c1, var(--border));
   }
 }
 .journal-compose textarea {
@@ -354,4 +354,3 @@ a.item-row { text-decoration: none; color: inherit; }
 .day-row.has-entry { cursor: pointer; }
 .day-row.today .item-title { font-weight: 600; }
 
-.button-grid { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
