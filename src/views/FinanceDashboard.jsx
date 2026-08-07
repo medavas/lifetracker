@@ -12,7 +12,9 @@ import BillsSection from '../components/finance/BillsSection'
 import BudgetSection from '../components/finance/BudgetSection'
 import PlanSection from '../components/finance/PlanSection'
 import SubscriptionsSection from '../components/finance/SubscriptionsSection'
+import GoalsSection from '../components/finance/GoalsSection'
 import ItemSheet from '../components/ItemSheet'
+import ItemList from '../components/ItemList'
 
 /**
  * The 'money' area kind's dedicated page — the one view not rendered by
@@ -23,8 +25,10 @@ export default function FinanceDashboard() {
   const area = areaById('finance')
   const [month, setMonth] = useState(() => monthKey(todayKey()))
   const [sheetItem, setSheetItem] = useState(null)
+  const [otherDraft, setOtherDraft] = useState('')
   const items = useStore(useShallow(selectAreaItems('finance')))
   const logs = useStore((s) => s.logs)
+  const addItem = useStore((s) => s.addItem)
 
   const summary = budgetSummary(items, logs, month)
   const current = month === monthKey(todayKey())
@@ -66,15 +70,34 @@ export default function FinanceDashboard() {
       <div className="fin-grid">
         <div className="fin-col">
           <BudgetSection items={items} logs={logs} month={month} onEdit={setSheetItem} />
+          <GoalsSection items={items} logs={logs} onEdit={setSheetItem} />
         </div>
         <div className="fin-col">
           <SubscriptionsSection items={items} onEdit={setSheetItem} />
           <PlanSection items={items} onEdit={setSheetItem} />
         </div>
       </div>
+
+      <section className="fin-section card">
+        <h3>Other</h3>
+        <ItemList items={items.filter((i) => i.bucket === 'Other')} areaId="finance" />
+        <div className="fin-addrow">
+          <input
+            className="fin-title" placeholder="Add a note-style item…"
+            value={otherDraft} onChange={(e) => setOtherDraft(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && otherDraft.trim()) {
+                addItem('finance', otherDraft, { bucket: 'Other' })
+                setOtherDraft('')
+              }
+            }}
+          />
+        </div>
+      </section>
+
       {sheetItem && <ItemSheet item={sheetItem} onClose={() => setSheetItem(null)} />}
 
-      {/* Task 9-10 fill these in: GoalsSection, SpendChart, Other */}
+      {/* Task 10 fills this in: SpendChart */}
     </div>
   )
 }
