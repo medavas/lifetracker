@@ -8,8 +8,10 @@ import { formatCents } from '../lib/money'
 import { todayKey } from '../lib/rewards'
 import AreaIcon from '../components/AreaIcon'
 import QuickSpend from '../components/finance/QuickSpend'
+import BillsSection from '../components/finance/BillsSection'
 import BudgetSection from '../components/finance/BudgetSection'
 import PlanSection from '../components/finance/PlanSection'
+import SubscriptionsSection from '../components/finance/SubscriptionsSection'
 import ItemSheet from '../components/ItemSheet'
 
 /**
@@ -60,18 +62,19 @@ export default function FinanceDashboard() {
       </section>
 
       <QuickSpend categories={items.filter((i) => i.bucket === 'Spending')} />
+      <BillsSection items={items} onEdit={setSheetItem} />
       <div className="fin-grid">
         <div className="fin-col">
           <BudgetSection items={items} logs={logs} month={month} onEdit={setSheetItem} />
         </div>
         <div className="fin-col">
+          <SubscriptionsSection items={items} onEdit={setSheetItem} />
           <PlanSection items={items} onEdit={setSheetItem} />
         </div>
       </div>
       {sheetItem && <ItemSheet item={sheetItem} onClose={() => setSheetItem(null)} />}
 
-      {/* Tasks 8-10 fill these in: BillsSection, SubscriptionsSection,
-          GoalsSection, SpendChart, Other */}
+      {/* Task 9-10 fill these in: GoalsSection, SpendChart, Other */}
     </div>
   )
 }
