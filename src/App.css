@@ -340,3 +340,15 @@ a.item-row { text-decoration: none; color: inherit; }
 .day-row.today .item-title { font-weight: 600; }
 
 .button-grid { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+
+/* ── Projects (delinearized) ─────────────────────────────── */
+.projects-list-pane { display: block; }
+.projects-detail-pane { display: none; }
+.projects-shell.has-detail .projects-list-pane { display: none; }
+.projects-shell.has-detail .projects-detail-pane { display: block; }
+.project-progress { font-size: 12px; font-weight: 600; color: var(--text-secondary); flex: none; }
+
+@media (min-width: 900px) {
+  .projects-shell { display: grid; grid-template-columns: 320px 1fr; gap: 20px; align-items: start; }
+  .projects-list-pane, .projects-detail-pane { display: block !important; }
+}

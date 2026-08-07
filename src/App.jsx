@@ -6,6 +6,7 @@ import QuickAdd from './components/QuickAdd'
 import Dashboard from './views/Dashboard'
 import AreasGrid from './views/AreasGrid'
 import AreaView from './views/AreaView'
+import Projects from './views/Projects'
 import Journal from './views/Journal'
 import YearList from './views/journal/YearList'
 import MonthList from './views/journal/MonthList'
@@ -36,6 +37,8 @@ export default function App() {
           <Route path="/" element={<Dashboard />} />
           <Route path="/areas" element={<AreasGrid />} />
           <Route path="/area/:areaId" element={<AreaView />} />
+          <Route path="/projects" element={<Projects />} />
+          <Route path="/projects/:projectId" element={<Projects />} />
           <Route path="/journal" element={<Journal />} />
           <Route path="/journal/years" element={<YearList />} />
           <Route path="/journal/years/:year" element={<MonthList />} />
