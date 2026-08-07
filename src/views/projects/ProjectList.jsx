@@ -1,6 +1,13 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Check, Plus } from 'lucide-react'
+import { Check, Plus, GripVertical } from 'lucide-react'
+import {
+  DndContext, closestCenter, PointerSensor, TouchSensor, useSensor, useSensors,
+} from '@dnd-kit/core'
+import {
+  SortableContext, verticalListSortingStrategy, useSortable, arrayMove,
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 import { useShallow } from 'zustand/react/shallow'
 import { useStore, selectAreaItems } from '../../lib/store'
 import { areaById } from '../../data/areas'
@@ -16,10 +23,15 @@ function ProjectRow({ project }) {
   const hasSubItems = subItems.length > 0
   const doneCount = subItems.filter((i) => i.status === 'done').length
 
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
+    useSortable({ id: project.id })
+
   return (
     <Link
+      ref={setNodeRef}
+      style={{ transform: CSS.Transform.toString(transform), transition }}
       to={`/projects/${project.id}`}
-      className={`item-row ${!hasSubItems && project.status === 'done' ? 'done' : ''}`}
+      className={`item-row ${!hasSubItems && project.status === 'done' ? 'done' : ''} ${isDragging ? 'dragging' : ''}`}
     >
       {!hasSubItems ? (
         <button
@@ -36,6 +48,15 @@ function ProjectRow({ project }) {
         <div className="project-progress">{doneCount}/{subItems.length}</div>
       )}
       <div className="item-title">{project.title}</div>
+      <span
+        className="drag-handle"
+        {...attributes}
+        {...listeners}
+        onClick={(e) => e.preventDefault()}
+        aria-label="Reorder"
+      >
+        <GripVertical size={15} strokeWidth={1.75} />
+      </span>
     </Link>
   )
 }
@@ -48,16 +69,30 @@ function ProjectRow({ project }) {
 export default function ProjectList() {
   const area = areaById('projects')
   const addItem = useStore((s) => s.addItem)
-  const allItems = useStore(useShallow(selectAreaItems('projects')))
-  const topLevel = useMemo(() => allItems.filter((i) => !i.parentId), [allItems])
+  const reorderItems = useStore((s) => s.reorderItems)
 
   const [bucket, setBucket] = useState('All')
   const [draft, setDraft] = useState('')
+  const [showArchived, setShowArchived] = useState(false)
+
+  const allItems = useStore(useShallow(selectAreaItems('projects', showArchived)))
+  const topLevel = useMemo(() => allItems.filter((i) => !i.parentId), [allItems])
 
   const projects = useMemo(
     () => (bucket === 'All' ? topLevel : topLevel.filter((i) => i.bucket === bucket)),
     [topLevel, bucket],
   )
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 160, tolerance: 6 } }),
+  )
+
+  const onDragEnd = ({ active, over }) => {
+    if (!over || active.id === over.id) return
+    const ids = projects.map((p) => p.id)
+    reorderItems('projects', arrayMove(ids, ids.indexOf(active.id), ids.indexOf(over.id)))
+  }
 
   const add = () => {
     if (!draft.trim()) return
@@ -77,11 +112,19 @@ export default function ProjectList() {
         ))}
       </div>
 
-      {projects.length === 0 && <div className="empty-note">No projects yet. Add one below.</div>}
+      {projects.length === 0 && (
+        <div className="empty-note">
+          {showArchived ? 'No archived projects.' : 'No projects yet. Add one below.'}
+        </div>
+      )}
 
-      <div className="item-list">
-        {projects.map((p) => <ProjectRow key={p.id} project={p} />)}
-      </div>
+      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
+        <SortableContext items={projects.map((p) => p.id)} strategy={verticalListSortingStrategy}>
+          <div className="item-list">
+            {projects.map((p) => <ProjectRow key={p.id} project={p} />)}
+          </div>
+        </SortableContext>
+      </DndContext>
 
       <div className="add-row">
         <input
@@ -92,6 +135,10 @@ export default function ProjectList() {
         />
         <button onClick={add} aria-label="Add"><Plus size={20} strokeWidth={2} /></button>
       </div>
+
+      <button className="archived-toggle" onClick={() => setShowArchived(!showArchived)}>
+        {showArchived ? 'Back to active' : 'View archived'}
+      </button>
     </>
   )
 }
