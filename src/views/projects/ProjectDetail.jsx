@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ChevronLeft, Check, Plus, GripVertical } from 'lucide-react'
+import { ChevronLeft, Check, Plus, GripVertical, Trash2 } from 'lucide-react'
 import {
   DndContext, closestCenter, PointerSensor, TouchSensor, useSensor, useSensors,
 } from '@dnd-kit/core'
@@ -12,8 +12,8 @@ import { useShallow } from 'zustand/react/shallow'
 import { useStore, selectItemNotes, selectSubItems } from '../../lib/store'
 import { areaById } from '../../data/areas'
 
-/** One row in a project's checklist: title, checkbox, drag handle only -- no notes, no further drill-down. */
-function SortableSubTask({ item, onToggle }) {
+/** One row in a project's checklist: title, checkbox, delete, drag handle -- no notes, no further drill-down. */
+function SortableSubTask({ item, onToggle, onDelete }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id: item.id })
 
@@ -31,6 +31,13 @@ function SortableSubTask({ item, onToggle }) {
         <Check size={14} strokeWidth={2.5} />
       </button>
       <div className="item-title">{item.title}</div>
+      <button
+        className="detail-btn"
+        onClick={() => onDelete(item.id)}
+        aria-label={`Delete ${item.title}`}
+      >
+        <Trash2 size={16} strokeWidth={1.75} />
+      </button>
       <span className="drag-handle" {...attributes} {...listeners} aria-label="Reorder">
         <GripVertical size={15} strokeWidth={1.75} />
       </span>
@@ -59,7 +66,15 @@ export default function ProjectDetail() {
   // done, so no extra subscription is needed beyond reading this each render.
   const hydrated = useStore.persist.hasHydrated()
 
-  const project = useStore((s) => s.items.find((i) => i.id === projectId && !i.deletedAt))
+  // A sub-task's id or a foreign-area item's id must resolve exactly like a
+  // nonexistent id does here -- this is the only route into ProjectDetail,
+  // and nothing upstream stops a URL from naming either (see finding #3:
+  // the one-level nesting cap and "Projects only" are otherwise just
+  // conventions with no code enforcing them at this seam).
+  const project = useStore((s) => {
+    const item = s.items.find((i) => i.id === projectId && !i.deletedAt)
+    return item && !item.parentId && item.areaId === 'projects' ? item : undefined
+  })
   const updateItem = useStore((s) => s.updateItem)
   const toggleDone = useStore((s) => s.toggleDone)
   const archiveItem = useStore((s) => s.archiveItem)
@@ -151,20 +166,22 @@ export default function ProjectDetail() {
         <textarea rows={3} value={details} onChange={(e) => setDetails(e.target.value)} onBlur={save} placeholder="Notes, links, context…" />
       </div>
 
-      <div className="field">
-        <label>Bucket</label>
-        <div className="link-chips">
-          {area.buckets.map((b) => (
-            <button
-              key={b}
-              className={`chip ${project.bucket === b ? 'on' : ''}`}
-              onClick={() => updateItem(projectId, { bucket: project.bucket === b ? null : b })}
-            >
-              {b}
-            </button>
-          ))}
+      {area?.buckets.length > 0 && (
+        <div className="field">
+          <label>Bucket</label>
+          <div className="link-chips">
+            {area.buckets.map((b) => (
+              <button
+                key={b}
+                className={`chip ${project.bucket === b ? 'on' : ''}`}
+                onClick={() => updateItem(projectId, { bucket: project.bucket === b ? null : b })}
+              >
+                {b}
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       <div className="field">
         <label>
@@ -176,7 +193,7 @@ export default function ProjectDetail() {
           <SortableContext items={subItems.map((i) => i.id)} strategy={verticalListSortingStrategy}>
             <div className="item-list">
               {subItems.map((item) => (
-                <SortableSubTask key={item.id} item={item} onToggle={toggleDone} />
+                <SortableSubTask key={item.id} item={item} onToggle={toggleDone} onDelete={deleteItem} />
               ))}
             </div>
           </SortableContext>
