@@ -104,16 +104,22 @@ describe('routing', () => {
   })
 })
 
-describe('fitness top priorities', () => {
+describe('habit-bucket areas', () => {
   it('names Top Priorities as the fitness habit bucket, listed first', () => {
     const fitness = AREAS.find((a) => a.id === 'fitness')
     expect(fitness.habitBucket).toBe('Top Priorities')
     expect(fitness.buckets[0]).toBe('Top Priorities')
   })
 
+  it('names Today\'s Meals as the diet habit bucket, listed first', () => {
+    const diet = AREAS.find((a) => a.id === 'diet')
+    expect(diet.habitBucket).toBe('Today\'s Meals')
+    expect(diet.buckets[0]).toBe('Today\'s Meals')
+  })
+
   it('leaves every other area without a habit bucket', () => {
     for (const a of AREAS) {
-      if (a.id === 'fitness') continue
+      if (a.id === 'fitness' || a.id === 'diet') continue
       expect(a.habitBucket).toBeUndefined()
     }
   })

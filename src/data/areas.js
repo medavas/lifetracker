@@ -31,7 +31,7 @@
  * like a Habit instead of completing once like a task — the item's own
  * `bucket` field is the source of truth, so moving an item into or out of
  * that bucket switches its behavior with it. Undefined for every area that
- * doesn't opt in. Only `fitness` does today.
+ * doesn't opt in. `fitness` and `diet` do today.
  */
 export const AREAS = [
   {
@@ -58,8 +58,9 @@ export const AREAS = [
     id: 'diet', name: 'Diet', icon: 'Salad', kind: 'list',
     trim: 'g',
     daily: { order: 2, series: 3 },
+    habitBucket: "Today's Meals",
     keywords: ['eat', 'food', 'meal', 'diet', 'nutrition', 'recipe'],
-    buckets: ['Plan', 'Groceries', 'Recipes'],
+    buckets: ["Today's Meals", 'Plan', 'Groceries', 'Recipes'],
   },
   {
     id: 'health', name: 'Health', icon: 'Stethoscope', kind: 'list',
