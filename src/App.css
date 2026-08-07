@@ -205,6 +205,19 @@
 /* ── Journal ─────────────────────────────────────────────── */
 .journal-compose { margin-bottom: 16px; }
 .year-row.current .item-title { font-weight: 600; }
+.month-row.current .item-title { font-weight: 600; }
+.month-row.inert { cursor: default; }
+.month-row.inert .item-title { color: var(--text-muted); }
+
+.month-list { display: flex; flex-direction: column; gap: 8px; }
+
+@media (min-width: 900px) {
+  .month-list { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  .month-list .item-row {
+    flex-direction: column; justify-content: center; text-align: center;
+    padding: 20px 12px; border-left: none; border-top: 3px solid var(--area-c1, var(--border));
+  }
+}
 .journal-compose textarea {
   width: 100%; min-height: 88px; padding: 12px 14px; font-size: 15px; resize: vertical;
 }
