@@ -204,6 +204,7 @@
 
 /* ── Journal ─────────────────────────────────────────────── */
 .journal-compose { margin-bottom: 16px; }
+.year-row.current .item-title { font-weight: 600; }
 .journal-compose textarea {
   width: 100%; min-height: 88px; padding: 12px 14px; font-size: 15px; resize: vertical;
 }
