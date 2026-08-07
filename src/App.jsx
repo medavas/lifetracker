@@ -1,4 +1,4 @@
-import { HashRouter, Routes, Route } from 'react-router-dom'
+import { HashRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import AppShell from './components/AppShell'
 import BottomNav from './components/BottomNav'
@@ -6,6 +6,7 @@ import QuickAdd from './components/QuickAdd'
 import Dashboard from './views/Dashboard'
 import AreasGrid from './views/AreasGrid'
 import AreaView from './views/AreaView'
+import Projects from './views/Projects'
 import Journal from './views/Journal'
 import YearList from './views/journal/YearList'
 import MonthList from './views/journal/MonthList'
@@ -36,8 +37,11 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Dashboard />} />
           <Route path="/areas" element={<AreasGrid />} />
+          <Route path="/area/projects" element={<Navigate to="/projects" replace />} />
           <Route path="/area/:areaId" element={<AreaView />} />
           <Route path="/finance" element={<FinanceDashboard />} />
+          <Route path="/projects" element={<Projects />} />
+          <Route path="/projects/:projectId" element={<Projects />} />
           <Route path="/journal" element={<Journal />} />
           <Route path="/journal/years" element={<YearList />} />
           <Route path="/journal/years/:year" element={<MonthList />} />

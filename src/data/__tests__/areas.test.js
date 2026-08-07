@@ -91,11 +91,12 @@ describe('routing', () => {
     expect(routes.habits).toBe('/habits')
     expect(routes.nudges).toBe('/nudges')
     expect(routes.finance).toBe('/finance')
+    expect(routes.projects).toBe('/projects')
   })
 
   it('routes every other area through the generic area view', () => {
     for (const a of AREAS) {
-      if (['journal', 'habits', 'nudges', 'finance'].includes(a.id)) continue
+      if (['journal', 'habits', 'nudges', 'finance', 'projects'].includes(a.id)) continue
       expect(routeFor(a)).toBe(`/area/${a.id}`)
     }
   })

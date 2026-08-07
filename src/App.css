@@ -256,9 +256,9 @@
 @keyframes sheet-up { from { transform: translate(-50%, 24px); opacity: 0; } to { transform: translate(-50%, 0); opacity: 1; } }
 .sheet-grab { width: 40px; height: 4px; border-radius: 2px; background: var(--border); margin: 0 auto 14px; }
 .sheet h2 { display: flex; align-items: center; gap: 8px; font-size: 16px; font-weight: 600; margin: 0 0 12px; }
-.sheet .field { margin-bottom: 12px; }
-.sheet .field label { display: block; font-size: 11px; font-weight: 600; color: var(--text-muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.07em; }
-.sheet .field input, .sheet .field textarea { width: 100%; padding: 10px 12px; }
+.field { margin-bottom: 12px; }
+.field label { display: block; font-size: 11px; font-weight: 600; color: var(--text-muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.07em; }
+.field input, .field textarea { width: 100%; padding: 10px 12px; }
 .sheet-actions { display: flex; gap: 8px; margin-top: 16px; }
 .sheet-actions .btn-primary { flex: 1; text-align: center; }
 .btn-ghost {
@@ -408,4 +408,16 @@ a.item-row { text-decoration: none; color: inherit; }
 @media (min-width: 900px) {
   .fin-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 16px; align-items: start; }
   .fin-grid > .fin-col { min-width: 0; }
+}
+
+/* ── Projects (delinearized) ─────────────────────────────── */
+.projects-list-pane { display: block; }
+.projects-detail-pane { display: none; }
+.projects-shell.has-detail .projects-list-pane { display: none; }
+.projects-shell.has-detail .projects-detail-pane { display: block; }
+.project-progress { font-size: 12px; font-weight: 600; color: var(--text-secondary); flex: none; }
+
+@media (min-width: 900px) {
+  .projects-shell { display: grid; grid-template-columns: 320px 1fr; gap: 20px; align-items: start; }
+  .projects-list-pane, .projects-detail-pane { display: block !important; }
 }

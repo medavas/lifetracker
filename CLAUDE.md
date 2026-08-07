@@ -27,6 +27,9 @@ really just filtered views over 4 data primitives:
    Finance (money) items additionally carry { amount, cadence, nextDue }
    and money LOGs carry { amount, note?, prevDue? } — the same deliberate
    concession, cents-integer amounts, no 5th primitive.
+   A project sub-task additionally carries `{ parentId }` — the same kind of
+   concession, one level of nesting only: a sub-task cannot itself have
+   sub-tasks (enforced in `addItem`, not just by convention).
    `bucket` is not purely a cosmetic label: when it matches the item's area's
    `habitBucket`, it determines which store action the UI wires the item to
    (`toggleHabitToday` instead of `toggleDone`) — moving an item into or out
@@ -44,6 +47,11 @@ really just filtered views over 4 data primitives:
 
 - ONE generic AreaView component renders every 'list'/'library' area,
   parameterized by the area config. Never create a FinanceView, DietView, etc.
+  Projects is the one deliberate, narrow exception (`src/views/Projects.jsx`
+  + `views/projects/{ProjectList,ProjectDetail}.jsx`, wired via `areas.js`'s
+  `route` field): it owns a per-item checklist and a notes feed, which a flat
+  list row can't express. This is not precedent for giving other areas their
+  own views.
 - Streaks and stats are always COMPUTED from logs, never stored, so they
   can't drift.
 - Unchecking an item is NOT archiving. Uncheck = back to `'open'`. Archive is

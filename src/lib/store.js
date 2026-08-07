@@ -6,6 +6,8 @@
  *          title, details, type, status, order, createdAt, updatedAt,
  *          completedAt }
  *          Nudge timers additionally carry { intervalMin, enabled }.
+ *          A project sub-task additionally carries { parentId }, one level
+ *          of nesting only — a sub-task cannot itself have sub-tasks.
  *  Log   - a dated record: habit check-ins, completions { id, itemId, areaId,
  *          kind, date, createdAt }
  *  Note  - journal entries, per-item notes, quotes      { id, areaId, itemId?,
@@ -47,6 +49,14 @@ export const useStore = create(
         const items = get().items
         const order =
           Math.max(0, ...items.filter((i) => i.areaId === areaId).map((i) => i.order)) + 1
+        // Structural one-level-nesting cap: a parentId is only honored when
+        // its target itself has no parentId. Without this, a future call
+        // site (or a stray URL — see ProjectDetail's own view-level guard)
+        // could attach a sub-task to another sub-task, producing a
+        // grandchild — the one architectural constraint this feature names.
+        const targetParent =
+          extra.parentId != null ? get().items.find((i) => i.id === extra.parentId) : null
+        const parentId = targetParent && !targetParent.parentId ? extra.parentId : undefined
         const item = {
           id: uid(),
           areaId,
@@ -73,8 +83,12 @@ export const useStore = create(
           ...(extra.amount != null && { amount: extra.amount }),
           ...(extra.cadence != null && { cadence: extra.cadence }),
           ...(extra.nextDue != null && { nextDue: extra.nextDue }),
+          // Project sub-tasks only. Same conditional-attachment pattern as
+          // intervalMin above — absent everywhere else in the app.
+          ...(parentId != null && { parentId }),
         }
         set({ items: [...items, item] })
+        if (parentId != null) get().syncParentCompletion(parentId)
         return item
       },
 
@@ -85,10 +99,32 @@ export const useStore = create(
           ),
         }),
 
-      /** Toggle done. Completing awards points + a log; unchecking reverses them. */
+      /**
+       * Toggle done. For any item without a parentId (every item everywhere
+       * else, including a project itself), this is unchanged: completing
+       * awards points + a log, unchecking reverses them. A sub-task
+       * (parentId set) takes a lighter path — its own status/completedAt
+       * flips, but it never writes a complete log or changes points; only
+       * the project's own derived completion, via syncParentCompletion
+       * below, ever does that.
+       */
       toggleDone: (id) => {
         const item = get().items.find((i) => i.id === id)
         if (!item) return
+
+        if (item.parentId) {
+          const flippedToDone = item.status !== 'done'
+          set({
+            items: get().items.map((i) =>
+              i.id === id
+                ? { ...i, status: flippedToDone ? 'done' : 'open', completedAt: flippedToDone ? now() : null, updatedAt: now() }
+                : i,
+            ),
+          })
+          get().syncParentCompletion(item.parentId)
+          return
+        }
+
         if (item.status === 'done') {
           const logs = get().logs.map((l) =>
             l.itemId === id && l.kind === 'complete' && l.date === todayKey() && !l.deletedAt
@@ -117,24 +153,86 @@ export const useStore = create(
         }
       },
 
-      /** Explicit archive/restore — separate from done. */
-      archiveItem: (id) => get().updateItem(id, { status: 'archived' }),
-      restoreItem: (id) => get().updateItem(id, { status: 'open' }),
+      /**
+       * Recomputes a project's derived completion from its live (not
+       * deleted, not archived) sub-tasks and, only if that disagrees with
+       * its current status, flips it via the toggleDone above — reusing its
+       * points-award/log-write/tombstone logic rather than duplicating it.
+       * A project with zero live sub-tasks is untouched: it stays
+       * independently toggleable exactly as before this feature existed.
+       * An archived project is frozen out of the cascade entirely — archive
+       * is an explicit user action, never implied by a sub-task changing
+       * underneath it (see the file-level invariant at the top).
+       */
+      syncParentCompletion: (parentId) => {
+        if (!parentId) return
+        const parent = get().items.find((i) => i.id === parentId && !i.deletedAt)
+        if (!parent || parent.status === 'archived') return
+        const subItems = get().items.filter(
+          (i) => i.parentId === parentId && !i.deletedAt && i.status !== 'archived',
+        )
+        if (subItems.length === 0) return
+        const allDone = subItems.every((i) => i.status === 'done')
+        if (allDone && parent.status !== 'done') get().toggleDone(parentId)
+        else if (!allDone && parent.status === 'done') get().toggleDone(parentId)
+      },
+
+      /** Explicit archive/restore — separate from done. Each syncs the target's parent, if it has one. */
+      archiveItem: (id) => {
+        const item = get().items.find((i) => i.id === id)
+        get().updateItem(id, { status: 'archived' })
+        if (item?.parentId) get().syncParentCompletion(item.parentId)
+      },
+      restoreItem: (id) => {
+        const item = get().items.find((i) => i.id === id)
+        get().updateItem(id, { status: 'open' })
+        if (item?.parentId) get().syncParentCompletion(item.parentId)
+        // The item may itself be a parent (a project) — re-derive its
+        // status from its own live sub-tasks too, so restoring a project
+        // whose sub-tasks were already all done comes back as 'done'
+        // rather than stranding it at 'open' with no live checkbox. This is
+        // a direct status patch rather than routing through
+        // syncParentCompletion/toggleDone: archiveItem never tombstones
+        // whatever `complete` log the project earned the first time it
+        // finished, so replaying toggleDone's completion path here would
+        // push a second live log for the same completion and double the
+        // points it already banked.
+        const subItems = get().items.filter(
+          (i) => i.parentId === id && !i.deletedAt && i.status !== 'archived',
+        )
+        if (subItems.length > 0 && subItems.every((i) => i.status === 'done')) {
+          get().updateItem(id, { status: 'done', completedAt: now() })
+        }
+      },
       deleteItem: (id) => {
+        const item = get().items.find((i) => i.id === id)
         const stamp = now()
         const logs = get().logs.map((l) => (l.itemId === id && !l.deletedAt ? { ...l, deletedAt: stamp, updatedAt: stamp } : l))
         set({
-          items: get().items.map((i) => (i.id === id ? { ...i, deletedAt: stamp, updatedAt: stamp } : i)),
+          items: get().items.map((i) =>
+            i.id === id || i.parentId === id ? { ...i, deletedAt: stamp, updatedAt: stamp } : i,
+          ),
           notes: get().notes.map((n) => (n.itemId === id && !n.deletedAt ? { ...n, deletedAt: stamp, updatedAt: stamp } : n)),
           logs,
           points: computePoints(logs),
         })
+        if (item?.parentId) get().syncParentCompletion(item.parentId)
       },
 
       reorderItems: (areaId, orderedIds) =>
         set({
           items: get().items.map((i) =>
             i.areaId === areaId && orderedIds.includes(i.id)
+              ? { ...i, order: orderedIds.indexOf(i.id), updatedAt: now() }
+              : i,
+          ),
+        }),
+
+      /** Sub-task drag-reorder, scoped by parentId instead of areaId — mirrors reorderItems exactly. */
+      reorderSubItems: (parentId, orderedIds) =>
+        set({
+          items: get().items.map((i) =>
+            i.parentId === parentId && orderedIds.includes(i.id)
               ? { ...i, order: orderedIds.indexOf(i.id), updatedAt: now() }
               : i,
           ),
@@ -297,6 +395,11 @@ export const selectAreaItems = (areaId, showArchived = false) => (s) =>
 
 export const selectItemNotes = (itemId) => (s) =>
   s.notes.filter((n) => !n.deletedAt && n.itemId === itemId).sort((a, b) => b.createdAt - a.createdAt)
+
+export const selectSubItems = (parentId) => (s) =>
+  s.items
+    .filter((i) => !i.deletedAt && i.parentId === parentId && i.status !== 'archived')
+    .sort((a, b) => a.order - b.order)
 
 export const selectJournal = (s) =>
   s.notes.filter((n) => !n.deletedAt && n.areaId === 'journal' && !n.itemId).sort((a, b) => b.createdAt - a.createdAt)

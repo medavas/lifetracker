@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest'
-import { useStore, selectAreaItems } from '../store.js'
+import { useStore, selectAreaItems, selectSubItems } from '../store.js'
 
 const reset = () => useStore.setState({ items: [], notes: [], logs: [], points: 0 })
 
@@ -205,5 +205,180 @@ describe('money logs', () => {
     const merged = useStore.getState().items.find((i) => i.id === bill.id)
     expect(merged.amount).toBe(125000)
     expect(merged.nextDue).toBe('2026-10-01')
+  })
+})
+
+describe('project sub-tasks', () => {
+  beforeEach(reset)
+
+  it('a project with no sub-tasks stays independently toggleable', () => {
+    const project = useStore.getState().addItem('projects', 'Redesign kitchen')
+    useStore.getState().toggleDone(project.id)
+    expect(useStore.getState().items.find((i) => i.id === project.id).status).toBe('done')
+    expect(useStore.getState().points).toBe(10)
+  })
+
+  it('adding the first sub-task does not retroactively complete or reopen the project', () => {
+    const project = useStore.getState().addItem('projects', 'Redesign kitchen')
+    useStore.getState().addItem('projects', 'Pick paint', { parentId: project.id })
+    expect(useStore.getState().items.find((i) => i.id === project.id).status).toBe('open')
+    expect(useStore.getState().points).toBe(0)
+  })
+
+  it('completing the last open sub-task completes the project and awards its points once', () => {
+    const project = useStore.getState().addItem('projects', 'Redesign kitchen')
+    const a = useStore.getState().addItem('projects', 'Pick paint', { parentId: project.id })
+    const b = useStore.getState().addItem('projects', 'Order tile', { parentId: project.id })
+    useStore.getState().toggleDone(a.id)
+    expect(useStore.getState().items.find((i) => i.id === project.id).status).toBe('open')
+    expect(useStore.getState().points).toBe(0)
+    useStore.getState().toggleDone(b.id)
+    expect(useStore.getState().items.find((i) => i.id === project.id).status).toBe('done')
+    expect(useStore.getState().points).toBe(10)
+  })
+
+  it('a sub-task toggle never changes points or writes a complete log on its own', () => {
+    const project = useStore.getState().addItem('projects', 'Redesign kitchen')
+    const a = useStore.getState().addItem('projects', 'Pick paint', { parentId: project.id })
+    // A second, still-open sub-task keeps the project's derived completion
+    // from cascading here, isolating what this test is actually about: `a`'s
+    // own toggle never touches points/logs on its own account.
+    useStore.getState().addItem('projects', 'Order tile', { parentId: project.id })
+    useStore.getState().toggleDone(a.id)
+    expect(useStore.getState().points).toBe(0)
+    expect(useStore.getState().logs.some((l) => l.kind === 'complete')).toBe(false)
+    expect(useStore.getState().items.find((i) => i.id === a.id).status).toBe('done')
+  })
+
+  it('unchecking any sub-task on a completed project reopens it and reverts its points', () => {
+    const project = useStore.getState().addItem('projects', 'Redesign kitchen')
+    const a = useStore.getState().addItem('projects', 'Pick paint', { parentId: project.id })
+    useStore.getState().toggleDone(a.id)
+    expect(useStore.getState().items.find((i) => i.id === project.id).status).toBe('done')
+    expect(useStore.getState().points).toBe(10)
+    useStore.getState().toggleDone(a.id)
+    expect(useStore.getState().items.find((i) => i.id === project.id).status).toBe('open')
+    expect(useStore.getState().points).toBe(0)
+  })
+
+  it('does not un-archive a project when its last live sub-task completes', () => {
+    const project = useStore.getState().addItem('projects', 'Redesign kitchen')
+    const a = useStore.getState().addItem('projects', 'Pick paint', { parentId: project.id })
+    useStore.getState().archiveItem(project.id)
+    useStore.getState().toggleDone(a.id)
+    expect(useStore.getState().items.find((i) => i.id === project.id).status).toBe('archived')
+    expect(useStore.getState().points).toBe(0)
+  })
+
+  it('adding a new open sub-task to an already-completed project reopens it', () => {
+    const project = useStore.getState().addItem('projects', 'Redesign kitchen')
+    const a = useStore.getState().addItem('projects', 'Pick paint', { parentId: project.id })
+    useStore.getState().toggleDone(a.id)
+    expect(useStore.getState().items.find((i) => i.id === project.id).status).toBe('done')
+    useStore.getState().addItem('projects', 'Order tile', { parentId: project.id })
+    expect(useStore.getState().items.find((i) => i.id === project.id).status).toBe('open')
+    expect(useStore.getState().points).toBe(0)
+  })
+
+  it('archiving the last incomplete sub-task completes the project', () => {
+    const project = useStore.getState().addItem('projects', 'Redesign kitchen')
+    const a = useStore.getState().addItem('projects', 'Pick paint', { parentId: project.id })
+    const b = useStore.getState().addItem('projects', 'Order tile', { parentId: project.id })
+    useStore.getState().toggleDone(a.id)
+    useStore.getState().archiveItem(b.id)
+    expect(useStore.getState().items.find((i) => i.id === project.id).status).toBe('done')
+    expect(useStore.getState().points).toBe(10)
+  })
+
+  it('restoring an archived incomplete sub-task reopens a completed project', () => {
+    const project = useStore.getState().addItem('projects', 'Redesign kitchen')
+    const a = useStore.getState().addItem('projects', 'Pick paint', { parentId: project.id })
+    const b = useStore.getState().addItem('projects', 'Order tile', { parentId: project.id })
+    useStore.getState().archiveItem(b.id)
+    useStore.getState().toggleDone(a.id)
+    expect(useStore.getState().items.find((i) => i.id === project.id).status).toBe('done')
+    useStore.getState().restoreItem(b.id)
+    expect(useStore.getState().items.find((i) => i.id === project.id).status).toBe('open')
+  })
+
+  it('deleting a project tombstones its sub-tasks', () => {
+    const project = useStore.getState().addItem('projects', 'Redesign kitchen')
+    const a = useStore.getState().addItem('projects', 'Pick paint', { parentId: project.id })
+    useStore.getState().deleteItem(project.id)
+    expect(useStore.getState().items.find((i) => i.id === a.id).deletedAt).toBeTruthy()
+  })
+
+  it('leaves ordinary items free of parentId', () => {
+    const it = useStore.getState().addItem('projects', 'ship it')
+    expect('parentId' in it).toBe(false)
+  })
+
+  it('selectSubItems returns only that parent\'s live sub-tasks, sorted by order', () => {
+    const project = useStore.getState().addItem('projects', 'Redesign kitchen')
+    const other = useStore.getState().addItem('projects', 'Other project')
+    const a = useStore.getState().addItem('projects', 'Pick paint', { parentId: project.id })
+    const b = useStore.getState().addItem('projects', 'Order tile', { parentId: project.id })
+    useStore.getState().addItem('projects', 'Unrelated', { parentId: other.id })
+    const subs = selectSubItems(project.id)(useStore.getState())
+    expect(subs.map((i) => i.id)).toEqual([a.id, b.id])
+  })
+
+  it('reorderSubItems only touches its own parent\'s children', () => {
+    const project = useStore.getState().addItem('projects', 'Redesign kitchen')
+    const a = useStore.getState().addItem('projects', 'Pick paint', { parentId: project.id })
+    const b = useStore.getState().addItem('projects', 'Order tile', { parentId: project.id })
+    const unrelated = useStore.getState().addItem('projects', 'Unrelated top-level')
+    const unrelatedOrderBefore = unrelated.order
+    useStore.getState().reorderSubItems(project.id, [b.id, a.id])
+    expect(useStore.getState().items.find((i) => i.id === a.id).order).toBe(1)
+    expect(useStore.getState().items.find((i) => i.id === b.id).order).toBe(0)
+    expect(useStore.getState().items.find((i) => i.id === unrelated.id).order).toBe(unrelatedOrderBefore)
+  })
+
+  it('refuses to attach a sub-task to another sub-task, enforcing one level of nesting', () => {
+    const project = useStore.getState().addItem('projects', 'Redesign kitchen')
+    const a = useStore.getState().addItem('projects', 'Pick paint', { parentId: project.id })
+    const grandchild = useStore.getState().addItem('projects', 'Grandchild', { parentId: a.id })
+    expect('parentId' in grandchild).toBe(false)
+    const stored = useStore.getState().items.find((i) => i.id === grandchild.id)
+    expect('parentId' in stored).toBe(false)
+    // `a` itself must not have gained a child either, confirming no link was made at all.
+    expect(useStore.getState().items.some((i) => i.parentId === a.id)).toBe(false)
+    expect(useStore.getState().points).toBe(0)
+  })
+
+  it('restoring an archived project whose sub-tasks are all already done re-derives to done', () => {
+    const project = useStore.getState().addItem('projects', 'Redesign kitchen')
+    const a = useStore.getState().addItem('projects', 'Pick paint', { parentId: project.id })
+    useStore.getState().toggleDone(a.id)
+    expect(useStore.getState().items.find((i) => i.id === project.id).status).toBe('done')
+    expect(useStore.getState().points).toBe(10)
+    useStore.getState().archiveItem(project.id)
+    expect(useStore.getState().items.find((i) => i.id === project.id).status).toBe('archived')
+    useStore.getState().restoreItem(project.id)
+    expect(useStore.getState().items.find((i) => i.id === project.id).status).toBe('done')
+    expect(useStore.getState().points).toBe(10)
+  })
+
+  it('deleting the last live sub-task leaves the project frozen at its last derived status', () => {
+    const project = useStore.getState().addItem('projects', 'Redesign kitchen')
+    const a = useStore.getState().addItem('projects', 'Pick paint', { parentId: project.id })
+    useStore.getState().toggleDone(a.id)
+    expect(useStore.getState().items.find((i) => i.id === project.id).status).toBe('done')
+    expect(useStore.getState().points).toBe(10)
+    useStore.getState().deleteItem(a.id)
+    expect(useStore.getState().items.find((i) => i.id === project.id).status).toBe('done')
+    expect(useStore.getState().points).toBe(10)
+  })
+
+  it('archiving the last live sub-task leaves the project frozen at its last derived status', () => {
+    const project = useStore.getState().addItem('projects', 'Redesign kitchen')
+    const a = useStore.getState().addItem('projects', 'Pick paint', { parentId: project.id })
+    useStore.getState().toggleDone(a.id)
+    expect(useStore.getState().items.find((i) => i.id === project.id).status).toBe('done')
+    expect(useStore.getState().points).toBe(10)
+    useStore.getState().archiveItem(a.id)
+    expect(useStore.getState().items.find((i) => i.id === project.id).status).toBe('done')
+    expect(useStore.getState().points).toBe(10)
   })
 })
