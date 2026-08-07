@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { ChevronLeft, Check, Plus, GripVertical } from 'lucide-react'
 import {
@@ -77,6 +77,20 @@ export default function ProjectDetail() {
   const [noteDraft, setNoteDraft] = useState('')
   const [subDraft, setSubDraft] = useState('')
   const [confirmDelete, setConfirmDelete] = useState(false)
+
+  // The useState initializers above only run once, at first mount -- if
+  // hydration is still in flight then (project undefined), title/details
+  // permanently capture '' unless we resync here. This effect covers both
+  // that async-hydration race and a future case where the route's
+  // projectId changes without a remount (React Router doesn't remount on
+  // a param change alone), so stale typed fields from one project can't
+  // leak into another's display.
+  useEffect(() => {
+    if (project) {
+      setTitle(project.title)
+      setDetails(project.details)
+    }
+  }, [project?.id])
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
