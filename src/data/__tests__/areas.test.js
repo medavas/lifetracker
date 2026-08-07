@@ -85,16 +85,17 @@ describe('routing', () => {
     expect(nudges.buckets).toEqual([])
   })
 
-  it('routes the three non-generic areas to their own pages', () => {
+  it('routes the four non-generic areas to their own pages', () => {
     const routes = Object.fromEntries(AREAS.map((a) => [a.id, routeFor(a)]))
     expect(routes.journal).toBe('/journal')
     expect(routes.habits).toBe('/habits')
     expect(routes.nudges).toBe('/nudges')
+    expect(routes.projects).toBe('/projects')
   })
 
   it('routes every other area through the generic area view', () => {
     for (const a of AREAS) {
-      if (['journal', 'habits', 'nudges'].includes(a.id)) continue
+      if (['journal', 'habits', 'nudges', 'projects'].includes(a.id)) continue
       expect(routeFor(a)).toBe(`/area/${a.id}`)
     }
   })

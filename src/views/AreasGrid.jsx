@@ -10,7 +10,7 @@ export default function AreasGrid() {
   const countFor = (a) =>
     a.kind === 'journal'
       ? notes.filter((n) => n.areaId === 'journal' && !n.itemId).length
-      : items.filter((i) => i.areaId === a.id && i.status === 'open').length
+      : items.filter((i) => i.areaId === a.id && i.status === 'open' && !i.parentId).length
 
   return (
     <div className="page">

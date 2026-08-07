@@ -36,7 +36,7 @@
 export const AREAS = [
   {
     id: 'projects', name: 'Projects', icon: 'Rocket', kind: 'list',
-    trim: 'b',
+    trim: 'b', route: '/projects',
     keywords: ['project', 'build', 'ship', 'idea'],
     buckets: ['Active', 'Backlog', 'Someday'],
   },
