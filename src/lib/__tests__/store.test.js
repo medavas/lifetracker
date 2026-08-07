@@ -235,4 +235,51 @@ describe('project sub-tasks', () => {
     expect(useStore.getState().items.find((i) => i.id === b.id).order).toBe(0)
     expect(useStore.getState().items.find((i) => i.id === unrelated.id).order).toBe(unrelatedOrderBefore)
   })
+
+  it('refuses to attach a sub-task to another sub-task, enforcing one level of nesting', () => {
+    const project = useStore.getState().addItem('projects', 'Redesign kitchen')
+    const a = useStore.getState().addItem('projects', 'Pick paint', { parentId: project.id })
+    const grandchild = useStore.getState().addItem('projects', 'Grandchild', { parentId: a.id })
+    expect('parentId' in grandchild).toBe(false)
+    const stored = useStore.getState().items.find((i) => i.id === grandchild.id)
+    expect('parentId' in stored).toBe(false)
+    // `a` itself must not have gained a child either, confirming no link was made at all.
+    expect(useStore.getState().items.some((i) => i.parentId === a.id)).toBe(false)
+    expect(useStore.getState().points).toBe(0)
+  })
+
+  it('restoring an archived project whose sub-tasks are all already done re-derives to done', () => {
+    const project = useStore.getState().addItem('projects', 'Redesign kitchen')
+    const a = useStore.getState().addItem('projects', 'Pick paint', { parentId: project.id })
+    useStore.getState().toggleDone(a.id)
+    expect(useStore.getState().items.find((i) => i.id === project.id).status).toBe('done')
+    expect(useStore.getState().points).toBe(10)
+    useStore.getState().archiveItem(project.id)
+    expect(useStore.getState().items.find((i) => i.id === project.id).status).toBe('archived')
+    useStore.getState().restoreItem(project.id)
+    expect(useStore.getState().items.find((i) => i.id === project.id).status).toBe('done')
+    expect(useStore.getState().points).toBe(10)
+  })
+
+  it('deleting the last live sub-task leaves the project frozen at its last derived status', () => {
+    const project = useStore.getState().addItem('projects', 'Redesign kitchen')
+    const a = useStore.getState().addItem('projects', 'Pick paint', { parentId: project.id })
+    useStore.getState().toggleDone(a.id)
+    expect(useStore.getState().items.find((i) => i.id === project.id).status).toBe('done')
+    expect(useStore.getState().points).toBe(10)
+    useStore.getState().deleteItem(a.id)
+    expect(useStore.getState().items.find((i) => i.id === project.id).status).toBe('done')
+    expect(useStore.getState().points).toBe(10)
+  })
+
+  it('archiving the last live sub-task leaves the project frozen at its last derived status', () => {
+    const project = useStore.getState().addItem('projects', 'Redesign kitchen')
+    const a = useStore.getState().addItem('projects', 'Pick paint', { parentId: project.id })
+    useStore.getState().toggleDone(a.id)
+    expect(useStore.getState().items.find((i) => i.id === project.id).status).toBe('done')
+    expect(useStore.getState().points).toBe(10)
+    useStore.getState().archiveItem(a.id)
+    expect(useStore.getState().items.find((i) => i.id === project.id).status).toBe('done')
+    expect(useStore.getState().points).toBe(10)
+  })
 })

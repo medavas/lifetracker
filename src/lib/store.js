@@ -48,6 +48,14 @@ export const useStore = create(
         const items = get().items
         const order =
           Math.max(0, ...items.filter((i) => i.areaId === areaId).map((i) => i.order)) + 1
+        // Structural one-level-nesting cap: a parentId is only honored when
+        // its target itself has no parentId. Without this, a future call
+        // site (or a stray URL — see ProjectDetail's own view-level guard)
+        // could attach a sub-task to another sub-task, producing a
+        // grandchild — the one architectural constraint this feature names.
+        const targetParent =
+          extra.parentId != null ? get().items.find((i) => i.id === extra.parentId) : null
+        const parentId = targetParent && !targetParent.parentId ? extra.parentId : undefined
         const item = {
           id: uid(),
           areaId,
@@ -70,10 +78,10 @@ export const useStore = create(
           }),
           // Project sub-tasks only. Same conditional-attachment pattern as
           // intervalMin above — absent everywhere else in the app.
-          ...(extra.parentId != null && { parentId: extra.parentId }),
+          ...(parentId != null && { parentId }),
         }
         set({ items: [...items, item] })
-        if (extra.parentId != null) get().syncParentCompletion(extra.parentId)
+        if (parentId != null) get().syncParentCompletion(parentId)
         return item
       },
 
@@ -172,6 +180,22 @@ export const useStore = create(
         const item = get().items.find((i) => i.id === id)
         get().updateItem(id, { status: 'open' })
         if (item?.parentId) get().syncParentCompletion(item.parentId)
+        // The item may itself be a parent (a project) — re-derive its
+        // status from its own live sub-tasks too, so restoring a project
+        // whose sub-tasks were already all done comes back as 'done'
+        // rather than stranding it at 'open' with no live checkbox. This is
+        // a direct status patch rather than routing through
+        // syncParentCompletion/toggleDone: archiveItem never tombstones
+        // whatever `complete` log the project earned the first time it
+        // finished, so replaying toggleDone's completion path here would
+        // push a second live log for the same completion and double the
+        // points it already banked.
+        const subItems = get().items.filter(
+          (i) => i.parentId === id && !i.deletedAt && i.status !== 'archived',
+        )
+        if (subItems.length > 0 && subItems.every((i) => i.status === 'done')) {
+          get().updateItem(id, { status: 'done', completedAt: now() })
+        }
       },
       deleteItem: (id) => {
         const item = get().items.find((i) => i.id === id)
