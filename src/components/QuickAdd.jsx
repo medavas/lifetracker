@@ -30,6 +30,11 @@ export default function QuickAdd({ onClose }) {
   const fileTo = (area) => {
     if (!text.trim()) return
     if (area.kind === 'journal') addNote('journal', text)
+    // Money-kind items with no bucket resolve to bucket: null, which no
+    // dashboard section's `bucket === X` filter matches — they'd be
+    // invisible. 'Other' is the dashboard's catch-all bucket, so default
+    // QuickAdd captures there instead.
+    else if (area.kind === 'money') addItem(area.id, text, { bucket: 'Other' })
     else addItem(area.id, text)
     onClose()
     navigate(routeFor(area))

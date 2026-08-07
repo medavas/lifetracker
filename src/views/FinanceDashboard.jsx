@@ -66,8 +66,8 @@ export default function FinanceDashboard() {
         </div>
       </section>
 
-      <QuickSpend categories={items.filter((i) => i.bucket === 'Spending')} />
-      <BillsSection items={items} onEdit={setSheetItem} />
+      <QuickSpend categories={items.filter((i) => i.bucket === 'Spending')} isCurrentMonth={current} />
+      <BillsSection items={items} logs={logs} onEdit={setSheetItem} />
       <div className="fin-grid">
         <div className="fin-col">
           <BudgetSection items={items} logs={logs} month={month} onEdit={setSheetItem} />

@@ -67,6 +67,12 @@ const liveLogs = (logs, month) =>
  * The month's money movement. Spends whose item no longer resolves land
  * under 'uncategorized' — the money actually left, so totals stay
  * truthful even after a category is hard-deleted.
+ *
+ * INVARIANT: totalSpend sums every live 'spend' log regardless of the
+ * resolved item's bucket (not structurally scoped to Spending) — safe
+ * only because QuickSpend.jsx is the sole logSpend() call site and only
+ * offers Spending-bucket categories; a future non-Spending logSpend call
+ * site would need this filtered by bucket.
  */
 export function monthActuals(items, logs, month) {
   const known = new Set(items.filter((i) => !i.deletedAt).map((i) => i.id))
