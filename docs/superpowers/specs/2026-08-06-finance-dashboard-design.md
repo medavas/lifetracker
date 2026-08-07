@@ -1,7 +1,7 @@
 # Finance Dashboard — Design
 
 **Date:** 2026-08-06
-**Status:** Approved, not implemented
+**Status:** Implemented (finance-dashboard branch)
 
 Finance stops being a generic bucketed list and becomes a real dashboard:
 design a monthly budget, log daily spending, track subscriptions, savings

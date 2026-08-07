@@ -13,6 +13,7 @@ import BudgetSection from '../components/finance/BudgetSection'
 import PlanSection from '../components/finance/PlanSection'
 import SubscriptionsSection from '../components/finance/SubscriptionsSection'
 import GoalsSection from '../components/finance/GoalsSection'
+import SpendChart from '../components/finance/SpendChart'
 import ItemSheet from '../components/ItemSheet'
 import ItemList from '../components/ItemList'
 
@@ -71,6 +72,7 @@ export default function FinanceDashboard() {
         <div className="fin-col">
           <BudgetSection items={items} logs={logs} month={month} onEdit={setSheetItem} />
           <GoalsSection items={items} logs={logs} onEdit={setSheetItem} />
+          <SpendChart logs={logs} month={month} />
         </div>
         <div className="fin-col">
           <SubscriptionsSection items={items} onEdit={setSheetItem} />
@@ -96,8 +98,6 @@ export default function FinanceDashboard() {
       </section>
 
       {sheetItem && <ItemSheet item={sheetItem} onClose={() => setSheetItem(null)} />}
-
-      {/* Task 10 fills this in: SpendChart */}
     </div>
   )
 }
