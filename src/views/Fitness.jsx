@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from 'react'
 import { Plus } from 'lucide-react'
 import { useShallow } from 'zustand/react/shallow'
-import { useStore, selectAreaItems, selectWorkoutSessions } from '../lib/store'
+import { useStore, selectAreaItems, selectWorkoutSessions, selectStretchCategories } from '../lib/store'
 import { areaById } from '../data/areas'
 import { todayKey, startOfWeekKey } from '../lib/rewards'
 import { sessionDates, sessionSummary, sessionCountSince, buildExerciseIndex } from '../lib/workout'
@@ -11,6 +11,7 @@ import ItemList from '../components/ItemList'
 import SessionLogger from '../components/fitness/SessionLogger'
 import ProgressChart from '../components/fitness/ProgressChart'
 import ProgramCard from '../components/fitness/ProgramCard'
+import StretchBoard from '../components/fitness/StretchBoard'
 
 const shortDate = (iso) =>
   new Date(`${iso}T00:00:00`).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' })
@@ -34,12 +35,14 @@ export default function Fitness() {
 
   const items = useStore(useShallow(selectAreaItems('fitness')))
   const sessions = useStore(useShallow(selectWorkoutSessions))
+  const categories = useStore(useShallow(selectStretchCategories))
   const allItems = useStore((s) => s.items)
   const logs = useStore((s) => s.logs)
   const addItem = useStore((s) => s.addItem)
 
   const exerciseIndex = useMemo(() => buildExerciseIndex(allItems), [allItems])
 
+  const [tab, setTab] = useState('train')
   const [bucket, setBucket] = useState(area.habitBucket)
   const [draft, setDraft] = useState('')
 
@@ -78,11 +81,26 @@ export default function Fitness() {
       <div className="page-head">
         <div className="icon-chip"><AreaIcon name={area.icon} /></div>
         <h1>{area.name}</h1>
-        {sessions.length > 0 && (
+        {tab === 'train' && sessions.length > 0 && (
           <span className="fin-sub">{thisWeek} of {sessions.length} this week</span>
         )}
       </div>
 
+      <div className="bucket-tabs">
+        {[['train', 'Train'], ['stretch', 'Stretches']].map(([id, label]) => (
+          <button
+            key={id} className={`bucket-tab ${tab === id ? 'on' : ''}`}
+            onClick={() => setTab(id)}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {tab === 'stretch' ? (
+        <StretchBoard categories={categories} allItems={allItems} />
+      ) : (
+      <>
       <SessionLogger
         sessions={sessions} logs={logs} exerciseIndex={exerciseIndex}
         date={date} weekday={weekday}
@@ -141,6 +159,8 @@ export default function Fitness() {
           </section>
         </div>
       </div>
+      </>
+      )}
     </div>
   )
 }

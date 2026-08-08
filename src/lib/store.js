@@ -27,6 +27,7 @@ import { todayKey, computePoints } from './rewards'
 import { toEntities, fromEntities, merge } from './merge'
 import { advanceDue } from './finance'
 import { DEFAULT_PROGRAM, SESSION_BUCKET } from '../data/workoutProgram'
+import { DEFAULT_STRETCH_CATEGORIES, STRETCH_BUCKET } from '../data/stretches'
 
 // crypto.randomUUID only exists in secure contexts (HTTPS or localhost) —
 // fall back to a manual v4 UUID so a plain-HTTP tunnel URL doesn't throw on
@@ -252,6 +253,36 @@ export const useStore = create(
           ),
         }),
 
+      /**
+       * Move a sub-item to a different parent and place it in that parent's
+       * order — one atomic set(), because doing it as updateItem +
+       * reorderSubItems would land the item in the new parent for a render
+       * with a stale order and make it visibly jump.
+       *
+       * Both parents are re-synced afterwards: the item leaving one and
+       * joining the other can change either side's derived completion, and
+       * skipping that is exactly how a project ends up stuck 'done' with an
+       * open sub-task under it.
+       */
+      moveSubItem: (id, newParentId, orderedIds) => {
+        const item = get().items.find((i) => i.id === id)
+        if (!item) return
+        const oldParentId = item.parentId
+        set({
+          items: get().items.map((i) => {
+            if (i.id === id) {
+              return { ...i, parentId: newParentId, order: orderedIds.indexOf(id), updatedAt: now() }
+            }
+            if (i.parentId === newParentId && orderedIds.includes(i.id)) {
+              return { ...i, order: orderedIds.indexOf(i.id), updatedAt: now() }
+            }
+            return i
+          }),
+        })
+        if (oldParentId && oldParentId !== newParentId) get().syncParentCompletion(oldParentId)
+        get().syncParentCompletion(newParentId)
+      },
+
       // ── Habit check-ins ──────────────────────────────────────
       toggleHabitToday: (itemId) => {
         const { logs, items } = get()
@@ -403,6 +434,21 @@ export const useStore = create(
           ),
         }),
 
+      /**
+       * Build the starter stretch categories, once. Idempotent the same way
+       * seedWorkoutProgram is, and for the same reason. The categories come
+       * up empty — which stretches matter is the part only the user knows.
+       */
+      seedStretchCategories: () => {
+        const existing = get().items.some(
+          (i) => !i.deletedAt && i.areaId === 'fitness' && i.bucket === STRETCH_BUCKET,
+        )
+        if (existing) return
+        for (const name of DEFAULT_STRETCH_CATEGORIES) {
+          get().addItem('fitness', name, { bucket: STRETCH_BUCKET })
+        }
+      },
+
       // ── Notes / Journal ──────────────────────────────────────
       addNote: (areaId, text, itemId = null) => {
         const note = { id: uid(), areaId, itemId, text: text.trim(), createdAt: now(), updatedAt: now(), deletedAt: null }
@@ -482,6 +528,12 @@ export const selectSubItems = (parentId) => (s) =>
 export const selectWorkoutSessions = (s) =>
   s.items
     .filter((i) => !i.deletedAt && i.areaId === 'fitness' && i.bucket === SESSION_BUCKET && i.status !== 'archived')
+    .sort((a, b) => a.order - b.order)
+
+/** Stretch categories, in user order. */
+export const selectStretchCategories = (s) =>
+  s.items
+    .filter((i) => !i.deletedAt && i.areaId === 'fitness' && i.bucket === STRETCH_BUCKET && i.status !== 'archived')
     .sort((a, b) => a.order - b.order)
 
 export const selectJournal = (s) =>

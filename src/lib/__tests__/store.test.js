@@ -1,6 +1,8 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { useStore, selectAreaItems, selectSubItems } from '../store.js'
 import { DEFAULT_PROGRAM, SESSION_BUCKET } from '../../data/workoutProgram.js'
+import { DEFAULT_STRETCH_CATEGORIES, STRETCH_BUCKET } from '../../data/stretches.js'
+import { buildExerciseIndex } from '../workout.js'
 
 const reset = () => useStore.setState({ items: [], notes: [], logs: [], points: 0 })
 
@@ -463,5 +465,73 @@ describe('workout program + set logs', () => {
     const upper = sessions().find((s) => s.title === 'Upper Body')
     expect(upper.status).toBe('open')
     expect(useStore.getState().points).toBe(0)
+  })
+})
+
+describe('stretch categories', () => {
+  beforeEach(reset)
+
+  const cats = () =>
+    useStore.getState().items
+      .filter((i) => i.bucket === STRETCH_BUCKET && !i.deletedAt)
+      .sort((a, b) => a.order - b.order)
+
+  it('seeds the starter categories empty, so nothing has to be deleted first', () => {
+    useStore.getState().seedStretchCategories()
+    expect(cats().map((c) => c.title)).toEqual(DEFAULT_STRETCH_CATEGORIES)
+    for (const c of cats()) {
+      expect(selectSubItems(c.id)(useStore.getState())).toEqual([])
+    }
+  })
+
+  it('is idempotent — seeding twice cannot duplicate edited categories', () => {
+    useStore.getState().seedStretchCategories()
+    const before = useStore.getState().items.length
+    useStore.getState().seedStretchCategories()
+    expect(useStore.getState().items).toHaveLength(before)
+  })
+
+  it('moveSubItem re-parents a stretch and orders it in its new home', () => {
+    const hips = useStore.getState().addItem('fitness', 'Hips', { bucket: STRETCH_BUCKET })
+    const hams = useStore.getState().addItem('fitness', 'Hamstrings', { bucket: STRETCH_BUCKET })
+    const pigeon = useStore.getState().addItem('fitness', 'Pigeon', { parentId: hips.id })
+    const forwardFold = useStore.getState().addItem('fitness', 'Forward fold', { parentId: hams.id })
+
+    useStore.getState().moveSubItem(pigeon.id, hams.id, [pigeon.id, forwardFold.id])
+
+    expect(selectSubItems(hips.id)(useStore.getState())).toEqual([])
+    expect(selectSubItems(hams.id)(useStore.getState()).map((i) => i.title))
+      .toEqual(['Pigeon', 'Forward fold'])
+  })
+
+  it('moveSubItem bumps updatedAt so the move wins a last-write-wins merge', async () => {
+    const a = useStore.getState().addItem('fitness', 'A', { bucket: STRETCH_BUCKET })
+    const b = useStore.getState().addItem('fitness', 'B', { bucket: STRETCH_BUCKET })
+    const s = useStore.getState().addItem('fitness', 'Pigeon', { parentId: a.id })
+    const stale = useStore.getState().items.find((i) => i.id === s.id).updatedAt
+    await new Promise((r) => setTimeout(r, 2))
+    useStore.getState().moveSubItem(s.id, b.id, [s.id])
+    expect(useStore.getState().items.find((i) => i.id === s.id).updatedAt).toBeGreaterThan(stale)
+  })
+
+  it('moveSubItem on a missing item is a no-op rather than a throw', () => {
+    const a = useStore.getState().addItem('fitness', 'A', { bucket: STRETCH_BUCKET })
+    expect(() => useStore.getState().moveSubItem('nope', a.id, ['nope'])).not.toThrow()
+    expect(selectSubItems(a.id)(useStore.getState())).toEqual([])
+  })
+
+  it('keeps stretches out of the workout exercise index', () => {
+    useStore.getState().seedWorkoutProgram()
+    const hips = useStore.getState().addItem('fitness', 'Hips', { bucket: STRETCH_BUCKET })
+    useStore.getState().addItem('fitness', 'Pigeon', { parentId: hips.id })
+    const index = buildExerciseIndex(useStore.getState().items)
+    expect([...index.values()].some((e) => e.title === 'Pigeon')).toBe(false)
+  })
+
+  it('deleting a category takes its stretches with it', () => {
+    const hips = useStore.getState().addItem('fitness', 'Hips', { bucket: STRETCH_BUCKET })
+    const pigeon = useStore.getState().addItem('fitness', 'Pigeon', { parentId: hips.id })
+    useStore.getState().deleteItem(hips.id)
+    expect(useStore.getState().items.find((i) => i.id === pigeon.id).deletedAt).toBeTruthy()
   })
 })

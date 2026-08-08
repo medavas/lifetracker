@@ -38,6 +38,12 @@ really just filtered views over 4 data primitives:
    where less weight is progress, which is why there is no separate boolean.
    This is what makes the whole plan editable in the UI; `data/workoutProgram.js`
    is only the seed `seedWorkoutProgram()` builds once, never the live plan.
+   Stretches follow the identical shape one more time: a category is a parent
+   item in the `'Stretch categories'` bucket and each stretch is a sub-item,
+   so dragging a stretch between categories is only a change of `parentId`
+   (`moveSubItem`). Three features now share this nesting — it is the general
+   way to express "user-defined groups of user-defined things", not a
+   per-feature special case. Reach for it before inventing a new field.
    `bucket` is not purely a cosmetic label: when it matches the item's area's
    `habitBucket`, it determines which store action the UI wires the item to
    (`toggleHabitToday` instead of `toggleDone`) — moving an item into or out

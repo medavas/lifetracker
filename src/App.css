@@ -506,6 +506,55 @@ a.item-row { text-decoration: none; color: inherit; }
    not start at zero, so these labels are load-bearing, not decoration. */
 .wo-scale span:last-child { text-align: right; }
 
+/* ── Stretch board ───────────────────────────────────────── */
+/* Wraps rather than squeezing: on a phone the hint takes the row and the
+   button drops below it, instead of both being crushed onto one line. */
+.st-toolbar { display: flex; align-items: center; gap: 8px 10px; margin-bottom: 10px; flex-wrap: wrap; }
+.st-toolbar .fin-sub { flex: 1 1 240px; min-width: 0; }
+.st-toolbar .fin-add { display: flex; align-items: center; gap: 5px; flex: none; }
+.st-newcat { margin-bottom: 10px; }
+
+.st-board { display: flex; flex-direction: column; gap: 12px; }
+.st-col { padding: 12px; }
+/* The whole column reads as a target while something is over it — an empty
+   category has no cards to highlight, and it is the one that most needs to
+   look droppable. */
+.st-col.over { border-color: var(--area-c1, var(--text-secondary)); }
+
+.st-col-head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.st-col-title {
+  flex: 1; min-width: 0; text-align: left;
+  font-size: 0.8rem; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.06em; color: var(--text-secondary);
+}
+.st-rename { flex: 1; min-width: 0; padding: 4px 8px; font-size: 0.85rem; }
+
+.st-drop { display: flex; flex-direction: column; gap: 6px; min-height: 56px; }
+.st-empty {
+  margin: 0; padding: 16px 8px; text-align: center;
+  font-size: 12.5px; color: var(--text-muted);
+  border: 1px dashed var(--border); border-radius: var(--radius-sm);
+}
+
+.st-card {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--surface-2); border: 1px solid var(--border);
+  border-left: 3px solid var(--area-c1, var(--border));
+  border-radius: var(--radius-sm); padding: 8px 10px;
+  touch-action: manipulation;
+}
+.st-card.dragging { opacity: 0.4; }
+.st-card.dragging-overlay { box-shadow: var(--shadow-sheet); cursor: grabbing; }
+.st-title {
+  flex: 1; min-width: 0; text-align: left; font-size: 14px;
+  display: flex; flex-direction: column; gap: 2px; overflow-wrap: anywhere;
+}
+.st-note { font-size: 12px; color: var(--text-muted); }
+
+@media (min-width: 900px) {
+  .st-board { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); align-items: start; }
+}
+
 /* ── Projects (delinearized) ─────────────────────────────── */
 .projects-list-pane { display: block; }
 .projects-detail-pane { display: none; }
