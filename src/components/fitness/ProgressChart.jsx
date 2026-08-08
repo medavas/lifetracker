@@ -1,6 +1,5 @@
 import { useState } from 'react'
-import { ALL_EXERCISES, exerciseById } from '../../data/workoutProgram'
-import { topSetSeries, lineGeometry, liveSets, formatWeight } from '../../lib/workout'
+import { topSetSeries, lineGeometry, liveSets, formatWeight, isAssisted } from '../../lib/workout'
 
 const W = 320
 const H = 104
@@ -14,15 +13,22 @@ const shortDate = (iso) =>
  *
  * One series, so there is no legend: the picker names the data. The y-axis
  * deliberately does not start at zero (a 135->140 lb week would be invisible
- * against one), so the min and max are always printed beside the plot —
+ * against one), so the range is always printed beside the plot —
  * lineGeometry's contract.
+ *
+ * The picker reads from the exercise index rather than the live program, so
+ * an exercise you have since retired still shows the history you built on it.
  */
-export default function ProgressChart({ logs }) {
-  const trained = ALL_EXERCISES.filter((e) => liveSets(logs).some((l) => l.exercise === e.id))
+export default function ProgressChart({ logs, exerciseIndex }) {
   const [picked, setPicked] = useState(null)
   const [tip, setTip] = useState(null)
 
-  const exercise = exerciseById(picked) ?? trained[0]
+  const logged = new Set(liveSets(logs).map((l) => l.itemId))
+  const trained = [...exerciseIndex.values()]
+    .filter((e) => logged.has(e.id))
+    .sort((a, b) => a.title.localeCompare(b.title))
+
+  const exercise = trained.find((e) => e.id === picked) ?? trained[0]
 
   if (!exercise) {
     return (
@@ -38,7 +44,7 @@ export default function ProgressChart({ logs }) {
   const latest = points[points.length - 1]
   const first = points[0]
   const delta = points.length > 1 ? latest.weight - first.weight : 0
-  const better = exercise.assisted ? -delta : delta
+  const better = isAssisted(exercise) ? -delta : delta
 
   return (
     <section className="fin-section card">
@@ -51,7 +57,9 @@ export default function ProgressChart({ logs }) {
         aria-label="Exercise to chart"
       >
         {trained.map((e) => (
-          <option key={e.id} value={e.id}>{e.name}</option>
+          <option key={e.id} value={e.id}>
+            {e.title}{e.status === 'archived' ? ' (retired)' : ''}
+          </option>
         ))}
       </select>
 
@@ -65,13 +73,13 @@ export default function ProgressChart({ logs }) {
             over {points.length} sessions
           </>
         )}
-        {exercise.assisted && ' · assist weight, so down is stronger'}
+        {isAssisted(exercise) && ' · assist weight, so down is stronger'}
       </div>
 
       <div className="chart-wrap">
         <svg
           viewBox={`0 0 ${W} ${H}`} width="100%" role="img"
-          aria-label={`${exercise.name} top-set weight per session`}
+          aria-label={`${exercise.title} top-set weight per session`}
           onMouseLeave={() => setTip(null)}
         >
           <path d={path} fill="none" stroke="var(--series-4)" strokeWidth="1.6"

@@ -462,13 +462,16 @@ a.item-row { text-decoration: none; color: inherit; }
 }
 .wo-set:hover { color: var(--text-primary); border-color: var(--text-muted); }
 
-.wo-superset {
-  border: 1px dashed var(--border); border-radius: var(--radius-sm); padding: 8px;
-  display: flex; flex-direction: column; gap: 8px;
-}
-.wo-superset-label {
-  font-size: 10.5px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em;
-  color: var(--text-muted);
+/* Editing the program */
+.wo-hint { font-size: 12.5px; line-height: 1.55; color: var(--text-muted); margin: 8px 0 14px; }
+.wo-spec-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0 8px; }
+.wo-spec-grid .field { margin-bottom: 8px; min-width: 0; }
+.wo-spec-grid input { text-align: center; font-variant-numeric: tabular-nums; }
+.link-chips .chip:disabled { color: var(--text-muted); border-color: var(--border); cursor: default; }
+/* Four across only where the sheet is actually wide. On a phone the labels
+   ("Weight jump") wrap and stagger the row, so go 2x2 well before that. */
+@media (max-width: 560px) {
+  .wo-spec-grid { grid-template-columns: repeat(2, 1fr); }
 }
 
 /* Program reference */

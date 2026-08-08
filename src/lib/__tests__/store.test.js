@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { useStore, selectAreaItems, selectSubItems } from '../store.js'
+import { DEFAULT_PROGRAM, SESSION_BUCKET } from '../../data/workoutProgram.js'
 
 const reset = () => useStore.setState({ items: [], notes: [], logs: [], points: 0 })
 
@@ -380,5 +381,87 @@ describe('project sub-tasks', () => {
     useStore.getState().archiveItem(a.id)
     expect(useStore.getState().items.find((i) => i.id === project.id).status).toBe('done')
     expect(useStore.getState().points).toBe(10)
+  })
+})
+
+describe('workout program + set logs', () => {
+  beforeEach(reset)
+
+  const sessions = () =>
+    useStore.getState().items.filter((i) => i.bucket === SESSION_BUCKET && !i.deletedAt)
+
+  it('seeds sessions as parent items and exercises as their sub-items', () => {
+    useStore.getState().seedWorkoutProgram()
+    expect(sessions()).toHaveLength(DEFAULT_PROGRAM.length)
+    for (const s of sessions()) {
+      expect(s.parentId).toBeUndefined()
+      expect(selectSubItems(s.id)(useStore.getState()).length).toBeGreaterThan(0)
+    }
+  })
+
+  it('carries weekday onto sessions and the full spec onto exercises', () => {
+    useStore.getState().seedWorkoutProgram()
+    const upper = sessions().find((s) => s.title === 'Upper Body')
+    expect(upper.weekday).toBe(6)
+    const bench = selectSubItems(upper.id)(useStore.getState())[0]
+    expect(bench).toMatchObject({ sets: 3, low: 6, high: 10, step: 5 })
+    expect(bench.details.length).toBeGreaterThan(0)
+  })
+
+  it('is idempotent — seeding twice cannot duplicate an edited program', () => {
+    useStore.getState().seedWorkoutProgram()
+    const before = useStore.getState().items.length
+    useStore.getState().seedWorkoutProgram()
+    expect(useStore.getState().items).toHaveLength(before)
+  })
+
+  it('keeps an assistance machine negative so progression runs downward', () => {
+    useStore.getState().seedWorkoutProgram()
+    const full = sessions().find((s) => s.title === 'Full Body')
+    const assisted = selectSubItems(full.id)(useStore.getState()).find((e) => e.step < 0)
+    expect(assisted.step).toBe(-5)
+  })
+
+  it('logs a set against the exercise item and awards no points', () => {
+    const session = useStore.getState().addItem('fitness', 'Upper', { bucket: SESSION_BUCKET, weekday: 6 })
+    const bench = useStore.getState().addItem('fitness', 'Bench', { parentId: session.id, sets: 3, low: 6, high: 10 })
+    useStore.getState().logSet(bench.id, 135, 8)
+    const log = useStore.getState().logs.find((l) => l.kind === 'set')
+    expect(log).toMatchObject({ itemId: bench.id, areaId: 'fitness', weight: 135, reps: 8 })
+    expect(useStore.getState().points).toBe(0)
+  })
+
+  it('deleteSet tombstones rather than dropping, so sync can propagate it', () => {
+    const session = useStore.getState().addItem('fitness', 'Upper', { bucket: SESSION_BUCKET })
+    const bench = useStore.getState().addItem('fitness', 'Bench', { parentId: session.id })
+    useStore.getState().logSet(bench.id, 135, 8)
+    const log = useStore.getState().logs[0]
+    useStore.getState().deleteSet(log.id)
+    expect(useStore.getState().logs).toHaveLength(1)
+    expect(useStore.getState().logs[0].deletedAt).toBeTruthy()
+  })
+
+  it('retiring an exercise keeps its logged sets; deleting it takes them', () => {
+    const session = useStore.getState().addItem('fitness', 'Upper', { bucket: SESSION_BUCKET })
+    const bench = useStore.getState().addItem('fitness', 'Bench', { parentId: session.id })
+    useStore.getState().logSet(bench.id, 135, 8)
+    useStore.getState().archiveItem(bench.id)
+    expect(useStore.getState().logs.every((l) => !l.deletedAt)).toBe(true)
+    useStore.getState().deleteItem(bench.id)
+    expect(useStore.getState().logs.every((l) => l.deletedAt)).toBe(true)
+  })
+
+  it('never lets an exercise nest under another exercise', () => {
+    const session = useStore.getState().addItem('fitness', 'Upper', { bucket: SESSION_BUCKET })
+    const bench = useStore.getState().addItem('fitness', 'Bench', { parentId: session.id })
+    const nested = useStore.getState().addItem('fitness', 'Nope', { parentId: bench.id })
+    expect(nested.parentId).toBeUndefined()
+  })
+
+  it('leaves a session item untouched by its exercises, which are never toggled done', () => {
+    useStore.getState().seedWorkoutProgram()
+    const upper = sessions().find((s) => s.title === 'Upper Body')
+    expect(upper.status).toBe('open')
+    expect(useStore.getState().points).toBe(0)
   })
 })

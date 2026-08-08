@@ -26,6 +26,7 @@ import { idbStorage } from './storage'
 import { todayKey, computePoints } from './rewards'
 import { toEntities, fromEntities, merge } from './merge'
 import { advanceDue } from './finance'
+import { DEFAULT_PROGRAM, SESSION_BUCKET } from '../data/workoutProgram'
 
 // crypto.randomUUID only exists in secure contexts (HTTPS or localhost) —
 // fall back to a manual v4 UUID so a plain-HTTP tunnel URL doesn't throw on
@@ -90,6 +91,15 @@ export const useStore = create(
           // Project sub-tasks only. Same conditional-attachment pattern as
           // intervalMin above — absent everywhere else in the app.
           ...(parentId != null && { parentId }),
+          // Workout program only. A session item carries `weekday`; an
+          // exercise sub-item carries its target sets and rep range. Same
+          // conditional-attachment pattern again, so no other area pays for
+          // them and merge.js syncs them with no sync-layer change.
+          ...(extra.weekday != null && { weekday: extra.weekday }),
+          ...(extra.sets != null && { sets: extra.sets }),
+          ...(extra.low != null && { low: extra.low }),
+          ...(extra.high != null && { high: extra.high }),
+          ...(extra.step != null && { step: extra.step }),
         }
         set({ items: [...items, item] })
         if (parentId != null) get().syncParentCompletion(parentId)
@@ -330,28 +340,55 @@ export const useStore = create(
         if (log.kind === 'bill-pay' && log.prevDue) get().updateItem(log.itemId, { nextDue: log.prevDue })
       },
 
-      // ── Fitness (logged sets) ────────────────────────────────
-      // A set log carries { exercise, weight, reps } — the same deliberate
-      // scalar concession the money logs make, for the same reason: the
-      // program is static config (data/workoutProgram.js), so `exercise`
-      // holds a config id and there is no ITEM for itemId to point at.
+      // ── Fitness (the program, and logged sets) ───────────────
+      // The program is ITEMs, not config: a session is a parent item in the
+      // SESSION_BUCKET carrying `weekday`, and each exercise is one of its
+      // sub-items carrying { sets, low, high, step }. That reuses the same
+      // one-level parentId nesting Projects introduced, which is why
+      // selectSubItems/reorderSubItems/archiveItem all work here for free —
+      // and why every part of the plan is editable without a code change.
+      //
+      // A set log therefore points at a real ITEM: `itemId` is the exercise.
+      // It adds only { weight, reps }, the same deliberate scalar concession
+      // the money logs make.
       //
       // Set logs never touch points (computePoints counts only
       // complete/habit-check/journal), and rewards.js's band index skips
       // every kind but complete/habit-check — so an 18-set leg day cannot
       // swamp the daily-practice chart. Fitness's contribution there still
       // comes from its 'Top Priorities' habit bucket, unchanged.
-      logSet: (exercise, weight, reps, date) =>
+      logSet: (itemId, weight, reps, date) =>
         set({
           logs: [
             ...get().logs,
             {
-              id: uid(), itemId: null, areaId: 'fitness', kind: 'set',
-              exercise, weight, reps,
+              id: uid(), itemId, areaId: 'fitness', kind: 'set', weight, reps,
               date: date ?? todayKey(), createdAt: now(), updatedAt: now(), deletedAt: null,
             },
           ],
         }),
+
+      /**
+       * Build the starter program, once. Idempotent by construction: if any
+       * session item already exists (even archived), this does nothing — so
+       * it can be offered as a button without ever duplicating a plan the
+       * user has since edited.
+       */
+      seedWorkoutProgram: () => {
+        const existing = get().items.some(
+          (i) => !i.deletedAt && i.areaId === 'fitness' && i.bucket === SESSION_BUCKET,
+        )
+        if (existing) return
+        for (const session of DEFAULT_PROGRAM) {
+          const parent = get().addItem('fitness', session.name, {
+            bucket: SESSION_BUCKET,
+            weekday: session.weekday,
+          })
+          for (const exercise of session.exercises) {
+            get().addItem('fitness', exercise.title, { ...exercise, parentId: parent.id })
+          }
+        }
+      },
 
       updateSet: (logId, patch) =>
         set({
@@ -439,6 +476,12 @@ export const selectItemNotes = (itemId) => (s) =>
 export const selectSubItems = (parentId) => (s) =>
   s.items
     .filter((i) => !i.deletedAt && i.parentId === parentId && i.status !== 'archived')
+    .sort((a, b) => a.order - b.order)
+
+/** Program sessions, in user order. Archived sessions stay out of the way. */
+export const selectWorkoutSessions = (s) =>
+  s.items
+    .filter((i) => !i.deletedAt && i.areaId === 'fitness' && i.bucket === SESSION_BUCKET && i.status !== 'archived')
     .sort((a, b) => a.order - b.order)
 
 export const selectJournal = (s) =>

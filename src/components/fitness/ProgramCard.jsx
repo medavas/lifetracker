@@ -1,18 +1,19 @@
 import { useState } from 'react'
 import { ChevronDown, ChevronRight } from 'lucide-react'
-import { RULES, SCHEDULE_NOTE, SESSIONS } from '../../data/workoutProgram'
-
-const DAY = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
-
-const range = (e) => (e.low === e.high ? `${e.low}` : `${e.low}–${e.high}`)
+import { RULES, SCHEDULE_NOTE, WEEKDAY_LONG } from '../../data/workoutProgram'
+import { formatTarget } from '../../lib/workout'
 
 /**
- * The program itself, as a reference you can re-read at the rack: the rules
- * first (they are what actually drives progress), then all three day
- * templates. Collapsed by default — you read this once and then live in the
- * logger above it.
+ * The rules, then the plan as it currently stands.
+ *
+ * The rules are fixed — they are the method, and no gym's machine selection
+ * changes what "1-2 reps shy of failure" means. The day list underneath is
+ * read from the live program items, so it always reflects the edits rather
+ * than the plan as first written.
+ *
+ * Collapsed by default: you read this once and then live in the logger.
  */
-export default function ProgramCard() {
+export default function ProgramCard({ sessions, exercisesFor }) {
   const [open, setOpen] = useState(false)
 
   return (
@@ -20,7 +21,7 @@ export default function ProgramCard() {
       <button className="wo-disclosure" onClick={() => setOpen(!open)} aria-expanded={open}>
         {open ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
         <h3>The program</h3>
-        <span className="fin-sub">{open ? 'Hide' : 'Rules and all three days'}</span>
+        <span className="fin-sub">{open ? 'Hide' : 'Rules and every day'}</span>
       </button>
 
       {open && (
@@ -34,18 +35,13 @@ export default function ProgramCard() {
           </ol>
           <p className="wo-note">{SCHEDULE_NOTE}</p>
 
-          {SESSIONS.map((s) => (
+          {sessions.map((s) => (
             <div key={s.id} className="wo-day">
-              <h4>{DAY[s.weekday]} — {s.name}</h4>
-              {s.exercises.map((e) => (
+              <h4>{s.weekday == null ? 'Unscheduled' : WEEKDAY_LONG[s.weekday]} — {s.title}</h4>
+              {exercisesFor(s.id).map((e) => (
                 <div key={e.id} className="wo-day-row">
-                  <span className="fin-grow">
-                    {e.name}
-                    {e.alt && <span className="wo-alt"> (or {e.alt.toLowerCase()})</span>}
-                  </span>
-                  <span className="fin-amount fin-sub">
-                    {e.sets} × {range(e)}{e.perSide ? '/side' : ''}
-                  </span>
+                  <span className="fin-grow">{e.title}</span>
+                  <span className="fin-amount fin-sub">{formatTarget(e)}</span>
                 </div>
               ))}
             </div>

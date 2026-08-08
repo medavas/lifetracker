@@ -1,16 +1,15 @@
 import { useState } from 'react'
-import { Info, Plus, X } from 'lucide-react'
+import { Info, Pencil, Plus, X } from 'lucide-react'
 import { useStore } from '../../lib/store'
-import { setsOn, lastPerformance, nextTarget, formatWeight } from '../../lib/workout'
+import { setsOn, lastPerformance, nextTarget, formatWeight, formatTarget } from '../../lib/workout'
+import { exerciseSpec } from '../../data/workoutProgram'
 
 const shortDate = (iso) =>
   new Date(`${iso}T00:00:00`).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
 
-const range = (e) => (e.low === e.high ? `${e.low}` : `${e.low}–${e.high}`)
-
 const targetLine = (target) => {
   if (target.advance === 'start') return `Start at ${target.reps} reps and find the weight`
-  const verb = target.advance === 'weight' ? 'Add weight' : 'Add a rep'
+  const verb = target.advance === 'weight' ? 'Move up' : 'Add a rep'
   return `${verb}: ${formatWeight(target.weight)} × ${target.reps}`
 }
 
@@ -20,11 +19,12 @@ const targetLine = (target) => {
  * set is a single tap) — the whole point is that at the rack you press one
  * button and only touch the numbers when reality disagrees.
  */
-export default function ExerciseLogger({ exercise, logs, date }) {
+export default function ExerciseLogger({ exercise, logs, date, onEdit }) {
   const logSet = useStore((s) => s.logSet)
   const deleteSet = useStore((s) => s.deleteSet)
   const [showCue, setShowCue] = useState(false)
 
+  const spec = exerciseSpec(exercise)
   const today = setsOn(logs, exercise.id, date)
   const last = lastPerformance(logs, exercise.id, date)
   const target = nextTarget(exercise, last)
@@ -38,36 +38,38 @@ export default function ExerciseLogger({ exercise, logs, date }) {
 
   const weightValue = weight === '' ? suggestedWeight : Number(weight)
   const repsValue = reps === '' ? suggestedReps : Number(reps)
-  const canLog = Number.isFinite(repsValue) && repsValue > 0 && (exercise.bodyweight || weightValue != null)
+  const canLog = Number.isFinite(repsValue) && repsValue > 0 && Number.isFinite(weightValue)
 
   const commit = () => {
     if (!canLog) return
-    logSet(exercise.id, weightValue ?? 0, repsValue, date)
+    logSet(exercise.id, weightValue, repsValue, date)
     setWeight('')
     setReps('')
   }
 
-  const done = today.length >= exercise.sets
+  const done = today.length >= spec.sets
 
   return (
     <div className={`wo-ex ${done ? 'done' : ''}`}>
       <div className="wo-ex-head">
-        <span className="fin-grow">{exercise.name}</span>
-        <span className="fin-sub fin-amount">
-          {today.length}/{exercise.sets} × {range(exercise)}{exercise.perSide ? '/side' : ''}
-        </span>
+        <span className="fin-grow">{exercise.title}</span>
+        <span className="fin-sub fin-amount">{today.length}/{formatTarget(exercise)}</span>
         <button
           className="wo-info" onClick={() => setShowCue(!showCue)}
-          aria-label={`Form cue for ${exercise.name}`} aria-expanded={showCue}
+          aria-label={`Form notes for ${exercise.title}`} aria-expanded={showCue}
         >
           <Info size={15} strokeWidth={1.75} />
+        </button>
+        <button className="wo-info" onClick={() => onEdit(exercise)} aria-label={`Edit ${exercise.title}`}>
+          <Pencil size={14} strokeWidth={1.75} />
         </button>
       </div>
 
       {showCue && (
         <p className="wo-cue">
-          {exercise.cue}
-          {exercise.alt && <> <em>No machine? {exercise.alt}.</em></>}
+          {exercise.details?.trim()
+            ? exercise.details
+            : 'No form notes yet — add them with the pencil above.'}
         </p>
       )}
 
@@ -83,7 +85,7 @@ export default function ExerciseLogger({ exercise, logs, date }) {
       <div className="wo-entry">
         <input
           type="number" inputMode="decimal" step="2.5" min="0"
-          className="wo-num" aria-label={`${exercise.name} weight`}
+          className="wo-num" aria-label={`${exercise.title} weight`}
           placeholder={suggestedWeight == null ? 'lb' : String(suggestedWeight)}
           value={weight} onChange={(e) => setWeight(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && commit()}
@@ -91,7 +93,7 @@ export default function ExerciseLogger({ exercise, logs, date }) {
         <span className="wo-x">×</span>
         <input
           type="number" inputMode="numeric" min="1"
-          className="wo-num" aria-label={`${exercise.name} reps`}
+          className="wo-num" aria-label={`${exercise.title} reps`}
           placeholder={String(suggestedReps)}
           value={reps} onChange={(e) => setReps(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && commit()}
