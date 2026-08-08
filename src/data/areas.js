@@ -49,7 +49,7 @@ export const AREAS = [
   },
   {
     id: 'fitness', name: 'Fitness', icon: 'Dumbbell', kind: 'list',
-    trim: 'y',
+    trim: 'y', route: '/fitness',
     daily: { order: 3, series: 4 },
     habitBucket: 'Top Priorities',
     keywords: ['workout', 'gym', 'run', 'lift', 'exercise', 'training'],
