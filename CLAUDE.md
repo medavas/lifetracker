@@ -38,6 +38,14 @@ really just filtered views over 4 data primitives:
 3. **LOG** — a dated record of something happening: habit check-in, item
    completion, journal-day marker.
    `{ id, itemId, areaId, kind, date: 'YYYY-MM-DD', createdAt }`
+   Money logs additionally carry `{ amount, note?, prevDue? }`.
+   A workout set (`kind: 'set'`) additionally carries
+   `{ exercise, weight, reps }` — the same deliberate scalar concession, one
+   log per set. `exercise` is an id from the static program registry
+   (`src/data/workoutProgram.js`), NOT an item id, so `itemId` stays null:
+   the program is config, exactly like an AREA, so there is nothing in the
+   DB to point at. Renaming an exercise's `id` orphans its history; renaming
+   its `name` is free.
 
 4. **NOTE** — freeform text: journal entries (areaId `'journal'`, no itemId) and
    per-item notes (has itemId).
@@ -46,12 +54,19 @@ really just filtered views over 4 data primitives:
 ## Consequences of this design — preserve them
 
 - ONE generic AreaView component renders every 'list'/'library' area,
-  parameterized by the area config. Never create a FinanceView, DietView, etc.
-  Projects is the one deliberate, narrow exception (`src/views/Projects.jsx`
-  + `views/projects/{ProjectList,ProjectDetail}.jsx`, wired via `areas.js`'s
-  `route` field): it owns a per-item checklist and a notes feed, which a flat
-  list row can't express. This is not precedent for giving other areas their
-  own views.
+  parameterized by the area config. Never create a DietView, HealthView, etc.
+  Three areas have their own page, each wired the same way — an `areas.js`
+  `route` field, never a branch in a ternary — and each for the same narrow
+  reason: their unit of work cannot be expressed as a flat list row.
+  Finance (`views/FinanceDashboard.jsx`, the 'money' kind) owns dated cash
+  movement; Projects (`views/Projects.jsx` + `views/projects/*`) owns a
+  per-item checklist and notes feed; Fitness (`views/Fitness.jsx` +
+  `components/fitness/*`) owns sets of weight x reps against a static
+  program. That test — "a row genuinely cannot hold this" — is the bar, and
+  three passing it is not a licence for a fourth. Fitness in particular is
+  still an ordinary `kind: 'list'` area underneath: its items, buckets,
+  `habitBucket` check-off and daily band all still run through the shared
+  machinery, and its page renders `ItemList` for exactly that.
 - Streaks and stats are always COMPUTED from logs, never stored, so they
   can't drift.
 - Unchecking an item is NOT archiving. Uncheck = back to `'open'`. Archive is

@@ -410,6 +410,99 @@ a.item-row { text-decoration: none; color: inherit; }
   .fin-grid > .fin-col { min-width: 0; }
 }
 
+/* ── Fitness (workout logging) ───────────────────────────── */
+.wo-head { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 12px; }
+.wo-tabs { margin-bottom: 14px; }
+
+.wo-list { display: flex; flex-direction: column; gap: 10px; }
+.wo-ex {
+  border: 1px solid var(--border); border-left: 3px solid var(--area-c1, var(--border));
+  border-radius: var(--radius-sm); padding: 10px 12px; background: var(--surface-2);
+}
+/* Target sets met — recede, don't celebrate. The chips below still say what was done. */
+.wo-ex.done { border-left-color: var(--text-muted); }
+.wo-ex.done .wo-ex-head > .fin-grow { color: var(--text-secondary); }
+
+.wo-ex-head { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; }
+.wo-info { color: var(--text-muted); display: grid; place-items: center; padding: 2px; flex: none; }
+.wo-cue {
+  margin: 8px 0 0; font-size: 12.5px; line-height: 1.5; color: var(--text-secondary);
+  border-left: 2px solid var(--border); padding-left: 10px;
+}
+.wo-cue em { color: var(--text-muted); font-style: normal; }
+
+.wo-target { font-size: 12.5px; color: var(--text-primary); margin-top: 6px; }
+.wo-last { color: var(--text-muted); }
+
+/* Capped so the log button stays near the inputs on a wide screen instead of
+   drifting to the far edge of the card. */
+.wo-entry { display: flex; align-items: center; gap: 6px; margin-top: 8px; max-width: 460px; }
+.wo-num { width: 72px; flex: none; padding: 8px 10px; text-align: center; font-variant-numeric: tabular-nums; }
+/* These placeholders are pre-filled defaults that WILL be logged if you just
+   hit the button, not hints — so they read closer to real values than the
+   muted app-wide placeholder does. */
+.wo-num::placeholder { color: var(--text-secondary); }
+/* Spinners steal width on a 72px field and are useless on a phone. */
+.wo-num::-webkit-outer-spin-button, .wo-num::-webkit-inner-spin-button { appearance: none; margin: 0; }
+.wo-num { appearance: textfield; -moz-appearance: textfield; }
+.wo-x { color: var(--text-muted); font-size: 13px; }
+.wo-log {
+  display: flex; align-items: center; gap: 5px; margin-left: auto;
+  padding: 8px 14px; border-radius: var(--radius-sm); font-size: 13px; font-weight: 600;
+  background: var(--surface-3); color: var(--text-primary); border: 1px solid var(--border);
+}
+.wo-log:disabled { color: var(--text-muted); cursor: default; }
+
+.wo-sets { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.wo-set {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums;
+  padding: 5px 8px; border-radius: var(--radius-sm);
+  background: var(--surface-3); border: 1px solid var(--border); color: var(--text-secondary);
+}
+.wo-set:hover { color: var(--text-primary); border-color: var(--text-muted); }
+
+.wo-superset {
+  border: 1px dashed var(--border); border-radius: var(--radius-sm); padding: 8px;
+  display: flex; flex-direction: column; gap: 8px;
+}
+.wo-superset-label {
+  font-size: 10.5px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em;
+  color: var(--text-muted);
+}
+
+/* Program reference */
+.wo-disclosure { display: flex; align-items: center; gap: 8px; width: 100%; color: var(--text-secondary); }
+.wo-disclosure h3 { margin: 0; }
+.wo-disclosure .fin-sub { margin-left: auto; }
+.wo-program { margin-top: 12px; }
+.wo-rules { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 8px; }
+.wo-rules li { font-size: 13px; line-height: 1.55; color: var(--text-secondary); }
+.wo-rules b { color: var(--text-primary); }
+.wo-note { font-size: 12.5px; line-height: 1.55; color: var(--text-muted); margin: 12px 0 0; }
+.wo-day { margin-top: 16px; }
+.wo-day h4 {
+  margin: 0 0 6px; font-size: 12px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.06em; color: var(--area-c1, var(--text-secondary));
+}
+.wo-day-row { display: flex; gap: 10px; font-size: 13px; padding: 4px 0; color: var(--text-secondary); }
+.wo-alt { color: var(--text-muted); }
+
+/* Progression chart */
+.wo-picker {
+  font: inherit; font-size: 13px; width: 100%; margin-bottom: 8px;
+  color: var(--text-primary); background: var(--surface-2);
+  border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 8px;
+}
+.wo-progress-line { margin-bottom: 8px; }
+.wo-scale {
+  display: flex; justify-content: space-between; gap: 8px;
+  font-size: 11px; color: var(--text-muted); font-variant-numeric: tabular-nums;
+}
+/* Min on the left, max on the right, window in the middle — the y-axis does
+   not start at zero, so these labels are load-bearing, not decoration. */
+.wo-scale span:last-child { text-align: right; }
+
 /* ── Projects (delinearized) ─────────────────────────────── */
 .projects-list-pane { display: block; }
 .projects-detail-pane { display: none; }

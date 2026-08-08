@@ -10,6 +10,10 @@
  *          of nesting only — a sub-task cannot itself have sub-tasks.
  *  Log   - a dated record: habit check-ins, completions { id, itemId, areaId,
  *          kind, date, createdAt }
+ *          Money logs additionally carry { amount, note?, prevDue? }.
+ *          Workout set logs (kind 'set') additionally carry
+ *          { exercise, weight, reps } — `exercise` is a static-config id
+ *          from data/workoutProgram.js, so itemId stays null.
  *  Note  - journal entries, per-item notes, quotes      { id, areaId, itemId?,
  *          text, createdAt, updatedAt }
  *
@@ -325,6 +329,42 @@ export const useStore = create(
         })
         if (log.kind === 'bill-pay' && log.prevDue) get().updateItem(log.itemId, { nextDue: log.prevDue })
       },
+
+      // ── Fitness (logged sets) ────────────────────────────────
+      // A set log carries { exercise, weight, reps } — the same deliberate
+      // scalar concession the money logs make, for the same reason: the
+      // program is static config (data/workoutProgram.js), so `exercise`
+      // holds a config id and there is no ITEM for itemId to point at.
+      //
+      // Set logs never touch points (computePoints counts only
+      // complete/habit-check/journal), and rewards.js's band index skips
+      // every kind but complete/habit-check — so an 18-set leg day cannot
+      // swamp the daily-practice chart. Fitness's contribution there still
+      // comes from its 'Top Priorities' habit bucket, unchanged.
+      logSet: (exercise, weight, reps, date) =>
+        set({
+          logs: [
+            ...get().logs,
+            {
+              id: uid(), itemId: null, areaId: 'fitness', kind: 'set',
+              exercise, weight, reps,
+              date: date ?? todayKey(), createdAt: now(), updatedAt: now(), deletedAt: null,
+            },
+          ],
+        }),
+
+      updateSet: (logId, patch) =>
+        set({
+          logs: get().logs.map((l) => (l.id === logId ? { ...l, ...patch, updatedAt: now() } : l)),
+        }),
+
+      /** Tombstone a logged set. Nothing derived needs unwinding — no points, no due dates. */
+      deleteSet: (logId) =>
+        set({
+          logs: get().logs.map((l) =>
+            l.id === logId ? { ...l, deletedAt: now(), updatedAt: now() } : l,
+          ),
+        }),
 
       // ── Notes / Journal ──────────────────────────────────────
       addNote: (areaId, text, itemId = null) => {

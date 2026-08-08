@@ -85,20 +85,32 @@ describe('routing', () => {
     expect(nudges.buckets).toEqual([])
   })
 
-  it('routes the four non-generic areas to their own pages', () => {
+  it('routes the non-generic areas to their own pages', () => {
     const routes = Object.fromEntries(AREAS.map((a) => [a.id, routeFor(a)]))
     expect(routes.journal).toBe('/journal')
     expect(routes.habits).toBe('/habits')
     expect(routes.nudges).toBe('/nudges')
     expect(routes.finance).toBe('/finance')
     expect(routes.projects).toBe('/projects')
+    expect(routes.fitness).toBe('/fitness')
   })
 
   it('routes every other area through the generic area view', () => {
     for (const a of AREAS) {
-      if (['journal', 'habits', 'nudges', 'finance', 'projects'].includes(a.id)) continue
+      if (['journal', 'habits', 'nudges', 'finance', 'projects', 'fitness'].includes(a.id)) continue
       expect(routeFor(a)).toBe(`/area/${a.id}`)
     }
+  })
+
+  // The workout page owns the route, but fitness is still a plain 'list' area
+  // with a habit bucket: its items, its daily band, and its Top Priorities
+  // check-off all keep working exactly as before.
+  it('keeps fitness a list-kind area with its original buckets', () => {
+    const fitness = AREAS.find((a) => a.id === 'fitness')
+    expect(fitness.kind).toBe('list')
+    expect(fitness.habitBucket).toBe('Top Priorities')
+    expect(fitness.buckets).toEqual(['Top Priorities', 'Routine', 'Goals', 'PRs'])
+    expect(fitness.daily).toEqual({ order: 3, series: 4 })
   })
 
   it('leaves the daily bands untouched by the new area', () => {
