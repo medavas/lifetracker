@@ -60,4 +60,18 @@ describe('stackGeometry', () => {
     expect(out[0].w).toBeLessThan(out[0].colW)
     expect(out[0].x).toBeGreaterThan(out[0].colX)
   })
+
+  // Finance stacks spending categories, whose palette slot lives on the item
+  // rather than in the area registry.
+  it('takes the series slot from seriesOf when one is given', () => {
+    const bands = [{ id: 'groceries', series: 5 }, { id: 'fun', series: 3 }]
+    const col = { date: '2026-08-01', bands: { groceries: 1000, fun: 500 }, total: 1500 }
+    const segs = stackGeometry([col], bands, { ...OPTS, seriesOf: (b) => b.series })[0].segments
+    expect(segs.map((s) => [s.areaId, s.series, s.count])).toEqual([
+      ['groceries', 5, 1000],
+      ['fun', 3, 500],
+    ])
+    // stacked from the baseline up: the second band sits above the first
+    expect(segs[1].y).toBeLessThan(segs[0].y)
+  })
 })

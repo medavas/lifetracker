@@ -142,33 +142,92 @@ export function subscriptionRollup(items) {
   return { monthly, yearly: monthly * 12 }
 }
 
-/** Cents spent per day of the month, index 0 = day 1. 'spend' logs only. */
-export function dailySpend(logs, month) {
-  const days = new Array(daysInMonth(month)).fill(0)
+// ── Category colors ───────────────────────────────────────────
+// A spending category owns a color so the same money reads the same way in
+// the budget list, the log chips and the chart. The slot is STORED on the
+// item (`color`, 1..SPEND_SERIES) rather than derived from position, so
+// archiving or reordering a category never repaints the others — and never
+// repaints past months, where the color is the only label a bar segment has.
+
+export const SPEND_SERIES = 8
+
+/**
+ * Deterministic 1..SPEND_SERIES from an id — the fallback for a category
+ * that predates `color` and reached this device by sync rather than by the
+ * v3 -> v4 migration. Stable for the life of the id, so it behaves like a
+ * stored slot even though nothing was written.
+ */
+function hashSeries(id) {
+  let h = 0
+  for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) % 1000003
+  return (h % SPEND_SERIES) + 1
+}
+
+/** The --series-N slot a category renders as. */
+export const categorySeries = (item) =>
+  item?.color >= 1 && item.color <= SPEND_SERIES ? item.color : hashSeries(item?.id ?? '')
+
+/**
+ * The slot a NEW category should take: the lowest one no live category is
+ * using, so the first eight are all distinct. Past eight it wraps — a
+ * repeat is better than a ninth color the palette hasn't validated.
+ */
+export function nextCategoryColor(items) {
+  const cats = financeItems(items).filter((i) => i.bucket === 'Spending')
+  const used = new Set(cats.map(categorySeries))
+  for (let c = 1; c <= SPEND_SERIES; c++) if (!used.has(c)) return c
+  return (cats.length % SPEND_SERIES) + 1
+}
+
+// ── Spend over time, split by category ────────────────────────
+
+/** A spend log whose category no longer resolves still happened. */
+export const UNCATEGORIZED = 'uncategorized'
+
+/**
+ * The month's spending split into columns and, within a column, by
+ * category — the shape `stackGeometry` consumes (`.total` + `.bands`).
+ *
+ * `grain: 'week'` groups in sevens from the 1st rather than by calendar
+ * week: every column is then the same seven days wide except a short tail,
+ * where Mon-aligned weeks would leave a stub at BOTH ends of the month and
+ * make the first bar look like a spending drop that never happened.
+ */
+export function spendPeriods(items, logs, month, grain = 'day') {
+  const size = grain === 'week' ? 7 : 1
+  const last = daysInMonth(month)
+  const periods = []
+  for (let start = 1; start <= last; start += size) {
+    const end = Math.min(last, start + size - 1)
+    periods.push({ date: `${month}-${pad2(start)}`, start, end, total: 0, bands: {} })
+  }
+
+  const known = new Set(items.filter((i) => !i.deletedAt).map((i) => i.id))
   for (const l of liveLogs(logs, month)) {
     if (l.kind !== 'spend') continue
-    days[Number(l.date.slice(8, 10)) - 1] += l.amount ?? 0
+    const p = periods[Math.floor((Number(l.date.slice(8, 10)) - 1) / size)]
+    if (!p) continue
+    const key = l.itemId && known.has(l.itemId) ? l.itemId : UNCATEGORIZED
+    const amount = l.amount ?? 0
+    p.bands[key] = (p.bands[key] ?? 0) + amount
+    p.total += amount
   }
-  return days
+  return periods
 }
 
 /**
- * SVG bar geometry for the daily-spend chart, kept out of the component
- * so it can be tested (stackGeometry pattern — SVG y grows downward).
+ * The bands to stack and to legend, biggest spender first so the tallest
+ * blocks sit at the bottom of every column. Only categories with money in
+ * the month appear — an empty legend row is a color to learn for nothing.
  */
-export function spendBars(dayTotals, opts = {}) {
-  const { width = 320, height = 96, pad = 4, gap = 2 } = opts
-  const colW = (width - pad * 2) / Math.max(1, dayTotals.length)
-  const max = Math.max(1, ...dayTotals)
-  return dayTotals.map((total, i) => {
-    const h = (total / max) * height
-    return {
-      day: i + 1,
-      x: pad + i * colW + gap / 2,
-      y: height - h,
-      w: Math.max(1, colW - gap),
-      h,
-      total,
-    }
-  })
+export function spendBands(items, logs, month) {
+  const { spendByCategory } = monthActuals(items, logs, month)
+  const bands = financeItems(items)
+    .filter((i) => i.bucket === 'Spending' && (spendByCategory[i.id] ?? 0) > 0)
+    .map((i) => ({ id: i.id, name: i.title, series: categorySeries(i), total: spendByCategory[i.id] }))
+    .sort((a, b) => b.total - a.total)
+  if (spendByCategory[UNCATEGORIZED] > 0) {
+    bands.push({ id: UNCATEGORIZED, name: 'Uncategorized', series: 0, total: spendByCategory[UNCATEGORIZED] })
+  }
+  return bands
 }

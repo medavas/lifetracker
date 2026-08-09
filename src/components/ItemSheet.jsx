@@ -4,6 +4,7 @@ import { useShallow } from 'zustand/react/shallow'
 import { useStore, selectItemNotes } from '../lib/store'
 import { areaById } from '../data/areas'
 import { parseAmount, centsToInput } from '../lib/money'
+import { categorySeries, SPEND_SERIES } from '../lib/finance'
 import AreaIcon from './AreaIcon'
 
 /** Bottom sheet: item details, per-item notes, bucket, archive/delete. */
@@ -19,6 +20,7 @@ export default function ItemSheet({ item, onClose }) {
   const money = area?.kind === 'money'
   const moneyBill = money && (item.bucket === 'Bills' || item.bucket === 'Subscriptions')
   const moneyPlan = money && item.bucket === 'Plan'
+  const moneyCategory = money && item.bucket === 'Spending'
 
   const [title, setTitle] = useState(item.title)
   const [details, setDetails] = useState(item.details)
@@ -28,6 +30,7 @@ export default function ItemSheet({ item, onClose }) {
   const [cadence, setCadence] = useState(item.cadence ?? 'monthly')
   const [nextDue, setNextDue] = useState(item.nextDue ?? '')
   const [planType, setPlanType] = useState(item.type === 'savings' ? 'savings' : 'income')
+  const [color, setColor] = useState(() => categorySeries(item))
 
   const archived = item.status === 'archived'
 
@@ -41,6 +44,7 @@ export default function ItemSheet({ item, onClose }) {
         if (nextDue) patch.nextDue = nextDue
       }
       if (moneyPlan) patch.type = planType
+      if (moneyCategory) patch.color = color
     }
     updateItem(item.id, patch)
     onClose()
@@ -86,6 +90,26 @@ export default function ItemSheet({ item, onClose }) {
               <input type="date" value={nextDue} onChange={(e) => setNextDue(e.target.value)} />
             </div>
           </>
+        )}
+        {moneyCategory && (
+          <div className="field">
+            <label>Color</label>
+            {/* The eight CVD-validated --series-* slots and nothing else: a
+                free color input would let two categories land indistinguishable
+                in the stacked chart, where color is the only label. */}
+            <div className="swatch-row">
+              {Array.from({ length: SPEND_SERIES }, (_, i) => i + 1).map((c) => (
+                <button
+                  key={c}
+                  className={`swatch ${color === c ? 'on' : ''}`}
+                  style={{ background: `var(--series-${c})` }}
+                  aria-label={`Color ${c}`}
+                  aria-pressed={color === c}
+                  onClick={() => setColor(c)}
+                />
+              ))}
+            </div>
+          </div>
         )}
         {moneyPlan && (
           <div className="field">

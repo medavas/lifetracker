@@ -105,3 +105,37 @@ describe('v3 migration remaps old finance buckets', () => {
     expect(migrate(clean, 2)).toBe(clean)
   })
 })
+
+describe('v4 migration stamps spending-category colors', () => {
+  const { migrate } = useStore.persist.getOptions()
+  const mk = (id, bucket, extra = {}) => ({
+    id, areaId: 'finance', bucket, title: id, status: 'open',
+    order: 0, createdAt: 1, updatedAt: 1, completedAt: null, deletedAt: null, ...extra,
+  })
+
+  it('gives every uncolored category a distinct in-range slot and leaves others alone', () => {
+    const v3 = {
+      items: [mk('a', 'Spending'), mk('b', 'Spending'), mk('c', 'Bills'), mk('d', 'Spending', { color: 7 })],
+      logs: [], notes: [], points: 0,
+    }
+    const byId = (out, id) => out.items.find((i) => i.id === id)
+    const out = migrate(v3, 3)
+    expect(byId(out, 'a').color).toBe(1)
+    expect(byId(out, 'b').color).toBe(2)
+    expect(byId(out, 'c').color).toBeUndefined()
+    expect(byId(out, 'd').color).toBe(7)
+    expect(byId(out, 'd').updatedAt).toBe(1) // already colored — untouched
+    expect(byId(out, 'a').updatedAt).toBeGreaterThan(1)
+  })
+
+  it('runs after the v3 bucket remap, so a remapped category is colored too', () => {
+    const v2 = { items: [mk('c', 'Variable')], logs: [], notes: [], points: 0 }
+    const out = migrate(v2, 2)
+    expect(out.items[0]).toMatchObject({ bucket: 'Spending', color: 1 })
+  })
+
+  it('is a passthrough for a store already on v4', () => {
+    const current = { items: [mk('a', 'Spending')], logs: [], notes: [], points: 0 }
+    expect(migrate(current, 4)).toBe(current)
+  })
+})

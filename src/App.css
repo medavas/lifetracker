@@ -417,7 +417,23 @@ a.item-row { text-decoration: none; color: inherit; }
 .fin-due.overdue { color: var(--trim-r); }
 .fin-minibar { height: 4px; border-radius: 2px; background: var(--surface-3); overflow: hidden; margin-top: 4px; }
 .fin-minibar > div { height: 100%; background: var(--area-c1); }
+.fin-minibar > div.cat { background: var(--cat-c, var(--area-c1)); }
 .fin-minibar > div.over { background: var(--trim-r); }
+
+/* Spending-category color: one identity carried across the budget row, the
+   log chip and the chart, so a bar can be read without the legend. */
+.cat-swatch { display: inline-block; margin-right: 6px; background: var(--cat-c); vertical-align: middle; }
+.chip-swatch .legend-swatch { background: var(--chip-c); }
+.chip-swatch.on { border-color: var(--chip-c); }
+.swatch-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px; }
+.swatch {
+  width: 26px; height: 26px; border-radius: var(--radius-sm); padding: 0;
+  border: 2px solid transparent; box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.25);
+}
+.swatch.on { border-color: var(--text-primary); }
+.fin-charthead { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.fin-charthead h3 { margin: 0; }
+.fin-charthead .link-chips { margin: 0 0 0 auto; }
 .fin-addrow { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
 .fin-addrow input { padding: 8px 10px; min-width: 0; }
 .fin-addrow input.fin-amt { width: 84px; flex: none; }

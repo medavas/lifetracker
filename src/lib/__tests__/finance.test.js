@@ -61,7 +61,8 @@ describe('monthlyize', () => {
 
 import {
   financeItems, monthActuals, budgetSummary, upcomingBills,
-  goalProgress, subscriptionRollup, dailySpend, spendBars,
+  goalProgress, subscriptionRollup, spendPeriods, spendBands,
+  categorySeries, nextCategoryColor, SPEND_SERIES, UNCATEGORIZED,
 } from '../finance.js'
 
 const fin = (bucket, extra = {}) => ({
@@ -183,31 +184,105 @@ describe('goals + subscriptions', () => {
   })
 })
 
-describe('dailySpend + spendBars', () => {
-  it('buckets spend logs by day of month', () => {
-    const logs = [
-      spend('c', 1000, '2026-08-01'),
-      spend('c', 500, '2026-08-01'),
-      spend('c', 200, '2026-08-31'),
-      spend('c', 9999, '2026-07-31'),
-      { id: 'p', itemId: 'rent', areaId: 'finance', kind: 'bill-pay', amount: 99, date: '2026-08-01', deletedAt: null },
-    ]
-    const days = dailySpend(logs, '2026-08')
-    expect(days).toHaveLength(31)
-    expect(days[0]).toBe(1500)
-    expect(days[30]).toBe(200)
-    expect(days[1]).toBe(0)
+describe('category colors', () => {
+  it('uses the stored slot when it is a valid series', () => {
+    expect(categorySeries({ id: 'a', color: 3 })).toBe(3)
+    expect(categorySeries({ id: 'a', color: SPEND_SERIES })).toBe(SPEND_SERIES)
   })
 
-  it('spendBars scales heights to the max day within the plot box', () => {
-    const bars = spendBars([1000, 0, 500], { width: 90, height: 100, pad: 0, gap: 0 })
-    expect(bars).toHaveLength(3)
-    expect(bars[0].h).toBe(100)
-    expect(bars[2].h).toBe(50)
-    expect(bars[1].h).toBe(0)
-    expect(bars[0].w).toBe(30)
-    expect(bars[2].x).toBe(60)
-    expect(bars[0].y).toBe(0)
-    expect(bars[2].y).toBe(50)
+  it('falls back to a stable in-range hash when color is missing or bogus', () => {
+    for (const color of [undefined, null, 0, -1, SPEND_SERIES + 1, 'blue']) {
+      const s = categorySeries({ id: 'groceries', color })
+      expect(s).toBe(categorySeries({ id: 'groceries' }))
+      expect(s).toBeGreaterThanOrEqual(1)
+      expect(s).toBeLessThanOrEqual(SPEND_SERIES)
+    }
+  })
+
+  it('hands new categories the lowest free slot, ignoring dead ones', () => {
+    const items = [
+      fin('Spending', { id: 'a', color: 1 }),
+      fin('Spending', { id: 'b', color: 3 }),
+      fin('Spending', { id: 'c', color: 2, status: 'archived' }),
+      fin('Bills', { id: 'd', color: 2 }),
+    ]
+    expect(nextCategoryColor(items)).toBe(2)
+  })
+
+  it('wraps once every slot is taken rather than inventing a ninth color', () => {
+    const items = Array.from({ length: SPEND_SERIES }, (_, i) =>
+      fin('Spending', { id: `c${i}`, color: i + 1 }),
+    )
+    const wrapped = nextCategoryColor(items)
+    expect(wrapped).toBeGreaterThanOrEqual(1)
+    expect(wrapped).toBeLessThanOrEqual(SPEND_SERIES)
+  })
+})
+
+describe('spendPeriods', () => {
+  const items = [fin('Spending', { id: 'groceries' }), fin('Spending', { id: 'fun' })]
+  const logs = [
+    spend('groceries', 1000, '2026-08-01'),
+    spend('fun', 500, '2026-08-01'),
+    spend('groceries', 200, '2026-08-08'),
+    spend('groceries', 300, '2026-08-31'),
+    spend('groceries', 9999, '2026-07-31'),
+    spend('groceries', 400, '2026-08-02', { deletedAt: 7 }),
+    { id: 'p', itemId: 'rent', areaId: 'finance', kind: 'bill-pay', amount: 99, date: '2026-08-01', deletedAt: null },
+  ]
+
+  it('gives one column per day, split by category', () => {
+    const days = spendPeriods(items, logs, '2026-08')
+    expect(days).toHaveLength(31)
+    expect(days[0]).toMatchObject({ start: 1, end: 1, total: 1500 })
+    expect(days[0].bands).toEqual({ groceries: 1000, fun: 500 })
+    expect(days[1].total).toBe(0)
+    expect(days[30].total).toBe(300)
+  })
+
+  it('groups weeks in sevens from the 1st, with a short tail', () => {
+    const weeks = spendPeriods(items, logs, '2026-08', 'week')
+    expect(weeks.map((w) => [w.start, w.end])).toEqual([[1, 7], [8, 14], [15, 21], [22, 28], [29, 31]])
+    expect(weeks[0].total).toBe(1500)
+    expect(weeks[1].bands).toEqual({ groceries: 200 })
+    expect(weeks[4].total).toBe(300)
+  })
+
+  it('keeps orphaned spends visible under uncategorized', () => {
+    const days = spendPeriods(items, [spend('gone', 700, '2026-08-03'), spend(null, 300, '2026-08-03')], '2026-08')
+    expect(days[2].bands).toEqual({ [UNCATEGORIZED]: 1000 })
+    expect(days[2].total).toBe(1000)
+  })
+
+  it('totals across periods match monthActuals whatever the grain', () => {
+    const sum = (ps) => ps.reduce((s, p) => s + p.total, 0)
+    const { totalSpend } = monthActuals(items, logs, '2026-08')
+    expect(sum(spendPeriods(items, logs, '2026-08'))).toBe(totalSpend)
+    expect(sum(spendPeriods(items, logs, '2026-08', 'week'))).toBe(totalSpend)
+  })
+})
+
+describe('spendBands', () => {
+  const items = [
+    fin('Spending', { id: 'groceries', title: 'Groceries', color: 2 }),
+    fin('Spending', { id: 'fun', title: 'Fun', color: 5 }),
+    fin('Spending', { id: 'idle', title: 'Idle', color: 6 }),
+  ]
+
+  it('lists only categories with spend, biggest first, carrying their color', () => {
+    const logs = [spend('groceries', 100, '2026-08-01'), spend('fun', 900, '2026-08-02')]
+    expect(spendBands(items, logs, '2026-08')).toEqual([
+      { id: 'fun', name: 'Fun', series: 5, total: 900 },
+      { id: 'groceries', name: 'Groceries', series: 2, total: 100 },
+    ])
+  })
+
+  it('appends uncategorized last with no series of its own', () => {
+    const bands = spendBands(items, [spend('gone', 700, '2026-08-03')], '2026-08')
+    expect(bands).toEqual([{ id: UNCATEGORIZED, name: 'Uncategorized', series: 0, total: 700 }])
+  })
+
+  it('is empty for a month with no spending', () => {
+    expect(spendBands(items, [], '2026-08')).toEqual([])
   })
 })

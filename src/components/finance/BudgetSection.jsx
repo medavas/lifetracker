@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useStore } from '../../lib/store'
-import { monthActuals } from '../../lib/finance'
+import { monthActuals, categorySeries } from '../../lib/finance'
 import { parseAmount, formatCents } from '../../lib/money'
 
 /** Per-category limit / spent / remaining with mini bars, plus inline add. */
@@ -28,10 +28,16 @@ export default function BudgetSection({ items, logs, month, onEdit }) {
         const limit = c.amount ?? 0
         const pct = limit > 0 ? Math.min(100, (spent / limit) * 100) : 0
         return (
-          <div key={c.id} className="fin-row" onClick={() => onEdit(c)} role="button" tabIndex={0}>
+          <div
+            key={c.id} className="fin-row" onClick={() => onEdit(c)} role="button" tabIndex={0}
+            style={{ '--cat-c': `var(--series-${categorySeries(c)})` }}
+          >
             <div className="fin-grow">
+              <span className="legend-swatch cat-swatch" />
               {c.title}
-              <div className="fin-minibar"><div className={spent > limit ? 'over' : ''} style={{ width: `${pct}%` }} /></div>
+              {/* The bar is the category's own color until it goes over the
+                  limit, where the warning has to beat the identity. */}
+              <div className="fin-minibar"><div className={spent > limit ? 'over' : 'cat'} style={{ width: `${pct}%` }} /></div>
             </div>
             <span className="fin-amount">
               {formatCents(spent)} <span className="fin-sub">/ {limit ? formatCents(limit) : 'set limit'}</span>

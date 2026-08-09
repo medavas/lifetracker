@@ -131,6 +131,22 @@ describe('money fields on items', () => {
     expect('amount' in stored).toBe(false)
     expect('cadence' in stored).toBe(false)
     expect('nextDue' in stored).toBe(false)
+    expect('color' in stored).toBe(false)
+  })
+
+  it('gives each new spending category the next free color, and nothing else one', () => {
+    const add = (bucket, title) => useStore.getState().addItem('finance', title, { bucket })
+    expect(add('Spending', 'Groceries').color).toBe(1)
+    expect(add('Spending', 'Fun').color).toBe(2)
+    expect('color' in add('Bills', 'Rent')).toBe(false)
+    // a freed slot is reused rather than skipped
+    useStore.getState().archiveItem(useStore.getState().items[0].id)
+    expect(add('Spending', 'Transit').color).toBe(1)
+  })
+
+  it('honors an explicit color over the auto-assigned one', () => {
+    const c = useStore.getState().addItem('finance', 'Fun', { bucket: 'Spending', color: 6 })
+    expect(c.color).toBe(6)
   })
 })
 

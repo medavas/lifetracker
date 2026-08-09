@@ -2,8 +2,14 @@ import { useState } from 'react'
 import { Plus } from 'lucide-react'
 import { useStore } from '../../lib/store'
 import { parseAmount } from '../../lib/money'
+import { categorySeries } from '../../lib/finance'
 
-/** The everyday surface: amount + category chip + optional memo. */
+/**
+ * The everyday surface: amount + category chip + optional memo. The chip
+ * stays selected after a submit — consecutive spends are usually the same
+ * category, and a log that lands uncategorized is one the chart can't
+ * explain later.
+ */
 export default function QuickSpend({ categories, isCurrentMonth }) {
   const logSpend = useStore((s) => s.logSpend)
   const [amountStr, setAmountStr] = useState('')
@@ -42,12 +48,18 @@ export default function QuickSpend({ categories, isCurrentMonth }) {
             {categories.map((c) => (
               <button
                 key={c.id}
-                className={`chip ${catId === c.id ? 'on' : ''}`}
+                className={`chip chip-swatch ${catId === c.id ? 'on' : ''}`}
+                style={{ '--chip-c': `var(--series-${categorySeries(c)})` }}
+                aria-pressed={catId === c.id}
                 onClick={() => setCatId(catId === c.id ? null : c.id)}
               >
+                <span className="legend-swatch" />
                 {c.title}
               </button>
             ))}
+            {categories.length === 0 && (
+              <span className="fin-sub">Add a budget category below to tag spending.</span>
+            )}
           </div>
         </>
       )}

@@ -27,6 +27,15 @@ really just filtered views over 4 data primitives:
    Finance (money) items additionally carry { amount, cadence, nextDue }
    and money LOGs carry { amount, note?, prevDue? } — the same deliberate
    concession, cents-integer amounts, no 5th primitive.
+   A Spending-bucket item (a budget category) additionally carries
+   `{ color }`: an index into the eight CVD-validated `--series-*` slots,
+   assigned on add as the lowest free one and editable in the item sheet.
+   It is STORED rather than derived from list position on purpose — the
+   stacked chart labels a segment with nothing but its color, so archiving
+   or reordering a category must not repaint its neighbours, and must not
+   repaint last month either. `lib/finance.js` owns the whole mechanism
+   (`categorySeries`, `nextCategoryColor`) and falls back to a hash of the
+   id, so a category that arrives by sync without a color is still stable.
    A project sub-task additionally carries `{ parentId }` — the same kind of
    concession, one level of nesting only: a sub-task cannot itself have
    sub-tasks (enforced in `addItem`, not just by convention).
@@ -81,7 +90,9 @@ really just filtered views over 4 data primitives:
   either in the `'Sessions'` bucket or hangs off one by `parentId`, and the
   Tracking tabs filter both out.
 - Streaks and stats are always COMPUTED from logs, never stored, so they
-  can't drift.
+  can't drift. (Category `color` is the one deliberate exception and shows
+  where the line is: it is an identity the user picks, not a fact derivable
+  from the logs, and deriving it would make it drift.)
 - Unchecking an item is NOT archiving. Uncheck = back to `'open'`. Archive is
   an explicit user action (soft delete). Hard delete needs confirmation.
 - Reward points are reversible: unchecking takes back exactly what checking

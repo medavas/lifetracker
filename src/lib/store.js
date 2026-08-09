@@ -6,6 +6,8 @@
  *          title, details, type, status, order, createdAt, updatedAt,
  *          completedAt }
  *          Nudge timers additionally carry { intervalMin, enabled }.
+ *          A finance spending category additionally carries { color }, its
+ *          --series-* slot (1..8), stored so it never shifts under the user.
  *          A project sub-task additionally carries { parentId }, one level
  *          of nesting only — a sub-task cannot itself have sub-tasks.
  *  Log   - a dated record: habit check-ins, completions { id, itemId, areaId,
@@ -25,7 +27,7 @@ import { persist, createJSONStorage } from 'zustand/middleware'
 import { idbStorage } from './storage'
 import { todayKey, computePoints } from './rewards'
 import { toEntities, fromEntities, merge } from './merge'
-import { advanceDue } from './finance'
+import { advanceDue, nextCategoryColor, SPEND_SERIES } from './finance'
 import { DEFAULT_PROGRAM, SESSION_BUCKET } from '../data/workoutProgram'
 import { DEFAULT_STRETCH_CATEGORIES, STRETCH_BUCKET } from '../data/stretches'
 
@@ -89,6 +91,12 @@ export const useStore = create(
           ...(extra.amount != null && { amount: extra.amount }),
           ...(extra.cadence != null && { cadence: extra.cadence }),
           ...(extra.nextDue != null && { nextDue: extra.nextDue }),
+          // Spending categories only: the palette slot the category is drawn
+          // in everywhere. Assigned here rather than derived at render time
+          // so it survives archiving a sibling — see lib/finance.js.
+          ...(areaId === 'finance' && extra.bucket === 'Spending' && {
+            color: extra.color ?? nextCategoryColor(items),
+          }),
           // Project sub-tasks only. Same conditional-attachment pattern as
           // intervalMin above — absent everywhere else in the app.
           ...(parentId != null && { parentId }),
@@ -483,7 +491,7 @@ export const useStore = create(
     {
       name: 'stoa',
       storage: createJSONStorage(() => idbStorage),
-      version: 3,
+      version: 4,
       // v1 -> v2 added tombstones: pre-v2 records simply lack `deletedAt`,
       // and every consumer treats a missing field as "not deleted", so no
       // transformation is needed. (Bumping `version` with no `migrate`
@@ -491,20 +499,42 @@ export const useStore = create(
       //
       // v2 -> v3: the finance dashboard replaced the old list buckets.
       // Old finance items are remapped to their new homes with a fresh
-      // updatedAt so the move wins last-write-wins sync merges. When
-      // nothing needs remapping the persisted object is returned as-is.
+      // updatedAt so the move wins last-write-wins sync merges.
+      //
+      // v3 -> v4: spending categories gained a `color`. Stamped once here so
+      // every existing category keeps one fixed slot; a category that misses
+      // this (created on a device still on v3, arriving by sync) falls back
+      // to a hash of its id in categorySeries — same color, just underived.
+      //
+      // Each step is `if (version < N)` and the object is returned untouched
+      // when no step changed anything, so a fresh v4 store pays nothing.
       migrate: (persistedState, version) => {
-        if (version >= 3 || !persistedState?.items) return persistedState
-        const REMAP = { Fixed: 'Bills', Variable: 'Spending', Savings: 'Goals', Insurance: 'Other', Investments: 'Other' }
-        const needsRemap = (i) => i.areaId === 'finance' && REMAP[i.bucket]
-        if (!persistedState.items.some(needsRemap)) return persistedState
+        if (!persistedState?.items) return persistedState
+        let items = persistedState.items
+        let touched = false
         const stamp = Date.now()
-        return {
-          ...persistedState,
-          items: persistedState.items.map((i) =>
-            needsRemap(i) ? { ...i, bucket: REMAP[i.bucket], updatedAt: stamp } : i,
-          ),
+
+        if (version < 3) {
+          const REMAP = { Fixed: 'Bills', Variable: 'Spending', Savings: 'Goals', Insurance: 'Other', Investments: 'Other' }
+          const needsRemap = (i) => i.areaId === 'finance' && REMAP[i.bucket]
+          if (items.some(needsRemap)) {
+            touched = true
+            items = items.map((i) => (needsRemap(i) ? { ...i, bucket: REMAP[i.bucket], updatedAt: stamp } : i))
+          }
         }
+
+        if (version < 4) {
+          const needsColor = (i) => i.areaId === 'finance' && i.bucket === 'Spending' && i.color == null
+          if (items.some(needsColor)) {
+            touched = true
+            let next = 0
+            items = items.map((i) =>
+              needsColor(i) ? { ...i, color: (next++ % SPEND_SERIES) + 1, updatedAt: stamp } : i,
+            )
+          }
+        }
+
+        return touched ? { ...persistedState, items } : persistedState
       },
     },
   ),

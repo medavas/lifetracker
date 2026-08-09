@@ -72,7 +72,7 @@ export default function FinanceDashboard() {
         <div className="fin-col">
           <BudgetSection items={items} logs={logs} month={month} onEdit={setSheetItem} />
           <GoalsSection items={items} logs={logs} onEdit={setSheetItem} />
-          <SpendChart logs={logs} month={month} />
+          <SpendChart items={items} logs={logs} month={month} />
         </div>
         <div className="fin-col">
           <SubscriptionsSection items={items} onEdit={setSheetItem} />
