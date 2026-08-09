@@ -187,6 +187,19 @@ export function startOfWeekKey(d = new Date()) {
 }
 
 /**
+ * The window Dashboard shows: 13 weeks, always exactly 91 days.
+ *
+ * Deliberately ROLLING rather than the calendar quarter. Calendar quarters run
+ * 90/91/92/92 days and start mid-week, so a fixed 13-cell grid misstates both
+ * ends; the 13-week fiscal quarter is exact by construction but sums to only
+ * 364 days a year, so it needs a 53rd correction week in years like 2026.
+ * A window measured back from today has neither problem and no leap branch —
+ * the price is that it never counts down, which is the right trade for a
+ * record of what happened. A countdown would need a fixed target date.
+ */
+export const QUARTER_WEEKS = 13
+
+/**
  * Presence booleans over a rolling window of `weeks` calendar weeks ending
  * with the current one. Outer array is weeks oldest-first, inner is Mon..Sun,
  * so the block is always exactly weeks x 7 and the oldest week drops off as a

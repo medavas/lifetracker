@@ -299,8 +299,20 @@
 .legend-swatch { width: 9px; height: 9px; border-radius: 2px; flex: none; }
 
 /* ── Practice grid ───────────────────────────────────────── */
-.practice-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
-.pg-head { font-size: 10px; color: var(--text-muted); text-align: center; margin-bottom: 2px; }
+/* Weeks are columns, days are rows: a fixed 7-row height that a longer window
+   widens rather than lengthens. `--pg-weeks` is set inline by the component.
+   minmax(0, 1fr) so the columns actually shrink on a phone instead of forcing
+   the card wider than the viewport. */
+.practice-grid {
+  display: grid;
+  grid-template-columns: auto repeat(var(--pg-weeks, 13), minmax(0, 1fr));
+  gap: 4px;
+}
+.pg-month { font-size: 10px; color: var(--text-muted); white-space: nowrap; }
+.pg-head {
+  font-size: 10px; color: var(--text-muted);
+  text-align: right; padding-right: 2px; align-self: center;
+}
 .pg-cell {
   display: flex; flex-direction: column; gap: 1px;
   border-radius: 3px; overflow: hidden; cursor: default;
@@ -311,6 +323,9 @@
 
 @media (max-width: 420px) {
   .practice-grid { gap: 3px; }
+  /* Squarer cells: at phone width 13 columns are ~18px wide, so a 27px-tall
+     cell reads as a stripe instead of a dot. */
+  .pg-slot { height: 4px; }
 }
 
 /* ── Progress ring ───────────────────────────────────────── */

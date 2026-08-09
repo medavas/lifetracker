@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
-import { computePoints, bandCounts, dailyActivity, startOfWeekKey, dailyPresence, habitStreak } from '../rewards.js'
+import { computePoints, bandCounts, dailyActivity, startOfWeekKey, dailyPresence, habitStreak, QUARTER_WEEKS } from '../rewards.js'
 
 const log = (over) => ({ id: Math.random().toString(), itemId: 'i', areaId: 'a', date: '2026-07-26', createdAt: 1, updatedAt: 1, deletedAt: null, ...over })
 
@@ -196,6 +196,28 @@ describe('dailyPresence', () => {
     expect(grid[0][0].date).toBe('2026-07-06')
     expect(grid[4][0].date).toBe('2026-08-03')
     expect(grid[4][6].date).toBe('2026-08-09')
+  })
+
+  it('spans exactly 91 distinct days over the quarter window', () => {
+    const grid = dailyPresence([], [], QUARTER_WEEKS)
+    expect(grid).toHaveLength(13)
+    const dates = grid.flat().map((c) => c.date)
+    expect(dates).toHaveLength(91)
+    expect(new Set(dates).size).toBe(91)
+    expect(dates[0]).toBe('2026-05-11') // twelve Mondays back
+    expect(dates[90]).toBe('2026-08-09') // this week's Sunday
+  })
+
+  it('stays 91 days across a year boundary out of a 53-week ISO year', () => {
+    // The drift that sinks fixed 13-week quarters: 2026 is a 53-week ISO year,
+    // so a fiscal-quarter grid would have to swallow a correction week here.
+    // A window measured back from today just does not have the problem.
+    vi.setSystemTime(new Date('2027-01-06T12:00:00')) // Wed of the week of Mon 2027-01-04
+    const dates = dailyPresence([], [], QUARTER_WEEKS).flat().map((c) => c.date)
+    expect(dates).toHaveLength(91)
+    expect(dates[0]).toBe('2026-10-12')
+    expect(dates[90]).toBe('2027-01-10')
+    expect((Date.parse(dates[90]) - Date.parse(dates[0])) / 86400000).toBe(90)
   })
 
   it('flags days after today as future', () => {

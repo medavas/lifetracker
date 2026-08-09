@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom'
 import { Check, Flame } from 'lucide-react'
 import { useShallow } from 'zustand/react/shallow'
 import { useStore, selectJournal } from '../lib/store'
-import { levelForPoints, levelProgress, habitStreak, dailyActivity, dailyPresence, todayKey } from '../lib/rewards'
+import { levelForPoints, levelProgress, habitStreak, dailyActivity, dailyPresence, todayKey, QUARTER_WEEKS } from '../lib/rewards'
 import { AREAS } from '../data/areas'
 import ProgressRing from '../components/ProgressRing'
 import DailyStack from '../components/DailyStack'
@@ -130,9 +130,9 @@ export default function Dashboard() {
             <DailyStack data={dailyActivity(logs, notes, 7)} />
           </div>
 
-          <div className="section-label">Last 5 weeks</div>
+          <div className="section-label">Last {QUARTER_WEEKS} weeks</div>
           <div className="card">
-            <PracticeGrid weeks={dailyPresence(logs, notes, 5)} />
+            <PracticeGrid weeks={dailyPresence(logs, notes, QUARTER_WEEKS)} />
           </div>
         </div>
 
