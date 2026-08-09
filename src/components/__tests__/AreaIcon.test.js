@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { Rocket } from 'lucide-react'
 import AreaIcon, { ICONS } from '../AreaIcon'
 import { AREAS } from '../../data/areas'
-import { orderableEntries } from '../../lib/sidebarOrder'
+import { orderableEntries, pinnedEntries } from '../../lib/sidebarOrder'
 
 describe('AreaIcon', () => {
   it('has a registry entry for every area icon', () => {
@@ -11,6 +11,10 @@ describe('AreaIcon', () => {
 
   it('has a registry entry for every sidebar entry icon (Home, Areas, plus every area)', () => {
     for (const e of orderableEntries()) expect(ICONS[e.icon], e.icon).toBeTruthy()
+  })
+
+  it('has a registry entry for every pinned top-section icon', () => {
+    for (const e of pinnedEntries()) expect(ICONS[e.icon], e.icon).toBeTruthy()
   })
 
   it('resolves a lucide icon by name with defaults', () => {

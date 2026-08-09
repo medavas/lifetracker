@@ -1,6 +1,7 @@
 import { describe, it, expect, afterEach, vi } from 'vitest'
 import {
-  orderableEntries, HOME_ENTRY, AREAS_GRID_ENTRY,
+  orderableEntries, HOME_ENTRY, AREAS_GRID_ENTRY, SETTINGS_ENTRY,
+  PINNED_IDS, pinnedEntries, mainMenuEntries,
   readSidebarOrder, writeSidebarOrder, orderedEntries,
 } from '../sidebarOrder.js'
 import { AREAS } from '../../data/areas.js'
@@ -28,6 +29,38 @@ describe('orderableEntries', () => {
 
   it('never includes settings', () => {
     expect(orderableEntries().some((e) => e.id === 'settings')).toBe(false)
+  })
+})
+
+describe('pinnedEntries', () => {
+  it('is Nudges, Home, Settings, Areas — the fixed top section', () => {
+    expect(pinnedEntries().map((e) => e.id)).toEqual(PINNED_IDS)
+    expect(pinnedEntries()[0].route).toBe('/nudges')
+    expect(pinnedEntries()).toContainEqual(SETTINGS_ENTRY)
+  })
+})
+
+describe('mainMenuEntries', () => {
+  afterEach(() => vi.unstubAllGlobals())
+
+  it('is the saved order with every pinned destination removed', () => {
+    const storage = stubLocalStorage()
+    storage.setItem(KEY, JSON.stringify(['home', 'nudges', 'fitness', 'areas', 'diet']))
+    // The unlisted areas are appended by readSidebarOrder; only the ranked
+    // pair's position is asserted here.
+    expect(mainMenuEntries().map((e) => e.id).slice(0, 2)).toEqual(['fitness', 'diet'])
+  })
+
+  it('never lists a pinned entry, whatever the saved order', () => {
+    stubLocalStorage()
+    const ids = mainMenuEntries().map((e) => e.id)
+    for (const pinned of PINNED_IDS) expect(ids).not.toContain(pinned)
+  })
+
+  it('leaves pinned entries rankable for the bottom bar', () => {
+    const storage = stubLocalStorage()
+    storage.setItem(KEY, JSON.stringify(['home', 'fitness']))
+    expect(orderedEntries()[0]).toEqual(HOME_ENTRY)
   })
 })
 

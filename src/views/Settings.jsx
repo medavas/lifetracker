@@ -52,7 +52,8 @@ function SidebarOrderSection() {
     <>
       <div className="section-label" style={{ marginTop: 28 }}>Sidebar order</div>
       <p className="hint" style={{ marginBottom: 10 }}>
-        Drag to reorder. The top 4 become your bottom-bar buttons on phone; the rest live in the side menu.
+        Drag to reorder. The top 4 become your bottom-bar buttons on phone; the rest live in the
+        side menu, below its pinned top section (Quick add, Nudges, Home, Settings, Areas).
       </p>
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
         <SortableContext items={order} strategy={verticalListSortingStrategy}>

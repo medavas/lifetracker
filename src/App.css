@@ -14,8 +14,15 @@
 }
 .sidebar.open { transform: translateX(0); }
 
+/* Mobile-only bar holding the hamburger. It occupies layout space instead of
+   floating, so the button can never cover a page heading; sticky + an opaque
+   background keep it reachable and legible once the page scrolls under it. */
+.topbar {
+  position: sticky; top: 0; z-index: 45;
+  display: flex; align-items: center;
+  padding: 10px 12px; background: var(--bg);
+}
 .hamburger {
-  position: fixed; top: 14px; left: 14px; z-index: 45;
   width: 38px; height: 38px; border-radius: var(--radius-sm);
   display: grid; place-items: center;
   background: var(--surface-1); border: 1px solid var(--border);
@@ -26,6 +33,11 @@
   padding: 0 10px 18px;
 }
 .side-nav { display: flex; flex-direction: column; gap: 2px; }
+/* Top section: pinned destinations, ruled off from the orderable main menu. */
+.side-top { padding-bottom: 12px; border-bottom: 1px solid var(--border); }
+/* min-height:0 so this section, not the pinned block or the level footer,
+   is what scrolls when the areas outgrow a short phone screen. */
+.side-main { padding-top: 12px; min-height: 0; overflow-y: auto; }
 .side-nav a {
   display: flex; align-items: center; gap: 10px;
   padding: 9px 10px; border-radius: var(--radius-sm);
@@ -34,7 +46,7 @@
 .side-nav a:hover { color: var(--text-primary); }
 .side-nav a.active { background: var(--surface-2); color: var(--text-primary); }
 .side-add {
-  margin-top: 14px; display: flex; align-items: center; justify-content: center;
+  margin-bottom: 6px; display: flex; align-items: center; justify-content: center;
   gap: 8px; padding: 9px 10px; border-radius: var(--radius-sm);
   background: var(--text-primary); color: var(--bg);
   font-size: 14px; font-weight: 600;
@@ -47,7 +59,9 @@
 
 /* ── Layout ──────────────────────────────────────────────── */
 .page {
-  padding: 20px 16px calc(var(--nav-h) + 32px);
+  /* Mobile top padding is small because .topbar above already spaces the
+     page off the top edge; the desktop override below restores a full one. */
+  padding: 8px 16px calc(var(--nav-h) + 32px);
   animation: fade-in 0.18s ease;
 }
 @keyframes fade-in {
@@ -318,7 +332,7 @@
 /* ── Desktop (≥900px): sidebar on, bottom nav off ────────── */
 @media (min-width: 900px) {
   .sidebar { transform: none; }
-  .hamburger { display: none; }
+  .topbar { display: none; }
   .bottom-nav { display: none; }
   .content { margin-left: var(--sidebar-w); max-width: none; }
   .page { max-width: 1100px; margin: 0 auto; padding: 28px 32px 48px; }

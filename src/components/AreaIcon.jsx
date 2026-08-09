@@ -2,7 +2,7 @@ import React from 'react'
 import {
   Rocket, Wallet, ChartColumn, Briefcase, Dumbbell, Salad,
   Stethoscope, CalendarDays, KeyRound, NotebookPen, Landmark, Brain, BellRing,
-  House, LayoutGrid,
+  House, LayoutGrid, Settings,
 } from 'lucide-react'
 
 /**
@@ -14,7 +14,7 @@ import {
 export const ICONS = {
   Rocket, Wallet, ChartColumn, Briefcase, Dumbbell, Salad,
   Stethoscope, CalendarDays, KeyRound, NotebookPen, Landmark, Brain, BellRing,
-  House, LayoutGrid,
+  House, LayoutGrid, Settings,
 }
 
 export default function AreaIcon({ name, size = 18, ...rest }) {
