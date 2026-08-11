@@ -33,9 +33,9 @@ describe('orderableEntries', () => {
 })
 
 describe('pinnedEntries', () => {
-  it('is Nudges, Home, Settings, Areas — the fixed top section', () => {
+  it('is Home, Nudges, Areas, Settings — the fixed top section', () => {
     expect(pinnedEntries().map((e) => e.id)).toEqual(PINNED_IDS)
-    expect(pinnedEntries()[0].route).toBe('/nudges')
+    expect(pinnedEntries()[0].route).toBe('/')
     expect(pinnedEntries()).toContainEqual(SETTINGS_ENTRY)
   })
 })
