@@ -115,11 +115,23 @@
 
 .hero-card { display: flex; align-items: center; gap: 16px; }
 .hero-meta { flex: 1; min-width: 0; }
-.hero-meta .greet { color: var(--text-secondary); font-size: 13px; margin: 0 0 2px; }
-.hero-meta .greet.quote { font-style: italic; overflow-wrap: anywhere; }
-.hero-meta .level { font-size: 20px; font-weight: 700; margin: 0; letter-spacing: -0.01em; }
-.hero-meta .pts { color: var(--text-secondary); font-size: 13px; margin: 4px 0 0; }
-.hero-meta .pts b { color: var(--trim-y); }
+.hero-stats {
+  display: flex; align-items: baseline; gap: 8px;
+  color: var(--text-secondary); font-size: 13px; margin: 0;
+  height: 26px; white-space: nowrap; overflow: hidden;
+}
+.hero-stats .level { font-size: 18px; font-weight: 700; color: var(--text-primary); letter-spacing: -0.01em; }
+.hero-stats b { color: var(--trim-y); }
+/* Fixed three-line box: a longer or shorter quote must not resize the card. */
+.hero-quote {
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3;
+  overflow: hidden; text-align: left; padding: 0; margin: 6px 0 0;
+  height: calc(3 * 1.35em);
+  font-size: 15px; font-style: italic; line-height: 1.35;
+  color: var(--text-secondary); overflow-wrap: anywhere;
+}
+button.hero-quote { cursor: pointer; background: none; border: none; width: 100%; }
+button.hero-quote:active { color: var(--text-primary); }
 
 .dash-add {
   margin: 12px 0; width: 100%;

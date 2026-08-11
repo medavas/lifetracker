@@ -140,12 +140,14 @@ export default function Dashboard({ onAdd }) {
   const quotesRef = useRef(quotes)
   quotesRef.current = quotes
   const [quoteIndex, setQuoteIndex] = useState(0)
+  const nextQuote = () => setQuoteIndex((i) => (quotesRef.current.length ? (i + 1) % quotesRef.current.length : 0))
+  // Keyed on the index rather than a bare interval, so tapping through
+  // quotes restarts the dwell time instead of racing a fixed tick.
   useEffect(() => {
-    const id = setInterval(() => {
-      setQuoteIndex((i) => (quotesRef.current.length ? (i + 1) % quotesRef.current.length : 0))
-    }, QUOTE_INTERVAL_MS)
-    return () => clearInterval(id)
-  }, [])
+    const id = setTimeout(nextQuote, QUOTE_INTERVAL_MS)
+    return () => clearTimeout(id)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [quoteIndex])
   const quote = quotes.length > 0 ? quotes[quoteIndex % quotes.length] : null
 
   return (
@@ -153,10 +155,20 @@ export default function Dashboard({ onAdd }) {
       <div className="dash-grid">
         <div className="dash-main">
           <div className="card hero-card">
+            {/* Every line here is a fixed height: the quote rotates on its
+                own, and text that reflows under it moves the whole card. */}
             <div className="hero-meta">
-              <p className={`greet${quote ? ' quote' : ''}`}>{quote ? `“${quote.title}”` : `${greet}, Ryan`}</p>
-              <p className="level">Level {level}</p>
-              <p className="pts"><b>{points}</b> pts · {Math.round(progress * 100)}% to L{level + 1}</p>
+              <p className="hero-stats">
+                <span className="level">Level {level}</span>
+                <b>{points}</b> pts · {Math.round(progress * 100)}% to L{level + 1}
+              </p>
+              {quote ? (
+                <button className="hero-quote" onClick={nextQuote} aria-label="Show another quote">
+                  “{quote.title}”
+                </button>
+              ) : (
+                <p className="hero-quote">{greet}, Ryan</p>
+              )}
             </div>
             <ProgressRing progress={progress} label={`L${level}`} />
           </div>
