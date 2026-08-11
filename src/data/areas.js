@@ -9,6 +9,7 @@
  *  - 'library' - items where each entry carries its own notes (books, videos…)
  *  - 'timers'  - interval nudges that fire a notification while the app is open
  *  - 'money'   - the finance dashboard: budget plan, bills, spending, goals
+ *  - 'focus'   - a single Pomodoro-style countdown timer, its own page
  *
  * `icon` is a lucide-react component name rendered via <AreaIcon>.
  * `trim` picks one of the six --trim-* tokens (theme in index.css); it is the
@@ -100,6 +101,13 @@ export const AREAS = [
     id: 'nudges', name: 'Nudges', icon: 'BellRing', kind: 'timers',
     trim: 'o', route: '/nudges',
     keywords: ['remind', 'nudge', 'timer', 'every', 'water', 'stretch', 'posture'],
+    buckets: [],
+  },
+  {
+    id: 'focus', name: 'Focus', icon: 'Timer', kind: 'focus',
+    trim: 'v', route: '/focus',
+    daily: { order: 5, series: 5 },
+    keywords: ['focus', 'pomodoro', 'work', 'concentrate', 'timer'],
     buckets: [],
   },
 ]

@@ -13,10 +13,11 @@ const EXPECTED = {
   philosophy: { trim: 'v', icon: 'Landmark' },
   learnings: { trim: 'o', icon: 'Brain' },
   nudges: { trim: 'o', icon: 'BellRing' },
+  focus: { trim: 'v', icon: 'Timer' },
 }
 
 describe('area registry', () => {
-  it('has exactly the 10 known areas', () => {
+  it('has exactly the 11 known areas', () => {
     expect(AREAS.map((a) => a.id).sort()).toEqual(Object.keys(EXPECTED).sort())
   })
 
@@ -50,15 +51,15 @@ describe('area registry', () => {
 })
 
 describe('daily bands', () => {
-  it('marks exactly the four daily-practice areas', () => {
+  it('marks exactly the five daily-practice areas', () => {
     expect(AREAS.filter((a) => a.daily).map((a) => a.id).sort()).toEqual(
-      ['diet', 'fitness', 'habits', 'journal'],
+      ['diet', 'fitness', 'focus', 'habits', 'journal'],
     )
   })
 
-  it('assigns orders 1..4 with no duplicates', () => {
+  it('assigns orders 1..5 with no duplicates', () => {
     const orders = AREAS.filter((a) => a.daily).map((a) => a.daily.order).sort((a, b) => a - b)
-    expect(orders).toEqual([1, 2, 3, 4])
+    expect(orders).toEqual([1, 2, 3, 4, 5])
   })
 
   it('assigns a distinct series slot to each band', () => {
@@ -67,13 +68,12 @@ describe('daily bands', () => {
   })
 
   it('exposes DAILY_BANDS sorted bottom-to-top', () => {
-    expect(DAILY_BANDS.map((a) => a.id)).toEqual(['journal', 'diet', 'fitness', 'habits'])
+    expect(DAILY_BANDS.map((a) => a.id)).toEqual(['journal', 'diet', 'fitness', 'habits', 'focus'])
   })
 
   it('gives every band a trim matching its own identity color family', () => {
-    // journal blue, diet green, fitness amber, habits red - nav and chart agree
     const trims = Object.fromEntries(DAILY_BANDS.map((a) => [a.id, a.trim]))
-    expect(trims).toEqual({ journal: 'b', diet: 'g', fitness: 'y', habits: 'r' })
+    expect(trims).toEqual({ journal: 'b', diet: 'g', fitness: 'y', habits: 'r', focus: 'v' })
   })
 })
 
@@ -97,7 +97,7 @@ describe('routing', () => {
 
   it('routes every other area through the generic area view', () => {
     for (const a of AREAS) {
-      if (['journal', 'habits', 'nudges', 'finance', 'projects', 'fitness'].includes(a.id)) continue
+      if (['journal', 'habits', 'nudges', 'finance', 'projects', 'fitness', 'focus'].includes(a.id)) continue
       expect(routeFor(a)).toBe(`/area/${a.id}`)
     }
   })
@@ -113,8 +113,12 @@ describe('routing', () => {
     expect(fitness.daily).toEqual({ order: 3, series: 4 })
   })
 
-  it('leaves the daily bands untouched by the new area', () => {
-    expect(DAILY_BANDS.map((a) => a.id)).toEqual(['journal', 'diet', 'fitness', 'habits'])
+  it('routes focus to its own page with no buckets', () => {
+    const focus = AREAS.find((a) => a.id === 'focus')
+    expect(focus.kind).toBe('focus')
+    expect(focus.route).toBe('/focus')
+    expect(focus.buckets).toEqual([])
+    expect(focus.daily).toEqual({ order: 5, series: 5 })
   })
 })
 
