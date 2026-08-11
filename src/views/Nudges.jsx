@@ -9,6 +9,8 @@ import AreaIcon from '../components/AreaIcon'
 
 const PRESETS = [15, 30, 45, 60, 120]
 
+const everyLabel = (mins) => (mins < 60 ? `${mins}m` : `${mins / 60}h`)
+
 const hhmm = (mins) =>
   `${String(Math.floor(mins / 60)).padStart(2, '0')}:${String(mins % 60).padStart(2, '0')}`
 
@@ -99,95 +101,99 @@ export default function Nudges() {
         <h1>Nudges</h1>
       </div>
 
-      {permission === 'unsupported' && (
-        <div className="status-error">
-          This browser cannot show notifications. On iPhone, add Stoa to your home
-          screen first.
-        </div>
-      )}
-      {permission === 'denied' && (
-        <div className="status-error">
-          Notifications are blocked. Re-enable them for this site in your browser
-          settings — nudges will not fire until you do.
-        </div>
-      )}
-      {permission === 'default' && (
-        <div className="status-error">
-          Notifications have not been allowed yet. Switching a nudge on will ask
-          your browser for permission — if you dismiss that prompt, the nudge
-          stays off.
+      {permission !== 'granted' && (
+        <div className={`nudge-banner ${permission === 'default' ? '' : 'bad'}`}>
+          {permission === 'unsupported' && 'This browser cannot show notifications. On iPhone, add Stoa to your home screen first.'}
+          {permission === 'denied' && 'Notifications are blocked. Re-enable them for this site in your browser settings — nudges will not fire until you do.'}
+          {permission === 'default' && 'Switching a nudge on will ask your browser for permission. Dismiss that prompt and the nudge stays off.'}
         </div>
       )}
 
-      {nudges.length === 0 && (
-        <div className="empty-note">
-          A nudge is a message on a repeat.
-          <br />Water every 2h, stand up every 45m. Nothing is logged.
-        </div>
-      )}
-
-      <div className="item-list">
-        {nudges.map((n) => {
-          const due = countdown(nextFireAt(n, lastFired), now)
-          return (
-            <div key={n.id} className="nudge-row">
-              <button
-                className={`nudge-dot ${n.enabled ? 'on' : ''}`}
-                onClick={() => toggle(n)}
-                aria-label={`${n.enabled ? 'Switch off' : 'Switch on'} ${n.title}`}
-                aria-pressed={n.enabled}
-              />
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div className="item-title">{n.title}</div>
-                <div className="nudge-meta">
-                  every {n.intervalMin}m{n.enabled && due ? ` · ${due}` : ''}
-                  {n.enabled && permission !== 'granted' ? ' (blocked)' : ''}
-                </div>
-              </div>
-              <button
-                className="detail-btn"
-                onClick={() => { clearAnchor(n.id); deleteItem(n.id) }}
-                aria-label={`Delete ${n.title}`}
-              >
-                <Trash2 size={16} strokeWidth={1.75} />
-              </button>
-            </div>
-          )
-        })}
-      </div>
-
-      <div className="add-row">
+      <div className="card nudge-new">
         <input
           value={draft}
           placeholder="Message to nudge yourself with…"
           onChange={(e) => setDraft(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && add()}
         />
-        <button onClick={add} aria-label="Add"><Plus size={20} strokeWidth={2} /></button>
-      </div>
-
-      <div className="bucket-tabs">
-        {PRESETS.map((m) => (
-          <button
-            key={m}
-            className={`bucket-tab ${intervalMin === m ? 'on' : ''}`}
-            onClick={() => setIntervalMin(m)}
-          >
-            {m}m
+        <div className="nudge-new-foot">
+          <span className="nudge-every">Every</span>
+          <div className="bucket-tabs">
+            {PRESETS.map((m) => (
+              <button
+                key={m}
+                className={`bucket-tab ${intervalMin === m ? 'on' : ''}`}
+                onClick={() => setIntervalMin(m)}
+              >
+                {everyLabel(m)}
+              </button>
+            ))}
+          </div>
+          <button className="btn-primary" onClick={add} disabled={!draft.trim()}>
+            <Plus size={16} strokeWidth={2} />Add
           </button>
-        ))}
+        </div>
       </div>
 
-      <div className="quiet-block">
-        <label className="quiet-head">
+      {nudges.length === 0 ? (
+        <div className="empty-note">
+          A nudge is a message on a repeat.
+          <br />Water every 2h, stand up every 45m. Nothing is logged.
+        </div>
+      ) : (
+        <>
+          <div className="section-label">Your nudges</div>
+          <div className="item-list">
+            {nudges.map((n) => {
+              const due = countdown(nextFireAt(n, lastFired), now)
+              return (
+                <div key={n.id} className={`nudge-row ${n.enabled ? 'on' : ''}`}>
+                  <button
+                    className={`switch ${n.enabled ? 'on' : ''}`}
+                    role="switch"
+                    aria-checked={n.enabled}
+                    onClick={() => toggle(n)}
+                    aria-label={`${n.enabled ? 'Switch off' : 'Switch on'} ${n.title}`}
+                  >
+                    <span />
+                  </button>
+                  <div className="nudge-body">
+                    <div className="item-title">{n.title}</div>
+                    <div className="nudge-meta">
+                      every {everyLabel(n.intervalMin)}
+                      {n.enabled && due ? ` · ${due}` : ''}
+                      {n.enabled && permission !== 'granted' ? ' · blocked' : ''}
+                    </div>
+                  </div>
+                  <button
+                    className="detail-btn"
+                    onClick={() => { clearAnchor(n.id); deleteItem(n.id) }}
+                    aria-label={`Delete ${n.title}`}
+                  >
+                    <Trash2 size={16} strokeWidth={1.75} />
+                  </button>
+                </div>
+              )
+            })}
+          </div>
+        </>
+      )}
+
+      <div className="section-label">Quiet hours</div>
+      <div className="card quiet-block">
+        <div className="quiet-head">
           <Moon size={15} strokeWidth={1.75} />
-          <span>Quiet hours</span>
-          <input
-            type="checkbox"
-            checked={quiet.on}
-            onChange={(e) => saveQuiet({ ...quiet, on: e.target.checked })}
-          />
-        </label>
+          <span>Skip nudges overnight</span>
+          <button
+            className={`switch ${quiet.on ? 'on' : ''}`}
+            role="switch"
+            aria-checked={quiet.on}
+            aria-label="Quiet hours"
+            onClick={() => saveQuiet({ ...quiet, on: !quiet.on })}
+          >
+            <span />
+          </button>
+        </div>
         <div className="quiet-times">
           <input
             type="time"

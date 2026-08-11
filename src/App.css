@@ -414,32 +414,56 @@ button.hero-quote:active { color: var(--text-primary); }
 .day-dot.today span { border-color: var(--text-muted); }
 .day-dot:active span { transform: scale(0.9); }
 
+/* ── Nudges ──────────────────────────────────────────────── */
+.nudge-banner {
+  font-size: 13px; line-height: 1.45; color: var(--text-secondary);
+  background: var(--surface-2); border: 1px solid var(--border);
+  border-left: 3px solid var(--trim-o);
+  border-radius: var(--radius-sm); padding: 10px 12px; margin-bottom: 16px;
+}
+.nudge-banner.bad { border-left-color: var(--trim-r); color: var(--trim-r); }
+
+.nudge-new { display: flex; flex-direction: column; gap: 12px; }
+.nudge-new input { width: 100%; padding: 11px 14px; font-size: 15px; }
+.nudge-new-foot { display: flex; align-items: center; gap: 8px; }
+.nudge-every { flex: none; font-size: 12px; color: var(--text-muted); }
+.nudge-new-foot .bucket-tabs { flex: 1; min-width: 0; margin: 0; padding: 0; }
+.nudge-new-foot .btn-primary { flex: none; display: flex; align-items: center; gap: 6px; }
+
 .nudge-row {
   display: flex; align-items: center; gap: 12px;
-  padding: 10px 2px;
-  border-bottom: 1px solid var(--surface-3);
+  background: var(--surface-1); border: 1px solid var(--border);
+  border-left: 3px solid var(--border);
+  border-radius: var(--radius-sm); padding: 10px 12px;
+  box-shadow: var(--shadow-card);
   touch-action: manipulation;
 }
-.item-list .nudge-row:last-child { border-bottom: none; }
-
-.nudge-dot {
-  width: 30px; height: 30px; flex: none;
-  display: grid; place-items: center;
-  background: transparent; border: none;
-}
-.nudge-dot::after {
-  content: '';
-  width: 8px; height: 8px; border-radius: 999px;
-  background: var(--text-muted);
-}
-.nudge-dot.on::after { background: var(--trim-o); }
+.nudge-row.on { border-left-color: var(--area-c1, var(--trim-o)); }
+.nudge-body { flex: 1; min-width: 0; }
 .nudge-meta { font-size: 12px; color: var(--text-muted); margin-top: 3px; }
 
-.quiet-block { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--surface-3); }
+/* Shared on/off control: the nudge rows and quiet hours. */
+.switch {
+  flex: none; width: 42px; height: 24px; padding: 3px;
+  border-radius: 999px; border: 1px solid var(--border);
+  background: var(--surface-3); cursor: pointer;
+  display: flex; align-items: center; touch-action: manipulation;
+}
+.switch span {
+  width: 16px; height: 16px; border-radius: 999px;
+  background: var(--text-muted);
+  transition: transform 0.14s ease, background 0.14s ease;
+}
+.switch.on { background: var(--surface-2); border-color: var(--trim-o); }
+.switch.on span { background: var(--trim-o); transform: translateX(18px); }
+
+.quiet-block { display: flex; flex-direction: column; gap: 12px; }
 .quiet-head { display: flex; align-items: center; gap: 8px; font-size: 14px; }
-.quiet-head span { flex: 1; }
-.quiet-times { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
+.quiet-head > span { flex: 1; }
+.quiet-times { display: flex; align-items: center; gap: 8px; }
+.quiet-times input { padding: 8px 10px; }
 .quiet-times span { font-size: 13px; color: var(--text-muted); }
+.quiet-block .hint { font-size: 12px; color: var(--text-muted); margin: 0; }
 
 a.item-row { text-decoration: none; color: inherit; }
 .day-row:not(.has-entry) { cursor: default; }
