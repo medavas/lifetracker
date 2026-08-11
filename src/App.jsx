@@ -55,7 +55,7 @@ export default function App() {
           <Route path="/settings" element={<Settings />} />
         </Routes>
       </AppShell>
-      <BottomNav />
+      <BottomNav onAdd={() => setQuickAddOpen(true)} />
       {quickAddOpen && <QuickAdd onClose={() => setQuickAddOpen(false)} />}
     </HashRouter>
   )

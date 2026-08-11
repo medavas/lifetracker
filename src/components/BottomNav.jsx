@@ -1,17 +1,18 @@
-import { NavLink, Link } from 'react-router-dom'
+import { NavLink } from 'react-router-dom'
 import { Plus } from 'lucide-react'
-import { orderedEntries } from '../lib/sidebarOrder'
+import { HOME_ENTRY, orderedEntries } from '../lib/sidebarOrder'
 import AreaIcon from './AreaIcon'
 
 /**
- * Phone-only nav: the user's top 4 sidebar entries flank a fixed center
- * button that always opens Journal directly (not Quick Add — Journal's own
- * compose box already does the fuzzy "file this elsewhere" trick Quick Add
- * does, so there's nothing to open a modal for). Settings never appears
- * here regardless of its sidebar rank; reach it through the drawer.
+ * Phone-only nav: Home always leads and never moves, so the first tab is a
+ * stable landmark regardless of sidebar reordering. The next 3 slots are
+ * the user's top-ranked sidebar entries (Home excluded from that ranking
+ * here since it's already pinned in slot one). Center button opens Quick
+ * Add. Settings never appears here regardless of its sidebar rank; reach
+ * it through the drawer.
  */
-export default function BottomNav() {
-  const [first, second, third, fourth] = orderedEntries()
+export default function BottomNav({ onAdd }) {
+  const [second, third, fourth] = orderedEntries().filter((e) => e.id !== HOME_ENTRY.id)
 
   const renderEntry = (e) =>
     e && (
@@ -22,11 +23,11 @@ export default function BottomNav() {
 
   return (
     <nav className="bottom-nav">
-      {renderEntry(first)}
+      {renderEntry(HOME_ENTRY)}
       {renderEntry(second)}
-      <Link to="/journal" className="nav-add" aria-label="Journal">
+      <button type="button" className="nav-add" onClick={onAdd} aria-label="Quick add">
         <Plus size={22} strokeWidth={2} />
-      </Link>
+      </button>
       {renderEntry(third)}
       {renderEntry(fourth)}
     </nav>
