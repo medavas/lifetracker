@@ -621,3 +621,32 @@ a.item-row { text-decoration: none; color: inherit; }
   .projects-shell { display: grid; grid-template-columns: 320px 1fr; gap: 20px; align-items: start; }
   .projects-list-pane, .projects-detail-pane { display: block !important; }
 }
+
+/* ── Focus (Pomodoro) ────────────────────────────────────── */
+.focus-body {
+  display: flex; flex-direction: column; align-items: center; gap: 14px;
+  padding: 24px 16px 28px;
+}
+.focus-mode {
+  color: var(--text-secondary); font-size: 12px;
+  letter-spacing: 0.06em; text-transform: uppercase;
+}
+.focus-time {
+  font-size: 52px; font-weight: 600; font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+}
+.focus-bar-track {
+  width: 100%; max-width: 260px; height: 4px; border-radius: 2px;
+  background: var(--surface-3); overflow: hidden;
+}
+.focus-bar-fill { height: 100%; background: var(--trim-v); }
+.focus-dots { display: flex; gap: 6px; }
+.focus-dot { width: 6px; height: 6px; border-radius: 999px; background: var(--surface-3); }
+.focus-dot.done { background: var(--trim-v); }
+.focus-controls { display: flex; gap: 10px; }
+.focus-btn {
+  padding: 8px 22px; border-radius: 999px; border: 1px solid var(--border);
+  background: var(--surface-2); color: var(--text-primary); font-size: 13px; font-weight: 600;
+}
+.focus-btn.primary { background: var(--text-primary); color: var(--bg); border-color: var(--text-primary); }
+.focus-today { color: var(--text-muted); font-size: 12px; }

@@ -14,6 +14,7 @@ import DayList from './views/journal/DayList'
 import DayDetail from './views/journal/DayDetail'
 import Habits from './views/Habits'
 import Nudges from './views/Nudges'
+import Focus from './views/Focus'
 import FinanceDashboard from './views/FinanceDashboard'
 import Fitness from './views/Fitness'
 import Settings from './views/Settings'
@@ -51,6 +52,7 @@ export default function App() {
           <Route path="/journal/years/:year/:month" element={<DayList />} />
           <Route path="/journal/years/:year/:month/:day" element={<DayDetail />} />
           <Route path="/nudges" element={<Nudges />} />
+          <Route path="/focus" element={<Focus />} />
           <Route path="/habits" element={<Habits />} />
           <Route path="/settings" element={<Settings />} />
         </Routes>
