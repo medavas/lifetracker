@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useStore } from '../lib/store'
+import { useBackDismiss } from '../lib/useBackDismiss'
 import { suggestAreas } from '../lib/fuzzy'
 import { AREAS, routeFor } from '../data/areas'
 import AreaIcon from './AreaIcon'
@@ -41,6 +42,14 @@ export default function QuickAdd({ onClose }) {
     onClose()
     navigate(routeFor(area))
   }
+
+  // Back files what's typed under the same Journal fallback the footer
+  // promises, minus the jump to the journal page: the point of Back here is
+  // to leave the capture behind, not to be taken somewhere new.
+  useBackDismiss(() => {
+    if (text.trim()) addNote('journal', text)
+    onClose()
+  })
 
   // No chip tap = no explicit area choice, so both Enter and the Add button
   // fall back to Journal rather than leaving the capture unfiled.

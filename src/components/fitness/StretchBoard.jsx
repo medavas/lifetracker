@@ -7,6 +7,7 @@ import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-
 import { CSS } from '@dnd-kit/utilities'
 import { GripVertical, Pencil, Plus, X } from 'lucide-react'
 import { useStore } from '../../lib/store'
+import { useBackDismiss } from '../../lib/useBackDismiss'
 import { STRETCH_BUCKET } from '../../data/stretches'
 import StretchSheet from './StretchSheet'
 
@@ -129,6 +130,8 @@ export default function StretchBoard({ categories, allItems }) {
   const [dragging, setDragging] = useState(null)
   const [newCategory, setNewCategory] = useState(null)
   const [confirmDelete, setConfirmDelete] = useState(null)
+
+  useBackDismiss(() => setConfirmDelete(null), confirmDelete != null)
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),

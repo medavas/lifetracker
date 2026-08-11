@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { ArrowDown, ArrowUp, Dumbbell } from 'lucide-react'
 import { useStore } from '../../lib/store'
+import { useBackDismiss } from '../../lib/useBackDismiss'
 import { exerciseSpec } from '../../data/workoutProgram'
 
 const int = (value, fallback) => {
@@ -64,6 +65,8 @@ export default function ExerciseSheet({ exercise, siblings, onClose }) {
     })
     onClose()
   }
+
+  useBackDismiss(save)
 
   return (
     <>

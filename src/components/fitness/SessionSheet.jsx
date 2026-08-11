@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { CalendarDays } from 'lucide-react'
 import { useStore } from '../../lib/store'
+import { useBackDismiss } from '../../lib/useBackDismiss'
 import { WEEKDAYS } from '../../data/workoutProgram'
 
 /**
@@ -22,6 +23,8 @@ export default function SessionSheet({ session, onClose }) {
     updateItem(session.id, { title: title.trim() || session.title, weekday })
     onClose()
   }
+
+  useBackDismiss(save)
 
   return (
     <>

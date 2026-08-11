@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { NavLink } from 'react-router-dom'
 import { Menu } from 'lucide-react'
 import { useStore } from '../lib/store'
+import { useBackDismiss } from '../lib/useBackDismiss'
 import { levelForPoints, levelProgress } from '../lib/rewards'
 import { mainMenuEntries, pinnedEntries } from '../lib/sidebarOrder'
 import AreaIcon from './AreaIcon'
@@ -64,6 +65,8 @@ export default function AppShell({ children }) {
   }, [drawerOpen])
 
   const closeDrawer = () => setDrawerOpen(false)
+
+  useBackDismiss(closeDrawer, drawerOpen)
 
   return (
     <div className="app-shell">

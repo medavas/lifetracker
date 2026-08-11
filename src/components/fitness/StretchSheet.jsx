@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { StretchHorizontal } from 'lucide-react'
 import { useStore } from '../../lib/store'
+import { useBackDismiss } from '../../lib/useBackDismiss'
 
 /**
  * Tap a stretch to rename it, move it, or drop it.
@@ -36,6 +37,8 @@ export default function StretchSheet({ stretch, categories, onClose }) {
     updateItem(stretch.id, { title: title.trim() || stretch.title, details })
     onClose()
   }
+
+  useBackDismiss(save)
 
   return (
     <>

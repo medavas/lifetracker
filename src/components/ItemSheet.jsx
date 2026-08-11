@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Plus } from 'lucide-react'
 import { useShallow } from 'zustand/react/shallow'
 import { useStore, selectItemNotes } from '../lib/store'
+import { useBackDismiss } from '../lib/useBackDismiss'
 import { areaById } from '../data/areas'
 import { parseAmount, centsToInput } from '../lib/money'
 import { categorySeries, SPEND_SERIES } from '../lib/finance'
@@ -49,6 +50,8 @@ export default function ItemSheet({ item, onClose }) {
     updateItem(item.id, patch)
     onClose()
   }
+
+  useBackDismiss(save)
 
   return (
     <>
