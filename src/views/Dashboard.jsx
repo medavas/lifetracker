@@ -130,7 +130,7 @@ export default function Dashboard({ onAdd }) {
 
   const habits = items.filter((i) => !i.deletedAt && i.areaId === 'habits' && i.status !== 'archived')
   const checkedToday = habits.filter((h) =>
-    logs.some((l) => l.itemId === h.id && l.kind === 'habit-check' && l.date === todayKey()),
+    logs.some((l) => l.itemId === h.id && l.kind === 'habit-check' && l.date === todayKey() && !l.deletedAt),
   )
 
   const hour = new Date().getHours()

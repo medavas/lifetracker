@@ -6,6 +6,8 @@ import { habitStreak, daysAgoKey } from '../lib/rewards'
 import ItemSheet from '../components/ItemSheet'
 import AreaIcon from '../components/AreaIcon'
 
+const DAY_INITIALS = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
+
 /** Keystone habits: daily checks, streaks, 7-day dot history per habit. */
 export default function Habits() {
   const habits = useStore(useShallow(selectAreaItems('habits')))
@@ -21,8 +23,11 @@ export default function Habits() {
     setDraft('')
   }
 
+  // Unchecking tombstones the log rather than removing it, so a check that
+  // ignores deletedAt reads as permanently on and the day can never be
+  // toggled back off.
   const checkedOn = (habitId, date) =>
-    logs.some((l) => l.itemId === habitId && l.kind === 'habit-check' && l.date === date)
+    logs.some((l) => l.itemId === habitId && l.kind === 'habit-check' && l.date === date && !l.deletedAt)
 
   return (
     <div className="page" style={{ '--area-c1': 'var(--trim-y)' }}>
@@ -53,21 +58,21 @@ export default function Habits() {
               </button>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div className="item-title">{h.title}</div>
-                <div style={{ display: 'flex', gap: 4, marginTop: 5 }} aria-label="Last 7 days — tap a day to backfill it">
+                <div className="day-dots" aria-label="Last 7 days — tap a day to backfill it">
                   {[6, 5, 4, 3, 2, 1, 0].map((d) => {
                     const date = daysAgoKey(d)
                     const on = checkedOn(h.id, date)
                     return (
                       <button
                         key={d}
+                        className={`day-dot ${on ? 'on' : ''} ${d === 0 ? 'today' : ''}`}
                         onClick={() => toggleHabitCheck(h.id, date)}
                         aria-label={`${on ? 'Uncheck' : 'Check'} ${h.title} for ${date}`}
+                        aria-pressed={on}
                         title={date}
-                        style={{
-                          width: 14, height: 14, padding: 0, border: 'none', borderRadius: '50%',
-                          background: on ? 'var(--trim-y)' : 'var(--surface-3)', cursor: 'pointer',
-                        }}
-                      />
+                      >
+                        <span>{DAY_INITIALS[new Date(`${date}T00:00:00`).getDay()]}</span>
+                      </button>
                     )
                   })}
                 </div>
