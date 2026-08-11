@@ -10,15 +10,14 @@ const dueLabel = (dateStr, overdue) => {
   return overdue ? `${label} - overdue` : label
 }
 
-/** Everything due in the next 14 days (or overdue), with one-tap mark paid. */
+/**
+ * Everything due in the next 14 days (or overdue), with one-tap mark paid.
+ * Creating a bill lives in AddBillSection, down with the page's other add
+ * controls — this section is for acting on what is already owed.
+ */
 export default function BillsSection({ items, logs, onEdit }) {
   const payBill = useStore((s) => s.payBill)
   const deleteMoneyLog = useStore((s) => s.deleteMoneyLog)
-  const addItem = useStore((s) => s.addItem)
-  const [title, setTitle] = useState('')
-  const [amountStr, setAmountStr] = useState('')
-  const [cadence, setCadence] = useState('monthly')
-  const [nextDue, setNextDue] = useState('')
   const [payFor, setPayFor] = useState(null) // billId awaiting a manual amount
   const [payStr, setPayStr] = useState('')
 
@@ -52,13 +51,6 @@ export default function BillsSection({ items, logs, onEdit }) {
     if (!latestPaidByItem[l.itemId]) latestPaidByItem[l.itemId] = l.id
   }
 
-  const add = () => {
-    const cents = parseAmount(amountStr)
-    if (!title.trim() || cents == null || !nextDue) return
-    addItem('finance', title, { bucket: 'Bills', amount: cents, cadence, nextDue })
-    setTitle(''); setAmountStr(''); setNextDue('')
-  }
-
   const pay = (bill) => {
     if (bill.amount != null) return payBill(bill.id)
     if (payFor !== bill.id) { setPayFor(bill.id); setPayStr(''); return }
@@ -89,7 +81,7 @@ export default function BillsSection({ items, logs, onEdit }) {
           <button className="fin-pay" onClick={() => pay(b)}>Paid</button>
         </div>
       ))}
-      {allBills.length === 0 && due.length === 0 && <div className="fin-sub">Add your first bill below.</div>}
+      {allBills.length === 0 && due.length === 0 && <div className="fin-sub">Add your first bill further down the page.</div>}
 
       {otherBills.length > 0 && (
         <>
@@ -105,19 +97,6 @@ export default function BillsSection({ items, logs, onEdit }) {
           ))}
         </>
       )}
-
-      <div className="fin-addrow">
-        <input className="fin-title" placeholder="New bill" value={title} onChange={(e) => setTitle(e.target.value)} />
-        <input className="fin-amt" inputMode="decimal" placeholder="0.00" value={amountStr} onChange={(e) => setAmountStr(e.target.value)} />
-        <select value={cadence} onChange={(e) => setCadence(e.target.value)}>
-          <option value="monthly">Monthly</option>
-          <option value="biannual">Biannual</option>
-          <option value="yearly">Yearly</option>
-          <option value="weekly">Weekly</option>
-        </select>
-        <input type="date" value={nextDue} onChange={(e) => setNextDue(e.target.value)} />
-        <button className="fin-add" onClick={add}>Add</button>
-      </div>
 
       {paidThisMonth.length > 0 && (
         <>

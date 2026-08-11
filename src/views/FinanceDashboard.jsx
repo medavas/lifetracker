@@ -9,6 +9,7 @@ import { todayKey } from '../lib/rewards'
 import AreaIcon from '../components/AreaIcon'
 import QuickSpend from '../components/finance/QuickSpend'
 import BillsSection from '../components/finance/BillsSection'
+import AddBillSection from '../components/finance/AddBillSection'
 import RecurringForecastSection from '../components/finance/RecurringForecastSection'
 import BudgetSection from '../components/finance/BudgetSection'
 import PlanSection from '../components/finance/PlanSection'
@@ -78,6 +79,7 @@ export default function FinanceDashboard() {
           <GoalsSection items={items} logs={logs} onEdit={setSheetItem} />
         </div>
         <div className="fin-col">
+          <AddBillSection />
           <PlanSection items={items} onEdit={setSheetItem} />
         </div>
       </div>
