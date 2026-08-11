@@ -91,7 +91,6 @@ export default function ProjectDetail() {
   const [details, setDetails] = useState(project?.details ?? '')
   const [noteDraft, setNoteDraft] = useState('')
   const [subDraft, setSubDraft] = useState('')
-  const [confirmDelete, setConfirmDelete] = useState(false)
 
   // The useState initializers above only run once, at first mount -- if
   // hydration is still in flight then (project undefined), title/details
@@ -243,15 +242,6 @@ export default function ProjectDetail() {
         ) : (
           <button className="btn-ghost" onClick={() => archiveItem(projectId)}>Archive</button>
         )}
-        <button
-          className="btn-ghost btn-danger"
-          onClick={() => {
-            if (confirmDelete) { deleteItem(projectId); navigate('/projects') }
-            else setConfirmDelete(true)
-          }}
-        >
-          {confirmDelete ? 'Sure?' : 'Delete'}
-        </button>
       </div>
     </>
   )
