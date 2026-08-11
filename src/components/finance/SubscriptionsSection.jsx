@@ -30,7 +30,7 @@ export default function SubscriptionsSection({ items, onEdit }) {
       {subs.map((s) => (
         <div key={s.id} className="fin-row" onClick={() => onEdit(s)} role="button" tabIndex={0}>
           <div className="fin-grow">
-            {s.title} <span className="fin-sub">{s.cadence === 'yearly' ? 'yearly' : s.cadence === 'weekly' ? 'weekly' : 'monthly'}</span>
+            {s.title} <span className="fin-sub">{s.cadence === 'yearly' ? 'yearly' : s.cadence === 'biannual' ? 'biannual' : s.cadence === 'weekly' ? 'weekly' : 'monthly'}</span>
           </div>
           <span className="fin-amount">{formatCents(monthlyize(s))}<span className="fin-sub">/mo</span></span>
         </div>
@@ -48,6 +48,7 @@ export default function SubscriptionsSection({ items, onEdit }) {
         <input className="fin-amt" inputMode="decimal" placeholder="0.00" value={amountStr} onChange={(e) => setAmountStr(e.target.value)} />
         <select value={cadence} onChange={(e) => setCadence(e.target.value)}>
           <option value="monthly">Monthly</option>
+          <option value="biannual">Biannual</option>
           <option value="yearly">Yearly</option>
           <option value="weekly">Weekly</option>
         </select>

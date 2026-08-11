@@ -15,6 +15,8 @@ export default function QuickAdd({ onClose }) {
   const addNote = useStore((s) => s.addNote)
   const navigate = useNavigate()
 
+  const journalArea = AREAS.find((a) => a.kind === 'journal')
+
   // A nudge needs an interval, which free-text capture never supplies, so
   // 'timers' areas are not a valid QuickAdd destination -- they're excluded
   // from both the fuzzy-matched suggestions and the fallback chips.
@@ -40,6 +42,15 @@ export default function QuickAdd({ onClose }) {
     navigate(routeFor(area))
   }
 
+  // No chip tap = no explicit area choice, so both Enter and the Add button
+  // fall back to Journal rather than leaving the capture unfiled.
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      fileTo(journalArea)
+    }
+  }
+
   return (
     <>
       <div className="sheet-backdrop" onClick={onClose} />
@@ -53,6 +64,7 @@ export default function QuickAdd({ onClose }) {
             value={text}
             placeholder="What's on your mind? e.g. “pay car insurance bill friday”"
             onChange={(e) => setText(e.target.value)}
+            onKeyDown={handleKeyDown}
           />
         </div>
         {text.trim() && (
@@ -72,6 +84,10 @@ export default function QuickAdd({ onClose }) {
                   <AreaIcon name={a.icon} size={13} /> {a.name}
                 </button>
               ))}
+            </div>
+            <div className="compose-foot">
+              <span className="hint">No pick? This lands in Journal.</span>
+              <button className="btn-primary" onClick={() => fileTo(journalArea)}>Add</button>
             </div>
           </>
         )}

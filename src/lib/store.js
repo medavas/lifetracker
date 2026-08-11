@@ -292,9 +292,10 @@ export const useStore = create(
       },
 
       // ── Habit check-ins ──────────────────────────────────────
-      toggleHabitToday: (itemId) => {
+      // date defaults to today but any past day can be passed, so a missed
+      // check-in can be backfilled without disturbing today's own state.
+      toggleHabitCheck: (itemId, date = todayKey()) => {
         const { logs, items } = get()
-        const date = todayKey()
         const existing = logs.find(
           (l) => l.itemId === itemId && l.kind === 'habit-check' && l.date === date && !l.deletedAt,
         )
@@ -515,7 +516,7 @@ export const useStore = create(
     {
       name: 'stoa',
       storage: createJSONStorage(() => idbStorage),
-      version: 4,
+      version: 5,
       // v1 -> v2 added tombstones: pre-v2 records simply lack `deletedAt`,
       // and every consumer treats a missing field as "not deleted", so no
       // transformation is needed. (Bumping `version` with no `migrate`
@@ -530,11 +531,17 @@ export const useStore = create(
       // this (created on a device still on v3, arriving by sync) falls back
       // to a hash of its id in categorySeries — same color, just underived.
       //
+      // v4 -> v5: the Learnings area was renamed to Academia (same id-is-a-
+      // foreign-key concern as the v2->v3 bucket remap). Items and notes
+      // carrying the old areaId are remapped so a device still on v4 that
+      // syncs in doesn't leave orphaned rows against a deleted area.
+      //
       // Each step is `if (version < N)` and the object is returned untouched
-      // when no step changed anything, so a fresh v4 store pays nothing.
+      // when no step changed anything, so a fresh v5 store pays nothing.
       migrate: (persistedState, version) => {
         if (!persistedState?.items) return persistedState
         let items = persistedState.items
+        let notes = persistedState.notes ?? []
         let touched = false
         const stamp = Date.now()
 
@@ -558,7 +565,18 @@ export const useStore = create(
           }
         }
 
-        return touched ? { ...persistedState, items } : persistedState
+        if (version < 5) {
+          if (items.some((i) => i.areaId === 'learnings')) {
+            touched = true
+            items = items.map((i) => (i.areaId === 'learnings' ? { ...i, areaId: 'academia', updatedAt: stamp } : i))
+          }
+          if (notes.some((n) => n.areaId === 'learnings')) {
+            touched = true
+            notes = notes.map((n) => (n.areaId === 'learnings' ? { ...n, areaId: 'academia', updatedAt: stamp } : n))
+          }
+        }
+
+        return touched ? { ...persistedState, items, notes } : persistedState
       },
     },
   ),

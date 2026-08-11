@@ -43,42 +43,44 @@ export default function PracticeGrid({ weeks }) {
           entering the next are separate events, so a per-cell handler renders a
           null frame between them, unmounting the caption and jumping the layout
           24px on every move. */}
-      <div
-        className="practice-grid"
-        style={{ '--pg-weeks': weeks.length }}
-        role="img"
-        aria-label={`Daily practice, last ${weeks.length} weeks`}
-        onMouseLeave={() => setTip(null)}
-      >
-        <div className="pg-corner" />
-        {months.map((month, w) => (
-          <div key={w} className="pg-month">{month}</div>
-        ))}
+      <div className="pg-scroll">
+        <div
+          className="practice-grid"
+          style={{ '--pg-weeks': weeks.length }}
+          role="img"
+          aria-label={`Daily practice, last ${weeks.length} weeks`}
+          onMouseLeave={() => setTip(null)}
+        >
+          <div className="pg-corner" />
+          {months.map((month, w) => (
+            <div key={w} className="pg-month">{month}</div>
+          ))}
 
-        {DAY_INITIALS.map((initial, d) => (
-          <Fragment key={d}>
-            <div className="pg-head">{initial}</div>
-            {weeks.map((week) => {
-              const cell = week[d]
-              return (
-                <div
-                  key={cell.date}
-                  className={`pg-cell ${cell.future ? 'future' : ''}`}
-                  onMouseEnter={() => setTip(cell)}
-                  onTouchStart={() => setTip(cell)}
-                >
-                  {DAILY_BANDS.map((b) => (
-                    <span
-                      key={b.id}
-                      className="pg-slot"
-                      style={cell.bands[b.id] ? { background: `var(--series-${b.daily.series})` } : undefined}
-                    />
-                  ))}
-                </div>
-              )
-            })}
-          </Fragment>
-        ))}
+          {DAY_INITIALS.map((initial, d) => (
+            <Fragment key={d}>
+              <div className="pg-head">{initial}</div>
+              {weeks.map((week) => {
+                const cell = week[d]
+                return (
+                  <div
+                    key={cell.date}
+                    className={`pg-cell ${cell.future ? 'future' : ''}`}
+                    onMouseEnter={() => setTip(cell)}
+                    onTouchStart={() => setTip(cell)}
+                  >
+                    {DAILY_BANDS.map((b) => (
+                      <span
+                        key={b.id}
+                        className="pg-slot"
+                        style={cell.bands[b.id] ? { background: `var(--series-${b.daily.series})` } : undefined}
+                      />
+                    ))}
+                  </div>
+                )
+              })}
+            </Fragment>
+          ))}
+        </div>
       </div>
 
       {/* Always rendered so its reserved min-height holds the layout steady;

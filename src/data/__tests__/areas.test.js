@@ -11,7 +11,7 @@ const EXPECTED = {
   habits: { trim: 'r', icon: 'KeyRound' },
   journal: { trim: 'b', icon: 'NotebookPen' },
   philosophy: { trim: 'v', icon: 'Landmark' },
-  learnings: { trim: 'o', icon: 'Brain' },
+  academia: { trim: 'o', icon: 'Brain' },
   nudges: { trim: 'o', icon: 'BellRing' },
   focus: { trim: 'v', icon: 'Timer' },
 }

@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { useStore, selectAreaItems, selectSubItems } from '../store.js'
+import { daysAgoKey, habitStreak } from '../rewards.js'
 import { DEFAULT_PROGRAM, SESSION_BUCKET } from '../../data/workoutProgram.js'
 import { DEFAULT_STRETCH_CATEGORIES, STRETCH_BUCKET } from '../../data/stretches.js'
 import { buildExerciseIndex } from '../workout.js'
@@ -106,10 +107,40 @@ describe('habit check-ins outside the Habits area', () => {
 
   it('a habit-check on a fitness priority item lands in the fitness band, not habits', () => {
     const item = useStore.getState().addItem('fitness', 'squats', { bucket: 'Top Priorities' })
-    useStore.getState().toggleHabitToday(item.id)
+    useStore.getState().toggleHabitCheck(item.id)
     const log = useStore.getState().logs.find((l) => l.kind === 'habit-check')
     expect(log.areaId).toBe('fitness')
     expect(useStore.getState().points).toBe(5)
+  })
+})
+
+describe('retroactive habit check-ins', () => {
+  beforeEach(reset)
+
+  it('backfills a missed past day without touching today', () => {
+    const h = useStore.getState().addItem('habits', 'read')
+    const yesterday = daysAgoKey(1)
+    useStore.getState().toggleHabitCheck(h.id, yesterday)
+    const log = useStore.getState().logs.find((l) => l.kind === 'habit-check' && !l.deletedAt)
+    expect(log.date).toBe(yesterday)
+    expect(useStore.getState().points).toBe(5)
+    expect(useStore.getState().logs.some((l) => l.date === daysAgoKey(0) && !l.deletedAt)).toBe(false)
+  })
+
+  it('toggling the same past day again un-checks it (tombstones the log)', () => {
+    const h = useStore.getState().addItem('habits', 'read')
+    const twoDaysAgo = daysAgoKey(2)
+    useStore.getState().toggleHabitCheck(h.id, twoDaysAgo)
+    useStore.getState().toggleHabitCheck(h.id, twoDaysAgo)
+    expect(useStore.getState().logs.every((l) => l.deletedAt)).toBe(true)
+    expect(useStore.getState().points).toBe(0)
+  })
+
+  it('a backfilled yesterday extends the streak through today', () => {
+    const h = useStore.getState().addItem('habits', 'read')
+    useStore.getState().toggleHabitCheck(h.id, daysAgoKey(1))
+    useStore.getState().toggleHabitCheck(h.id, daysAgoKey(0))
+    expect(habitStreak(useStore.getState().logs, h.id)).toBe(2)
   })
 })
 

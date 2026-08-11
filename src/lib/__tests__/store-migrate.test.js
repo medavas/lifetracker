@@ -139,3 +139,35 @@ describe('v4 migration stamps spending-category colors', () => {
     expect(migrate(current, 4)).toBe(current)
   })
 })
+
+describe('v5 migration renames Learnings to Academia', () => {
+  const { migrate } = useStore.persist.getOptions()
+
+  it('remaps areaId on both items and notes and stamps updatedAt', () => {
+    const v4 = {
+      items: [
+        { id: 'a', areaId: 'learnings', bucket: 'Read', title: 'a', status: 'open', order: 0, createdAt: 1, updatedAt: 1, completedAt: null, deletedAt: null },
+        { id: 'b', areaId: 'projects', bucket: 'Active', title: 'b', status: 'open', order: 0, createdAt: 1, updatedAt: 1, completedAt: null, deletedAt: null },
+      ],
+      notes: [
+        { id: 'n1', areaId: 'learnings', itemId: 'a', text: 'note', createdAt: 1, updatedAt: 1 },
+      ],
+      logs: [], points: 0,
+    }
+    const out = migrate(v4, 4)
+    expect(out.items.find((i) => i.id === 'a')).toMatchObject({ areaId: 'academia' })
+    expect(out.items.find((i) => i.id === 'a').updatedAt).toBeGreaterThan(1)
+    expect(out.items.find((i) => i.id === 'b').areaId).toBe('projects')
+    expect(out.notes.find((n) => n.id === 'n1')).toMatchObject({ areaId: 'academia' })
+  })
+
+  it('returns the same object when nothing is on the old areaId', () => {
+    const clean = { items: [{ id: 'x', areaId: 'academia', updatedAt: 1 }], logs: [], notes: [], points: 0 }
+    expect(migrate(clean, 4)).toBe(clean)
+  })
+
+  it('is a passthrough for a store already on v5', () => {
+    const current = { items: [{ id: 'x', areaId: 'academia', updatedAt: 1 }], logs: [], notes: [], points: 0 }
+    expect(migrate(current, 5)).toBe(current)
+  })
+})

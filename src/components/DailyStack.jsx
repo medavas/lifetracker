@@ -26,7 +26,7 @@ export default function DailyStack({ data }) {
           one column and entering the next are separate events, so a per-column
           handler renders a null frame between them and the tooltip blinks. */}
       <svg
-        viewBox={`0 0 ${W} ${H + 18}`} width="100%" role="img"
+        viewBox={`0 0 ${W} ${H + 18}`} preserveAspectRatio="none" role="img"
         aria-label="Daily practice, last 7 days by area"
         onMouseLeave={() => setTip(null)}
       >

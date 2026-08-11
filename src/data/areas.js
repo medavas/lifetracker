@@ -72,7 +72,7 @@ export const AREAS = [
     buckets: ['Upcoming', 'Tracking', 'Records', 'Supplements'],
   },
   {
-    id: 'habits', name: 'Keystone Habits', icon: 'KeyRound', kind: 'habits',
+    id: 'habits', name: 'Keystones', icon: 'KeyRound', kind: 'habits',
     trim: 'r', route: '/habits',
     daily: { order: 4, series: 2 },
     keywords: ['habit', 'daily', 'streak', 'keystone'],
@@ -86,13 +86,13 @@ export const AREAS = [
     buckets: [],
   },
   {
-    id: 'philosophy', name: 'Philosophy & Quotes', icon: 'Landmark', kind: 'library',
+    id: 'philosophy', name: 'Philosophy', icon: 'Landmark', kind: 'library',
     trim: 'v',
     keywords: ['quote', 'stoic', 'philosophy', 'principle', 'virtue'],
     buckets: ['Quotes', 'Principles', 'Essays'],
   },
   {
-    id: 'learnings', name: 'Learnings', icon: 'Brain', kind: 'library',
+    id: 'academia', name: 'Academia', icon: 'Brain', kind: 'library',
     trim: 'o',
     keywords: ['book', 'read', 'watch', 'listen', 'course', 'video', 'podcast', 'learn'],
     buckets: ['Read', 'Watch', 'Listen'],

@@ -10,7 +10,7 @@ import AreaIcon from '../components/AreaIcon'
 export default function Habits() {
   const habits = useStore(useShallow(selectAreaItems('habits')))
   const logs = useStore((s) => s.logs)
-  const toggleHabitToday = useStore((s) => s.toggleHabitToday)
+  const toggleHabitCheck = useStore((s) => s.toggleHabitCheck)
   const addItem = useStore((s) => s.addItem)
   const [draft, setDraft] = useState('')
   const [open, setOpen] = useState(null)
@@ -28,7 +28,7 @@ export default function Habits() {
     <div className="page" style={{ '--area-c1': 'var(--trim-y)' }}>
       <div className="page-head">
         <div className="icon-chip"><AreaIcon name="KeyRound" /></div>
-        <h1>Keystone Habits</h1>
+        <h1>Keystones</h1>
       </div>
 
       {habits.length === 0 && (
@@ -46,23 +46,30 @@ export default function Habits() {
             <div key={h.id} className="item-row habit-row">
               <button
                 className={`habit-check ${today ? 'on' : ''}`}
-                onClick={() => toggleHabitToday(h.id)}
+                onClick={() => toggleHabitCheck(h.id)}
                 aria-label={`Check ${h.title} for today`}
               >
                 <Check size={16} strokeWidth={2.5} />
               </button>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div className="item-title">{h.title}</div>
-                <div style={{ display: 'flex', gap: 4, marginTop: 5 }} aria-label="Last 7 days">
-                  {[6, 5, 4, 3, 2, 1, 0].map((d) => (
-                    <span
-                      key={d}
-                      style={{
-                        width: 8, height: 8, borderRadius: '50%',
-                        background: checkedOn(h.id, daysAgoKey(d)) ? 'var(--trim-y)' : 'var(--surface-3)',
-                      }}
-                    />
-                  ))}
+                <div style={{ display: 'flex', gap: 4, marginTop: 5 }} aria-label="Last 7 days — tap a day to backfill it">
+                  {[6, 5, 4, 3, 2, 1, 0].map((d) => {
+                    const date = daysAgoKey(d)
+                    const on = checkedOn(h.id, date)
+                    return (
+                      <button
+                        key={d}
+                        onClick={() => toggleHabitCheck(h.id, date)}
+                        aria-label={`${on ? 'Uncheck' : 'Check'} ${h.title} for ${date}`}
+                        title={date}
+                        style={{
+                          width: 14, height: 14, padding: 0, border: 'none', borderRadius: '50%',
+                          background: on ? 'var(--trim-y)' : 'var(--surface-3)', cursor: 'pointer',
+                        }}
+                      />
+                    )
+                  })}
                 </div>
               </div>
               <div className="streak"><Flame size={13} strokeWidth={1.75} /><b>{streak}</b></div>

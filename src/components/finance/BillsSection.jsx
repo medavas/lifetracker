@@ -90,17 +90,6 @@ export default function BillsSection({ items, logs, onEdit }) {
         </div>
       ))}
       {allBills.length === 0 && due.length === 0 && <div className="fin-sub">Add your first bill below.</div>}
-      <div className="fin-addrow">
-        <input className="fin-title" placeholder="New bill" value={title} onChange={(e) => setTitle(e.target.value)} />
-        <input className="fin-amt" inputMode="decimal" placeholder="0.00" value={amountStr} onChange={(e) => setAmountStr(e.target.value)} />
-        <select value={cadence} onChange={(e) => setCadence(e.target.value)}>
-          <option value="monthly">Monthly</option>
-          <option value="yearly">Yearly</option>
-          <option value="weekly">Weekly</option>
-        </select>
-        <input type="date" value={nextDue} onChange={(e) => setNextDue(e.target.value)} />
-        <button className="fin-add" onClick={add}>Add</button>
-      </div>
 
       {otherBills.length > 0 && (
         <>
@@ -116,6 +105,19 @@ export default function BillsSection({ items, logs, onEdit }) {
           ))}
         </>
       )}
+
+      <div className="fin-addrow">
+        <input className="fin-title" placeholder="New bill" value={title} onChange={(e) => setTitle(e.target.value)} />
+        <input className="fin-amt" inputMode="decimal" placeholder="0.00" value={amountStr} onChange={(e) => setAmountStr(e.target.value)} />
+        <select value={cadence} onChange={(e) => setCadence(e.target.value)}>
+          <option value="monthly">Monthly</option>
+          <option value="biannual">Biannual</option>
+          <option value="yearly">Yearly</option>
+          <option value="weekly">Weekly</option>
+        </select>
+        <input type="date" value={nextDue} onChange={(e) => setNextDue(e.target.value)} />
+        <button className="fin-add" onClick={add}>Add</button>
+      </div>
 
       {paidThisMonth.length > 0 && (
         <>

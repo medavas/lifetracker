@@ -40,7 +40,7 @@ export function addDays(dateStr, n) {
 export function advanceDue(dateStr, cadence) {
   const [y, m, d] = dateStr.split('-').map(Number)
   if (cadence === 'weekly') return addDays(dateStr, 7)
-  const months = cadence === 'yearly' ? 12 : 1
+  const months = cadence === 'yearly' ? 12 : cadence === 'biannual' ? 6 : 1
   const total = y * 12 + (m - 1) + months
   const ny = Math.floor(total / 12)
   const nm = (total % 12) + 1
@@ -52,6 +52,7 @@ export function advanceDue(dateStr, cadence) {
 export function monthlyize(item) {
   const amount = item.amount ?? 0
   if (item.cadence === 'yearly') return Math.round(amount / 12)
+  if (item.cadence === 'biannual') return Math.round(amount / 6)
   if (item.cadence === 'weekly') return Math.round((amount * 52) / 12)
   return amount
 }
@@ -127,6 +128,29 @@ export function upcomingBills(items, todayStr, horizonDays = 14) {
     .filter((i) => (i.bucket === 'Bills' || i.bucket === 'Subscriptions') && i.nextDue && i.nextDue <= limit)
     .map((i) => ({ ...i, overdue: i.nextDue < todayStr }))
     .sort((a, b) => (a.nextDue < b.nextDue ? -1 : a.nextDue > b.nextDue ? 1 : 0))
+}
+
+/**
+ * Every occurrence of a recurring bill/subscription that lands in `month`,
+ * projected forward from `nextDue` by repeated advanceDue. Pure forecast —
+ * doesn't touch the store or the payment ledger, so an autopay bill that
+ * never gets a manual "Paid" click (nextDue sitting frozen) still shows up
+ * in every month it would actually hit, not just the one nextDue is
+ * currently parked in.
+ */
+export function monthForecast(items, month) {
+  const start = `${month}-01`
+  const end = `${month}-${pad2(daysInMonth(month))}`
+  const occurrences = []
+  for (const i of financeItems(items)) {
+    if ((i.bucket !== 'Bills' && i.bucket !== 'Subscriptions') || !i.nextDue || !i.cadence) continue
+    let due = i.nextDue
+    for (let guard = 0; guard < 200 && due <= end; guard++) {
+      if (due >= start) occurrences.push({ ...i, dueDate: due })
+      due = advanceDue(due, i.cadence)
+    }
+  }
+  return occurrences.sort((a, b) => (a.dueDate < b.dueDate ? -1 : a.dueDate > b.dueDate ? 1 : 0))
 }
 
 /** Total saved toward a goal: the sum of its live contribute logs. */

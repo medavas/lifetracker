@@ -35,9 +35,9 @@ export default function App() {
 
   return (
     <HashRouter>
-      <AppShell onAdd={() => setQuickAddOpen(true)}>
+      <AppShell>
         <Routes>
-          <Route path="/" element={<Dashboard />} />
+          <Route path="/" element={<Dashboard onAdd={() => setQuickAddOpen(true)} />} />
           <Route path="/areas" element={<AreasGrid />} />
           <Route path="/area/projects" element={<Navigate to="/projects" replace />} />
           <Route path="/area/fitness" element={<Navigate to="/fitness" replace />} />

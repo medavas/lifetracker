@@ -13,7 +13,7 @@ import ItemSheet from './ItemSheet'
 
 function SortableRow({ item, onOpen, habitBucket }) {
   const toggleDone = useStore((s) => s.toggleDone)
-  const toggleHabitToday = useStore((s) => s.toggleHabitToday)
+  const toggleHabitCheck = useStore((s) => s.toggleHabitCheck)
   const logs = useStore((s) => s.logs)
   const updateItem = useStore((s) => s.updateItem)
   const [editing, setEditing] = useState(false)
@@ -45,7 +45,7 @@ function SortableRow({ item, onOpen, habitBucket }) {
       {isPriority ? (
         <button
           className={`habit-check ${checkedToday ? 'on' : ''}`}
-          onClick={() => toggleHabitToday(item.id)}
+          onClick={() => toggleHabitCheck(item.id)}
           aria-label={checkedToday ? `Uncheck ${item.title} for today` : `Check ${item.title} for today`}
         >
           <Check size={14} strokeWidth={2.5} />

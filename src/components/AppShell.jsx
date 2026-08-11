@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { NavLink } from 'react-router-dom'
-import { Menu, Plus } from 'lucide-react'
+import { Menu } from 'lucide-react'
 import { useStore } from '../lib/store'
 import { levelForPoints, levelProgress } from '../lib/rewards'
 import { mainMenuEntries, pinnedEntries } from '../lib/sidebarOrder'
@@ -10,23 +10,22 @@ const EDGE_PX = 24
 const OPEN_THRESHOLD_PX = 60
 
 /**
- * Desktop: fixed left sidebar, always visible (≥900px, CSS-controlled).
- * Mobile: the same sidebar becomes an off-canvas drawer, opened by the
- * hamburger button or an edge swipe-right, closed by the backdrop, a swipe
- * left, or tapping a destination. BottomNav (rendered by App) is mobile's
- * other nav surface — the two are independent, not a toggle between them.
+ * The sidebar is an off-canvas drawer on both breakpoints, opened by a
+ * hamburger, closed by the backdrop, a swipe left, or tapping a destination.
+ * Mobile shows a top bar with the hamburger (occupies layout space instead
+ * of floating, so it can never sit on top of a page's heading; sticky keeps
+ * it reachable once the page scrolls). Desktop instead shows a slim,
+ * always-visible strip standing in for the collapsed sidebar — click it to
+ * bring the full sidebar out as an overlay. BottomNav (rendered by App) is
+ * mobile's other nav surface — the two are independent, not a toggle
+ * between them.
  *
- * The hamburger rides in a mobile-only top bar that takes up layout space
- * rather than floating over the page, so it can never sit on top of a page's
- * heading; sticky keeps it reachable once the page scrolls.
- *
- * The sidebar is two sections: a fixed top block (Quick add, then the
- * PINNED_IDS destinations) and, below the rule, the main menu — the user's
- * saved order minus whatever the top block already pins, so nothing is
- * listed twice. Both come from sidebarOrder.js; the order is editable on the
- * Settings page.
+ * The sidebar is two sections: a fixed top block (the PINNED_IDS
+ * destinations) and, below the rule, the main menu — the user's saved order
+ * minus whatever the top block already pins, so nothing is listed twice.
+ * Both come from sidebarOrder.js; the order is editable on the Settings page.
  */
-export default function AppShell({ onAdd, children }) {
+export default function AppShell({ children }) {
   const points = useStore((s) => s.points)
   const level = levelForPoints(points)
   const progress = levelProgress(points)
@@ -73,9 +72,6 @@ export default function AppShell({ onAdd, children }) {
       <aside className={`sidebar ${drawerOpen ? 'open' : ''}`}>
         <div className="wordmark">Stoa</div>
         <nav className="side-nav side-top">
-          <button className="side-add" onClick={() => { closeDrawer(); onAdd() }}>
-            <Plus size={16} strokeWidth={2} />Quick add
-          </button>
           {pinned.map((e) => (
             <NavLink key={e.id} to={e.route} end={e.route === '/'} onClick={closeDrawer}>
               <AreaIcon name={e.icon} size={17} />{e.name}
@@ -95,6 +91,11 @@ export default function AppShell({ onAdd, children }) {
           <div className="side-bar"><span style={{ width: `${progress * 100}%` }} /></div>
         </div>
       </aside>
+      <div className="sidebar-strip">
+        <button className="strip-toggle" onClick={() => setDrawerOpen(true)} aria-label="Open menu">
+          <Menu size={18} strokeWidth={1.75} />
+        </button>
+      </div>
       <div className="content">
         <div className="topbar">
           <button className="hamburger" onClick={() => setDrawerOpen(true)} aria-label="Open menu">

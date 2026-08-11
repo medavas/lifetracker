@@ -19,10 +19,9 @@ export const SETTINGS_ENTRY = { id: 'settings', name: 'Settings', icon: 'Setting
 
 /**
  * The sidebar's top section: fixed, unrankable, and never repeated in the
- * main menu below it. Quick add leads it but is a button, not a destination,
- * so AppShell renders that one itself.
+ * main menu below it.
  */
-export const PINNED_IDS = ['nudges', 'home', 'settings', 'areas']
+export const PINNED_IDS = ['home', 'nudges', 'areas', 'settings']
 
 /** The pinned top-section destinations, in their fixed order. */
 export function pinnedEntries() {

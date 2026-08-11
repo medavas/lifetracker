@@ -9,6 +9,7 @@ import { todayKey } from '../lib/rewards'
 import AreaIcon from '../components/AreaIcon'
 import QuickSpend from '../components/finance/QuickSpend'
 import BillsSection from '../components/finance/BillsSection'
+import RecurringForecastSection from '../components/finance/RecurringForecastSection'
 import BudgetSection from '../components/finance/BudgetSection'
 import PlanSection from '../components/finance/PlanSection'
 import SubscriptionsSection from '../components/finance/SubscriptionsSection'
@@ -67,15 +68,16 @@ export default function FinanceDashboard() {
       </section>
 
       <QuickSpend categories={items.filter((i) => i.bucket === 'Spending')} isCurrentMonth={current} />
+      <SpendChart items={items} logs={logs} month={month} />
+      <SubscriptionsSection items={items} onEdit={setSheetItem} />
       <BillsSection items={items} logs={logs} onEdit={setSheetItem} />
+      <RecurringForecastSection items={items} month={month} monthLabel={monthLabel} onEdit={setSheetItem} />
       <div className="fin-grid">
         <div className="fin-col">
           <BudgetSection items={items} logs={logs} month={month} onEdit={setSheetItem} />
           <GoalsSection items={items} logs={logs} onEdit={setSheetItem} />
-          <SpendChart items={items} logs={logs} month={month} />
         </div>
         <div className="fin-col">
-          <SubscriptionsSection items={items} onEdit={setSheetItem} />
           <PlanSection items={items} onEdit={setSheetItem} />
         </div>
       </div>

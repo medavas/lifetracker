@@ -44,12 +44,18 @@ describe('advanceDue', () => {
   it('weekly advances seven days', () => {
     expect(advanceDue('2026-08-28', 'weekly')).toBe('2026-09-04')
   })
+
+  it('biannual advances six months, clamped to month end', () => {
+    expect(advanceDue('2026-02-15', 'biannual')).toBe('2026-08-15')
+    expect(advanceDue('2026-08-31', 'biannual')).toBe('2027-02-28')
+  })
 })
 
 describe('monthlyize', () => {
-  it('passes monthly through, divides yearly, scales weekly', () => {
+  it('passes monthly through, divides yearly and biannual, scales weekly', () => {
     expect(monthlyize({ amount: 1500, cadence: 'monthly' })).toBe(1500)
     expect(monthlyize({ amount: 12000, cadence: 'yearly' })).toBe(1000)
+    expect(monthlyize({ amount: 12000, cadence: 'biannual' })).toBe(2000)
     expect(monthlyize({ amount: 1000, cadence: 'weekly' })).toBe(4333)
   })
 
@@ -60,7 +66,7 @@ describe('monthlyize', () => {
 })
 
 import {
-  financeItems, monthActuals, budgetSummary, upcomingBills,
+  financeItems, monthActuals, budgetSummary, upcomingBills, monthForecast,
   goalProgress, subscriptionRollup, spendPeriods, spendBands,
   categorySeries, nextCategoryColor, SPEND_SERIES, UNCATEGORIZED,
 } from '../finance.js'
@@ -158,6 +164,35 @@ describe('upcomingBills', () => {
     expect(bills.map((b) => b.id)).toEqual(['late', 'tv', 'rent'])
     expect(bills.find((b) => b.id === 'late').overdue).toBe(true)
     expect(bills.find((b) => b.id === 'rent').overdue).toBe(false)
+  })
+})
+
+describe('monthForecast', () => {
+  it('projects a monthly bill into a future month without touching nextDue', () => {
+    const items = [fin('Bills', { id: 'rent', amount: 120000, cadence: 'monthly', nextDue: '2026-08-10' })]
+    expect(monthForecast(items, '2026-08').map((f) => f.dueDate)).toEqual(['2026-08-10'])
+    expect(monthForecast(items, '2026-10').map((f) => f.dueDate)).toEqual(['2026-10-10'])
+    expect(items[0].nextDue).toBe('2026-08-10')
+  })
+
+  it('finds every occurrence of a weekly item that lands in the month', () => {
+    const items = [fin('Subscriptions', { id: 'coffee', amount: 500, cadence: 'weekly', nextDue: '2026-08-03' })]
+    expect(monthForecast(items, '2026-08').map((f) => f.dueDate)).toEqual([
+      '2026-08-03', '2026-08-10', '2026-08-17', '2026-08-24', '2026-08-31',
+    ])
+  })
+
+  it('skips items with no nextDue/cadence and buckets outside Bills/Subscriptions', () => {
+    const items = [
+      fin('Bills', { id: 'nodate', amount: 1000, cadence: 'monthly' }),
+      fin('Spending', { id: 'groceries', amount: 1000 }),
+    ]
+    expect(monthForecast(items, '2026-08')).toEqual([])
+  })
+
+  it('is empty for a month before the item has ever been due', () => {
+    const items = [fin('Bills', { id: 'rent', amount: 120000, cadence: 'monthly', nextDue: '2026-08-10' })]
+    expect(monthForecast(items, '2026-06')).toEqual([])
   })
 })
 

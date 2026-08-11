@@ -7,7 +7,7 @@ Personal life dashboard PWA (habits, journal, finance, fitness, etc.).
 THE APP HAS 4 PRIMITIVES, NOT 12 MODULES.
 
 What looks like 9 sections (Projects, Finance, Fitness, Diet, Health,
-Keystone Habits, Journal, Philosophy/Quotes, Learnings) is
+Keystones, Journal, Philosophy, Academia) is
 really just filtered views over 4 data primitives:
 
 1. **AREA** — static config only, never stored in the DB. One registry file

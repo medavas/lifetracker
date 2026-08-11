@@ -80,7 +80,7 @@ export default function ItemSheet({ item, onClose }) {
             <div className="field">
               <label>Cadence</label>
               <div className="link-chips">
-                {['weekly', 'monthly', 'yearly'].map((c) => (
+                {['weekly', 'monthly', 'biannual', 'yearly'].map((c) => (
                   <button key={c} className={`chip ${cadence === c ? 'on' : ''}`} onClick={() => setCadence(c)}>{c}</button>
                 ))}
               </div>
