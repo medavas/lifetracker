@@ -18,12 +18,12 @@
  * validated palette.
  *
  * `daily` marks an area as part of the daily practice rendered by DailyStack
- * and PracticeGrid. `order` is 1..4, bottom-to-top in the stacked bar and
+ * and PracticeGrid. `order` is 1..5, bottom-to-top in the stacked bar and
  * top-to-bottom in a grid cell. `series` indexes the CVD-validated
  * --series-* palette in index.css. Areas without `daily` are excluded from
- * both views: finishing a bill is real work but is not a daily rhythm.
- * Adding a fifth daily area means adding this field plus a --series-5 check;
- * no component changes.
+ * both views: finishing a bill is real work but is not a daily rhythm, and a
+ * Pomodoro is a work session, not one either. Adding a band means adding this
+ * field plus a --series-N check; no component changes.
  *
  * `route` overrides the destination the areas grid links to. Areas without it
  * fall through to the generic /area/:id view. It exists so adding an area with
@@ -67,6 +67,7 @@ export const AREAS = [
   {
     id: 'health', name: 'Health', icon: 'Stethoscope', kind: 'list',
     trim: 'r',
+    daily: { order: 5, series: 5 },
     habitBucket: 'Supplements',
     keywords: ['doctor', 'dentist', 'sleep', 'meds', 'appointment', 'health', 'supplement', 'vitamin'],
     buckets: ['Upcoming', 'Tracking', 'Records', 'Supplements'],
@@ -106,7 +107,6 @@ export const AREAS = [
   {
     id: 'focus', name: 'Focus', icon: 'Timer', kind: 'focus',
     trim: 'v', route: '/focus',
-    daily: { order: 5, series: 5 },
     keywords: ['focus', 'pomodoro', 'work', 'concentrate', 'timer'],
     buckets: [],
   },

@@ -38,7 +38,7 @@ describe('bandCounts', () => {
   const D = '2026-08-04'
 
   it('returns a zero for every band when nothing happened', () => {
-    expect(bandCounts([], [], D)).toEqual({ journal: 0, diet: 0, fitness: 0, habits: 0, focus: 0 })
+    expect(bandCounts([], [], D)).toEqual({ journal: 0, diet: 0, fitness: 0, habits: 0, health: 0 })
   })
 
   it('counts journal NOTEs, not the day-marker log', () => {
@@ -107,9 +107,9 @@ describe('bandCounts', () => {
     expect(bandCounts(logs, [], D).fitness).toBe(3)
   })
 
-  it('counts completes into the focus band with no dedicated code path (5th-band claim)', () => {
-    const logs = [log({ kind: 'complete', areaId: 'focus', date: D })]
-    expect(bandCounts(logs, [], D).focus).toBe(1)
+  it('counts completes into the health band with no dedicated code path (5th-band claim)', () => {
+    const logs = [log({ kind: 'complete', areaId: 'health', date: D })]
+    expect(bandCounts(logs, [], D).health).toBe(1)
   })
 })
 
@@ -130,7 +130,7 @@ describe('dailyActivity', () => {
   it('includes zero days rather than skipping them', () => {
     const out = dailyActivity([log({ kind: 'complete', areaId: 'diet', date: '2026-08-04' })], [], 7)
     expect(out).toHaveLength(7)
-    expect(out[0]).toEqual({ date: '2026-07-29', bands: { journal: 0, diet: 0, fitness: 0, habits: 0, focus: 0 }, total: 0 })
+    expect(out[0]).toEqual({ date: '2026-07-29', bands: { journal: 0, diet: 0, fitness: 0, habits: 0, health: 0 }, total: 0 })
   })
 
   it('sums the four bands into total', () => {
@@ -141,7 +141,7 @@ describe('dailyActivity', () => {
     ]
     const notes = [note({ createdAt: Date.parse('2026-08-04T09:00:00') })]
     const today = dailyActivity(logs, notes, 7)[6]
-    expect(today.bands).toEqual({ journal: 1, diet: 1, fitness: 0, habits: 2, focus: 0 })
+    expect(today.bands).toEqual({ journal: 1, diet: 1, fitness: 0, habits: 2, health: 0 })
     expect(today.total).toBe(4)
   })
 
@@ -163,10 +163,10 @@ describe('dailyActivity', () => {
     ]
     const out = dailyActivity(logs, notes, 7)
     const byDate = Object.fromEntries(out.map((d) => [d.date, d.bands]))
-    expect(byDate['2026-08-01']).toEqual({ journal: 1, diet: 2, fitness: 0, habits: 0, focus: 0 })
-    expect(byDate['2026-08-02']).toEqual({ journal: 0, diet: 0, fitness: 0, habits: 1, focus: 0 })
-    expect(byDate['2026-08-03']).toEqual({ journal: 0, diet: 0, fitness: 1, habits: 0, focus: 0 })
-    expect(byDate['2026-08-04']).toEqual({ journal: 1, diet: 0, fitness: 0, habits: 0, focus: 0 })
+    expect(byDate['2026-08-01']).toEqual({ journal: 1, diet: 2, fitness: 0, habits: 0, health: 0 })
+    expect(byDate['2026-08-02']).toEqual({ journal: 0, diet: 0, fitness: 0, habits: 1, health: 0 })
+    expect(byDate['2026-08-03']).toEqual({ journal: 0, diet: 0, fitness: 1, habits: 0, health: 0 })
+    expect(byDate['2026-08-04']).toEqual({ journal: 1, diet: 0, fitness: 0, habits: 0, health: 0 })
   })
 })
 
@@ -240,7 +240,7 @@ describe('dailyPresence', () => {
       log({ kind: 'habit-check', areaId: 'habits', date: '2026-08-03' }),
     ]
     const cell = dailyPresence(logs, [], 5)[4][0]
-    expect(cell.bands).toEqual({ journal: false, diet: true, fitness: false, habits: true, focus: false })
+    expect(cell.bands).toEqual({ journal: false, diet: true, fitness: false, habits: true, health: false })
   })
 
   it('puts a Sunday and the following Monday in different weeks', () => {
@@ -269,9 +269,9 @@ describe('dailyPresence', () => {
     const notes = [note({ createdAt: Date.parse('2026-08-04T08:00:00') })]
     const grid = dailyPresence(logs, notes, 5)
     const byDate = Object.fromEntries(grid.flat().map((c) => [c.date, c.bands]))
-    expect(byDate['2026-07-20']).toEqual({ journal: false, diet: true, fitness: false, habits: false, focus: false })
-    expect(byDate['2026-07-27']).toEqual({ journal: false, diet: false, fitness: false, habits: true, focus: false })
-    expect(byDate['2026-08-03']).toEqual({ journal: false, diet: false, fitness: true, habits: false, focus: false })
-    expect(byDate['2026-08-04']).toEqual({ journal: true, diet: false, fitness: false, habits: false, focus: false })
+    expect(byDate['2026-07-20']).toEqual({ journal: false, diet: true, fitness: false, habits: false, health: false })
+    expect(byDate['2026-07-27']).toEqual({ journal: false, diet: false, fitness: false, habits: true, health: false })
+    expect(byDate['2026-08-03']).toEqual({ journal: false, diet: false, fitness: true, habits: false, health: false })
+    expect(byDate['2026-08-04']).toEqual({ journal: true, diet: false, fitness: false, habits: false, health: false })
   })
 })

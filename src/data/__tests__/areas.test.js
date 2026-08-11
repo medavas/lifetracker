@@ -53,7 +53,7 @@ describe('area registry', () => {
 describe('daily bands', () => {
   it('marks exactly the five daily-practice areas', () => {
     expect(AREAS.filter((a) => a.daily).map((a) => a.id).sort()).toEqual(
-      ['diet', 'fitness', 'focus', 'habits', 'journal'],
+      ['diet', 'fitness', 'habits', 'health', 'journal'],
     )
   })
 
@@ -68,12 +68,12 @@ describe('daily bands', () => {
   })
 
   it('exposes DAILY_BANDS sorted bottom-to-top', () => {
-    expect(DAILY_BANDS.map((a) => a.id)).toEqual(['journal', 'diet', 'fitness', 'habits', 'focus'])
+    expect(DAILY_BANDS.map((a) => a.id)).toEqual(['journal', 'diet', 'fitness', 'habits', 'health'])
   })
 
   it('gives every band a trim matching its own identity color family', () => {
     const trims = Object.fromEntries(DAILY_BANDS.map((a) => [a.id, a.trim]))
-    expect(trims).toEqual({ journal: 'b', diet: 'g', fitness: 'y', habits: 'r', focus: 'v' })
+    expect(trims).toEqual({ journal: 'b', diet: 'g', fitness: 'y', habits: 'r', health: 'r' })
   })
 })
 
@@ -113,12 +113,14 @@ describe('routing', () => {
     expect(fitness.daily).toEqual({ order: 3, series: 4 })
   })
 
-  it('routes focus to its own page with no buckets', () => {
+  // A Pomodoro round is work, not one of the daily rhythms the practice
+  // views track — the fifth band is Health's supplements instead.
+  it('routes focus to its own page with no buckets and no daily band', () => {
     const focus = AREAS.find((a) => a.id === 'focus')
     expect(focus.kind).toBe('focus')
     expect(focus.route).toBe('/focus')
     expect(focus.buckets).toEqual([])
-    expect(focus.daily).toEqual({ order: 5, series: 5 })
+    expect(focus.daily).toBeUndefined()
   })
 })
 
