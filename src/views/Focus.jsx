@@ -125,33 +125,31 @@ export default function Focus() {
         <div className="focus-today">{sessionsToday} session{sessionsToday === 1 ? '' : 's'} today</div>
       </div>
 
-      <div className="section">
-        <div className="label">Work length</div>
-        <div className="bucket-tabs">
-          {WORK_PRESETS.map((m) => (
-            <button
-              key={m}
-              className={`bucket-tab ${settings.workMin === m ? 'on' : ''}`}
-              disabled={pillsDisabled}
-              onClick={() => setWorkMin(m)}
-            >
-              {m}m
-            </button>
-          ))}
-        </div>
-        <div className="label" style={{ marginTop: 10 }}>Break length</div>
-        <div className="bucket-tabs">
-          {BREAK_PRESETS.map((m) => (
-            <button
-              key={m}
-              className={`bucket-tab ${settings.shortBreakMin === m ? 'on' : ''}`}
-              disabled={pillsDisabled}
-              onClick={() => setBreakMin(m)}
-            >
-              {m}m
-            </button>
-          ))}
-        </div>
+      <div className="section-label">Work length</div>
+      <div className="bucket-tabs">
+        {WORK_PRESETS.map((m) => (
+          <button
+            key={m}
+            className={`bucket-tab ${settings.workMin === m ? 'on' : ''}`}
+            disabled={pillsDisabled}
+            onClick={() => setWorkMin(m)}
+          >
+            {m}m
+          </button>
+        ))}
+      </div>
+      <div className="section-label">Break length</div>
+      <div className="bucket-tabs">
+        {BREAK_PRESETS.map((m) => (
+          <button
+            key={m}
+            className={`bucket-tab ${settings.shortBreakMin === m ? 'on' : ''}`}
+            disabled={pillsDisabled}
+            onClick={() => setBreakMin(m)}
+          >
+            {m}m
+          </button>
+        ))}
       </div>
     </div>
   )
