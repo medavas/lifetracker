@@ -1,5 +1,6 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Check, Flame } from 'lucide-react'
+import { Check, ChevronRight, Flame } from 'lucide-react'
 import { useShallow } from 'zustand/react/shallow'
 import { useStore, selectJournal } from '../lib/store'
 import { levelForPoints, levelProgress, habitStreak, dailyActivity, dailyPresence, todayKey, QUARTER_WEEKS } from '../lib/rewards'
@@ -7,13 +8,14 @@ import { AREAS } from '../data/areas'
 import ProgressRing from '../components/ProgressRing'
 import DailyStack from '../components/DailyStack'
 import PracticeGrid from '../components/PracticeGrid'
+import ItemSheet from '../components/ItemSheet'
 
 const PRIORITY_AREAS = AREAS.filter((a) => a.habitBucket)
 
 /** Today's checklist for one area's habit bucket (Fitness's Top Priorities, Diet's Today's Meals, ...). */
-function PriorityAreaSection({ area, items, logs, toggleHabitToday }) {
+function PriorityAreaSection({ area, items, logs, toggleHabitToday, onOpen }) {
   const priorityItems = items.filter(
-    (i) => i.areaId === area.id && i.bucket === area.habitBucket && i.status !== 'archived',
+    (i) => !i.deletedAt && i.areaId === area.id && i.bucket === area.habitBucket && i.status !== 'archived',
   )
   if (priorityItems.length === 0) return null
 
@@ -36,6 +38,7 @@ function PriorityAreaSection({ area, items, logs, toggleHabitToday }) {
               </button>
               <div className="item-title">{item.title}</div>
               <div className="streak"><Flame size={13} strokeWidth={1.75} /><b>{habitStreak(logs, item.id)}</b></div>
+              <button className="detail-btn" onClick={() => onOpen(item)} aria-label="Details"><ChevronRight size={17} strokeWidth={1.75} /></button>
             </div>
           )
         })}
@@ -51,11 +54,12 @@ export default function Dashboard() {
   const notes = useStore((s) => s.notes)
   const toggleHabitToday = useStore((s) => s.toggleHabitToday)
   const journal = useStore(useShallow(selectJournal))
+  const [open, setOpen] = useState(null)
 
   const level = levelForPoints(points)
   const progress = levelProgress(points)
 
-  const habits = items.filter((i) => i.areaId === 'habits' && i.status !== 'archived')
+  const habits = items.filter((i) => !i.deletedAt && i.areaId === 'habits' && i.status !== 'archived')
   const checkedToday = habits.filter((h) =>
     logs.some((l) => l.itemId === h.id && l.kind === 'habit-check' && l.date === todayKey()),
   )
@@ -108,6 +112,7 @@ export default function Dashboard() {
                       <button className={`habit-check ${on ? 'on' : ''}`} onClick={() => toggleHabitToday(h.id)} aria-label={`Check ${h.title}`}><Check size={15} strokeWidth={2.5} /></button>
                       <div className="item-title">{h.title}</div>
                       <div className="streak"><b>{habitStreak(logs, h.id)}</b> day streak</div>
+                      <button className="detail-btn" onClick={() => setOpen(h)} aria-label="Details"><ChevronRight size={17} strokeWidth={1.75} /></button>
                     </div>
                   )
                 })}
@@ -122,6 +127,7 @@ export default function Dashboard() {
               items={items}
               logs={logs}
               toggleHabitToday={toggleHabitToday}
+              onOpen={setOpen}
             />
           ))}
 
@@ -163,6 +169,8 @@ export default function Dashboard() {
           })()}
         </div>
       </div>
+
+      {open && <ItemSheet item={open} onClose={() => setOpen(null)} />}
     </div>
   )
 }
