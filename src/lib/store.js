@@ -490,6 +490,22 @@ export const useStore = create(
           notes: get().notes.map((n) => (n.id === id ? { ...n, deletedAt: now(), updatedAt: now() } : n)),
         }),
 
+      // ── Focus (Pomodoro) ─────────────────────────────────────
+      /**
+       * One completed work interval = one ordinary 'complete' log, itemId
+       * null (same shape the journal day-marker already uses). This is the
+       * entire dashboard/points integration -- rewards.js already sums any
+       * complete/habit-check log by areaId for a daily-band area, so no
+       * dedicated Focus code exists there.
+       */
+      logFocusSession: (date) => {
+        const logs = [
+          ...get().logs,
+          { id: uid(), itemId: null, areaId: 'focus', kind: 'complete', date: date ?? todayKey(), createdAt: now(), updatedAt: now(), deletedAt: null },
+        ]
+        set({ logs, points: computePoints(logs) })
+      },
+
       mergeRemote: (remoteEntities) => {
         const local = toEntities({ items: get().items, notes: get().notes, logs: get().logs })
         const merged = fromEntities(merge(local, remoteEntities))

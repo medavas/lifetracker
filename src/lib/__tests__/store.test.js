@@ -3,6 +3,7 @@ import { useStore, selectAreaItems, selectSubItems } from '../store.js'
 import { DEFAULT_PROGRAM, SESSION_BUCKET } from '../../data/workoutProgram.js'
 import { DEFAULT_STRETCH_CATEGORIES, STRETCH_BUCKET } from '../../data/stretches.js'
 import { buildExerciseIndex } from '../workout.js'
+import { todayKey } from '../rewards.js'
 
 const reset = () => useStore.setState({ items: [], notes: [], logs: [], points: 0 })
 
@@ -481,6 +482,34 @@ describe('workout program + set logs', () => {
     const upper = sessions().find((s) => s.title === 'Upper Body')
     expect(upper.status).toBe('open')
     expect(useStore.getState().points).toBe(0)
+  })
+})
+
+describe('logFocusSession', () => {
+  beforeEach(reset)
+
+  it('appends a complete log with a null itemId, areaId focus', () => {
+    useStore.getState().logFocusSession('2026-08-10')
+    const logs = useStore.getState().logs
+    expect(logs).toHaveLength(1)
+    expect(logs[0]).toMatchObject({ itemId: null, areaId: 'focus', kind: 'complete', date: '2026-08-10' })
+  })
+
+  it('defaults date to today when omitted', () => {
+    useStore.getState().logFocusSession()
+    expect(useStore.getState().logs[0].date).toBe(todayKey())
+  })
+
+  it('awards task points, same as any other completion', () => {
+    useStore.getState().logFocusSession('2026-08-10')
+    expect(useStore.getState().points).toBe(10)
+  })
+
+  it('each call appends its own log — no dedup, no cap', () => {
+    useStore.getState().logFocusSession('2026-08-10')
+    useStore.getState().logFocusSession('2026-08-10')
+    expect(useStore.getState().logs).toHaveLength(2)
+    expect(useStore.getState().points).toBe(20)
   })
 })
 
