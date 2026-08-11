@@ -66,8 +66,9 @@ export const AREAS = [
   {
     id: 'health', name: 'Health', icon: 'Stethoscope', kind: 'list',
     trim: 'r',
-    keywords: ['doctor', 'dentist', 'sleep', 'meds', 'appointment', 'health'],
-    buckets: ['Upcoming', 'Tracking', 'Records'],
+    habitBucket: 'Supplements',
+    keywords: ['doctor', 'dentist', 'sleep', 'meds', 'appointment', 'health', 'supplement', 'vitamin'],
+    buckets: ['Upcoming', 'Tracking', 'Records', 'Supplements'],
   },
   {
     id: 'habits', name: 'Keystone Habits', icon: 'KeyRound', kind: 'habits',

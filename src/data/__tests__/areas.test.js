@@ -131,9 +131,15 @@ describe('habit-bucket areas', () => {
     expect(diet.buckets[0]).toBe('Today\'s Meals')
   })
 
-  it('leaves every other area without a habit bucket', () => {
+  it('names Supplements as the health habit bucket, listed last', () => {
+    const health = AREAS.find((a) => a.id === 'health')
+    expect(health.habitBucket).toBe('Supplements')
+    expect(health.buckets).toEqual(['Upcoming', 'Tracking', 'Records', 'Supplements'])
+  })
+
+  it('leaves every non-habit-bucket area without one', () => {
     for (const a of AREAS) {
-      if (a.id === 'fitness' || a.id === 'diet') continue
+      if (['fitness', 'diet', 'health'].includes(a.id)) continue
       expect(a.habitBucket).toBeUndefined()
     }
   })
