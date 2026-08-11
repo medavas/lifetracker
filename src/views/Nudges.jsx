@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Moon, Plus, Power, Trash2 } from 'lucide-react'
+import { Moon, Plus, Trash2 } from 'lucide-react'
 import { useShallow } from 'zustand/react/shallow'
 import { useStore, selectAreaItems } from '../lib/store'
 import { nextFireAt } from '../lib/timers'
@@ -130,15 +130,13 @@ export default function Nudges() {
         {nudges.map((n) => {
           const due = countdown(nextFireAt(n, lastFired), now)
           return (
-            <div key={n.id} className="item-row nudge-row">
+            <div key={n.id} className="nudge-row">
               <button
-                className={`nudge-power ${n.enabled ? 'on' : ''}`}
+                className={`nudge-dot ${n.enabled ? 'on' : ''}`}
                 onClick={() => toggle(n)}
                 aria-label={`${n.enabled ? 'Switch off' : 'Switch on'} ${n.title}`}
                 aria-pressed={n.enabled}
-              >
-                <Power size={16} strokeWidth={2.25} />
-              </button>
+              />
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div className="item-title">{n.title}</div>
                 <div className="nudge-meta">

@@ -360,15 +360,25 @@
   .area-grid { grid-template-columns: repeat(4, 1fr); }
 }
 
-.nudge-power {
+.nudge-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 2px;
+  border-bottom: 1px solid var(--surface-3);
+  touch-action: manipulation;
+}
+.item-list .nudge-row:last-child { border-bottom: none; }
+
+.nudge-dot {
   width: 30px; height: 30px; flex: none;
   display: grid; place-items: center;
-  border-radius: 8px;
-  border: 1px solid var(--surface-3);
-  background: transparent;
-  color: var(--text-muted);
+  background: transparent; border: none;
 }
-.nudge-power.on { border-color: var(--trim-o); color: var(--trim-o); }
+.nudge-dot::after {
+  content: '';
+  width: 8px; height: 8px; border-radius: 999px;
+  background: var(--text-muted);
+}
+.nudge-dot.on::after { background: var(--trim-o); }
 .nudge-meta { font-size: 12px; color: var(--text-muted); margin-top: 3px; }
 
 .quiet-block { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--surface-3); }
