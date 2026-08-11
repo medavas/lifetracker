@@ -367,6 +367,14 @@ export const useStore = create(
           ],
         }),
 
+      /** Patch a live money log in place (e.g. assigning a category to an uncategorized spend). */
+      updateMoneyLog: (logId, patch) =>
+        set({
+          logs: get().logs.map((l) =>
+            l.id === logId && !l.deletedAt ? { ...l, ...patch, updatedAt: now() } : l,
+          ),
+        }),
+
       /** Tombstone a money log; un-paying a bill restores its prior due date. */
       deleteMoneyLog: (logId) => {
         const log = get().logs.find((l) => l.id === logId && !l.deletedAt)
