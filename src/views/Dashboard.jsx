@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { Check, ChevronRight, Flame, Plus } from 'lucide-react'
 import { useStore } from '../lib/store'
 import { levelForPoints, levelProgress, habitStreak, todayKey } from '../lib/rewards'
 import { AREAS, areaById } from '../data/areas'
+import { TOPIC_BUCKET } from '../data/academiaTopics'
 import ProgressRing from '../components/ProgressRing'
 import ActivityChart from '../components/ActivityChart'
 import ItemSheet from '../components/ItemSheet'
@@ -55,23 +56,36 @@ function PriorityAreaSection({ area, items, logs, toggleHabitCheck, onOpen }) {
 /** Up to ACADEMIA_LIMIT open items from the Academia library, most recently touched first. */
 function AcademiaSection({ items, onOpen }) {
   const area = areaById('academia')
+  // Topics themselves (see views/academia/AcademiaList) are items too, but
+  // they are tab labels, not queued entries, so they're excluded here.
   const openItems = items
-    .filter((i) => !i.deletedAt && i.areaId === 'academia' && i.status === 'open')
+    .filter((i) => !i.deletedAt && i.areaId === 'academia' && i.status === 'open' && i.bucket !== TOPIC_BUCKET)
     .sort((a, b) => b.updatedAt - a.updatedAt)
-    .slice(0, ACADEMIA_LIMIT)
 
   return (
     <>
-      <div className="column-title">{area.name}</div>
+      <div className="section-header">
+        <div className="column-title">{area.name}</div>
+        {openItems.length > 0 && (
+          <Link to="/area/academia" className="view-all">{openItems.length} open · View all</Link>
+        )}
+      </div>
       {openItems.length === 0 ? (
         <div className="empty-note">Nothing queued — add a book, video, or podcast.</div>
       ) : (
         <div className="item-list">
-          {openItems.map((item) => (
-            <div key={item.id} className="item-row">
+          {openItems.slice(0, ACADEMIA_LIMIT).map((item) => (
+            <div
+              key={item.id}
+              className="item-row clickable"
+              role="button"
+              tabIndex={0}
+              onClick={() => onOpen(item)}
+              onKeyDown={(e) => e.key === 'Enter' && onOpen(item)}
+            >
               <div className="item-title">{item.title}</div>
               {item.bucket && <span className="chip">{item.bucket}</span>}
-              <button className="detail-btn" onClick={() => onOpen(item)} aria-label="Details"><ChevronRight size={17} strokeWidth={1.75} /></button>
+              <ChevronRight className="detail-btn" size={17} strokeWidth={1.75} aria-hidden="true" />
             </div>
           ))}
         </div>
@@ -82,33 +96,29 @@ function AcademiaSection({ items, onOpen }) {
 
 /** Up to PROJECT_NOTES_LIMIT most recent notes across every project, newest first. */
 function ProjectNotesSection({ items, notes }) {
-  const navigate = useNavigate()
   const recentNotes = notes
     .filter((n) => !n.deletedAt && n.areaId === 'projects' && n.itemId != null)
     .sort((a, b) => b.createdAt - a.createdAt)
-    .slice(0, PROJECT_NOTES_LIMIT)
 
   return (
     <>
-      <div className="column-title">Last Project Notes</div>
+      <div className="section-header">
+        <div className="column-title">Last Project Notes</div>
+        {recentNotes.length > 0 && (
+          <Link to="/projects" className="view-all">{recentNotes.length} notes · View all</Link>
+        )}
+      </div>
       {recentNotes.length === 0 ? (
         <div className="empty-note">No project notes yet.</div>
       ) : (
         <div className="item-list">
-          {recentNotes.map((note) => {
+          {recentNotes.slice(0, PROJECT_NOTES_LIMIT).map((note) => {
             const project = items.find((i) => i.id === note.itemId)
             return (
-              <div
-                key={note.id}
-                className="card note-card clickable"
-                role="button"
-                tabIndex={0}
-                onClick={() => navigate(`/projects/${note.itemId}`)}
-                onKeyDown={(e) => e.key === 'Enter' && navigate(`/projects/${note.itemId}`)}
-              >
+              <Link key={note.id} to={`/projects/${note.itemId}`} className="card note-card clickable">
                 <div className="note-date">{project?.title ?? 'Deleted project'} · {new Date(note.createdAt).toLocaleDateString()}</div>
                 <div className="note-text">{note.text}</div>
-              </div>
+              </Link>
             )
           })}
         </div>

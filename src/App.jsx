@@ -7,6 +7,7 @@ import Dashboard from './views/Dashboard'
 import AreasGrid from './views/AreasGrid'
 import AreaView from './views/AreaView'
 import Projects from './views/Projects'
+import Academia from './views/Academia'
 import Journal from './views/Journal'
 import YearList from './views/journal/YearList'
 import MonthList from './views/journal/MonthList'
@@ -41,11 +42,14 @@ export default function App() {
           <Route path="/areas" element={<AreasGrid />} />
           <Route path="/area/projects" element={<Navigate to="/projects" replace />} />
           <Route path="/area/fitness" element={<Navigate to="/fitness" replace />} />
+          <Route path="/area/academia" element={<Navigate to="/academia" replace />} />
           <Route path="/area/:areaId" element={<AreaView />} />
           <Route path="/finance" element={<FinanceDashboard />} />
           <Route path="/fitness" element={<Fitness />} />
           <Route path="/projects" element={<Projects />} />
           <Route path="/projects/:projectId" element={<Projects />} />
+          <Route path="/academia" element={<Academia />} />
+          <Route path="/academia/:itemId" element={<Academia />} />
           <Route path="/journal" element={<Journal />} />
           <Route path="/journal/years" element={<YearList />} />
           <Route path="/journal/years/:year" element={<MonthList />} />

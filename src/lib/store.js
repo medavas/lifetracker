@@ -30,6 +30,7 @@ import { toEntities, fromEntities, merge } from './merge'
 import { advanceDue, nextCategoryColor, SPEND_SERIES } from './finance'
 import { DEFAULT_PROGRAM, SESSION_BUCKET } from '../data/workoutProgram'
 import { DEFAULT_STRETCH_CATEGORIES, STRETCH_BUCKET } from '../data/stretches'
+import { DEFAULT_ACADEMIA_TOPICS, TOPIC_BUCKET } from '../data/academiaTopics'
 
 // crypto.randomUUID only exists in secure contexts (HTTPS or localhost) —
 // fall back to a manual v4 UUID so a plain-HTTP tunnel URL doesn't throw on
@@ -466,6 +467,21 @@ export const useStore = create(
         }
       },
 
+      /**
+       * Build the starter Academia topics, once. Idempotent the same way
+       * seedStretchCategories is. Unlike stretches, these seed populated —
+       * see data/academiaTopics.js for why.
+       */
+      seedAcademiaTopics: () => {
+        const existing = get().items.some(
+          (i) => !i.deletedAt && i.areaId === 'academia' && i.bucket === TOPIC_BUCKET,
+        )
+        if (existing) return
+        for (const name of DEFAULT_ACADEMIA_TOPICS) {
+          get().addItem('academia', name, { bucket: TOPIC_BUCKET })
+        }
+      },
+
       // ── Notes / Journal ──────────────────────────────────────
       addNote: (areaId, text, itemId = null) => {
         const note = { id: uid(), areaId, itemId, text: text.trim(), createdAt: now(), updatedAt: now(), deletedAt: null }
@@ -606,6 +622,18 @@ export const selectWorkoutSessions = (s) =>
 export const selectStretchCategories = (s) =>
   s.items
     .filter((i) => !i.deletedAt && i.areaId === 'fitness' && i.bucket === STRETCH_BUCKET && i.status !== 'archived')
+    .sort((a, b) => a.order - b.order)
+
+/** Academia topics, in user order. Archived ones (see selectArchivedAcademiaTopics) stay out of the way. */
+export const selectAcademiaTopics = (s) =>
+  s.items
+    .filter((i) => !i.deletedAt && i.areaId === 'academia' && i.bucket === TOPIC_BUCKET && i.status !== 'archived')
+    .sort((a, b) => a.order - b.order)
+
+/** Academia topics the user archived — only offered back for restoring. */
+export const selectArchivedAcademiaTopics = (s) =>
+  s.items
+    .filter((i) => !i.deletedAt && i.areaId === 'academia' && i.bucket === TOPIC_BUCKET && i.status === 'archived')
     .sort((a, b) => a.order - b.order)
 
 export const selectJournal = (s) =>

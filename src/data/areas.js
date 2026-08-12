@@ -94,9 +94,11 @@ export const AREAS = [
   },
   {
     id: 'academia', name: 'Academia', icon: 'Brain', kind: 'library',
-    trim: 'o',
+    trim: 'o', route: '/academia',
     keywords: ['book', 'read', 'watch', 'listen', 'course', 'video', 'podcast', 'learn'],
-    buckets: ['Read', 'Watch', 'Listen'],
+    // No fixed buckets: entries are filed under user-editable topics
+    // instead (see data/academiaTopics.js), not a media-type tab.
+    buckets: [],
   },
   {
     id: 'nudges', name: 'Nudges', icon: 'BellRing', kind: 'timers',
