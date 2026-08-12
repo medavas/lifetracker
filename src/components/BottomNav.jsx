@@ -1,31 +1,27 @@
 import { NavLink } from 'react-router-dom'
-import { HOME_ENTRY, orderedEntries } from '../lib/sidebarOrder'
+import { orderedEntries } from '../lib/sidebarOrder'
 import AreaIcon from './AreaIcon'
 
+const SLOT_COUNT = 6
+
 /**
- * Phone-only nav: Home always leads and never moves, so the first tab is a
- * stable landmark regardless of sidebar reordering. The remaining slots are
- * the user's top-ranked sidebar entries (Home excluded from that ranking
- * here since it's already pinned in slot one). Settings never appears here
- * regardless of its sidebar rank; reach it through the drawer. Quick add
- * lives on the dashboard only — a nav bar is for going places.
+ * Phone-only nav: the user's top 6 ranked sidebar entries, in ranked order.
+ * Home is not pinned here — it and Areas already live in the topbar, so
+ * Home only takes a slot if the user actually ranks it that high. Settings
+ * never appears here regardless of its sidebar rank; reach it through the
+ * drawer. Quick add lives on the dashboard only — a nav bar is for going
+ * places.
  */
 export default function BottomNav() {
-  const [second, third, fourth] = orderedEntries().filter((e) => e.id !== HOME_ENTRY.id)
-
-  const renderEntry = (e) =>
-    e && (
-      <NavLink key={e.id} to={e.route} end={e.route === '/'}>
-        <AreaIcon name={e.icon} size={20} />{e.name}
-      </NavLink>
-    )
+  const entries = orderedEntries().slice(0, SLOT_COUNT)
 
   return (
     <nav className="bottom-nav">
-      {renderEntry(HOME_ENTRY)}
-      {renderEntry(second)}
-      {renderEntry(third)}
-      {renderEntry(fourth)}
+      {entries.map((e) => (
+        <NavLink key={e.id} to={e.route} end={e.route === '/'}>
+          <AreaIcon name={e.icon} size={20} />{e.name}
+        </NavLink>
+      ))}
     </nav>
   )
 }

@@ -13,9 +13,9 @@ const OPEN_THRESHOLD_PX = 60
 /**
  * The sidebar is an off-canvas drawer on both breakpoints, opened by a
  * hamburger, closed by the backdrop, a swipe left, or tapping a destination.
- * Mobile shows a top bar with the hamburger (occupies layout space instead
- * of floating, so it can never sit on top of a page's heading; sticky keeps
- * it reachable once the page scrolls). Desktop instead shows a slim,
+ * Mobile shows a top bar with the hamburger, then Home and Areas (occupies
+ * layout space instead of floating, so it can never sit on top of a page's
+ * heading; sticky keeps it reachable once the page scrolls). Desktop instead shows a slim,
  * always-visible strip standing in for the collapsed sidebar — click it to
  * bring the full sidebar out as an overlay. BottomNav (rendered by App) is
  * mobile's other nav surface — the two are independent, not a toggle
@@ -104,6 +104,12 @@ export default function AppShell({ children }) {
           <button className="hamburger" onClick={() => setDrawerOpen(true)} aria-label="Open menu">
             <Menu size={20} strokeWidth={1.75} />
           </button>
+          <NavLink to="/" end className="topbar-btn" onClick={closeDrawer} aria-label="Home">
+            <AreaIcon name="House" size={20} />
+          </NavLink>
+          <NavLink to="/areas" className="topbar-btn" onClick={closeDrawer} aria-label="Areas">
+            <AreaIcon name="LayoutGrid" size={20} />
+          </NavLink>
         </div>
         {children}
       </div>

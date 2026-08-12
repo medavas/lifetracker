@@ -14,20 +14,22 @@
 }
 .sidebar.open { transform: translateX(0); }
 
-/* Mobile-only bar holding the hamburger. It occupies layout space instead of
-   floating, so the button can never cover a page heading; sticky + an opaque
-   background keep it reachable and legible once the page scrolls under it. */
+/* Mobile-only bar holding the hamburger, then Home and Areas. It occupies
+   layout space instead of floating, so the buttons can never cover a page
+   heading; sticky + an opaque background keep it reachable and legible once
+   the page scrolls under it. */
 .topbar {
   position: sticky; top: 0; z-index: 45;
-  display: flex; align-items: center;
+  display: flex; align-items: center; gap: 8px;
   padding: 10px 12px; background: var(--bg);
 }
-.hamburger {
+.hamburger, .topbar-btn {
   width: 38px; height: 38px; border-radius: var(--radius-sm);
   display: grid; place-items: center;
   background: var(--surface-1); border: 1px solid var(--border);
   color: var(--text-secondary); box-shadow: var(--shadow-card);
 }
+.topbar-btn.active { color: var(--text-primary); }
 
 /* Desktop-only: a slim always-visible strip standing in for the collapsed
    sidebar. Clicking it opens the real .sidebar as an overlay (same drawer
@@ -92,7 +94,7 @@
   position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
   width: 100%; max-width: 640px; height: calc(var(--nav-h) + env(safe-area-inset-bottom));
   padding-bottom: env(safe-area-inset-bottom);
-  display: grid; grid-template-columns: repeat(4, 1fr);
+  display: grid; grid-template-columns: repeat(6, 1fr);
   background: rgba(11, 12, 14, 0.92);
   backdrop-filter: blur(14px);
   border-top: 1px solid var(--border);
@@ -100,7 +102,8 @@
 }
 .bottom-nav a, .bottom-nav button {
   display: flex; flex-direction: column; align-items: center; justify-content: center;
-  gap: 3px; font-size: 10.5px; color: var(--text-muted); font-weight: 600;
+  gap: 3px; font-size: 9.5px; color: var(--text-muted); font-weight: 600;
+  padding: 0 2px; text-align: center;
 }
 .bottom-nav a.active { color: var(--text-primary); }
 

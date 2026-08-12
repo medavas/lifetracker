@@ -30,7 +30,7 @@ function SortableEntry({ entry }) {
   )
 }
 
-/** Sidebar order: a device-local preference, editable by drag, driving both the desktop sidebar and phone's bottom-bar top-4. */
+/** Sidebar order: a device-local preference, editable by drag, driving both the desktop sidebar and phone's bottom-bar top-6. */
 function SidebarOrderSection() {
   const [order, setOrder] = useState(() => readSidebarOrder())
   const byId = new Map(orderableEntries().map((e) => [e.id, e]))
@@ -52,8 +52,9 @@ function SidebarOrderSection() {
     <>
       <div className="section-label" style={{ marginTop: 28 }}>Sidebar order</div>
       <p className="hint" style={{ marginBottom: 10 }}>
-        Drag to reorder. The top 4 become your bottom-bar buttons on phone; the rest live in the
-        side menu, below its pinned top section (Quick add, Nudges, Home, Settings, Areas).
+        Drag to reorder. The top 6 become your bottom-bar buttons on phone; the rest live in the
+        side menu, below its pinned top section (Nudges, Home, Settings, Areas). Home and Areas
+        are also always reachable from the top bar.
       </p>
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
         <SortableContext items={order} strategy={verticalListSortingStrategy}>

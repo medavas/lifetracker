@@ -70,12 +70,12 @@ export default function FinanceDashboard() {
 
       <QuickSpend categories={items.filter((i) => i.bucket === 'Spending')} isCurrentMonth={current} />
       <SpendChart items={items} logs={logs} month={month} />
+      <BudgetSection items={items} logs={logs} month={month} onEdit={setSheetItem} />
       <SubscriptionsSection items={items} onEdit={setSheetItem} />
       <BillsSection items={items} logs={logs} onEdit={setSheetItem} />
       <RecurringForecastSection items={items} month={month} monthLabel={monthLabel} onEdit={setSheetItem} />
       <div className="fin-grid">
         <div className="fin-col">
-          <BudgetSection items={items} logs={logs} month={month} onEdit={setSheetItem} />
           <GoalsSection items={items} logs={logs} onEdit={setSheetItem} />
         </div>
         <div className="fin-col">

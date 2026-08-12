@@ -3,7 +3,7 @@
  * domain data -- lives in localStorage like the sync token and the nudge
  * quiet-hours window, never synced, never a store primitive. The saved
  * order drives both the desktop sidebar's link order and, on phone, which
- * four destinations get a bottom-bar button (the top 4).
+ * six destinations get a bottom-bar button (the top 6 — see BottomNav.jsx).
  *
  * Settings is deliberately absent from the orderable set: it is pinned in
  * the sidebar's top section and never appears on the bottom bar, regardless

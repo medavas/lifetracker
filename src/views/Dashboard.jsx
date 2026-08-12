@@ -12,7 +12,7 @@ import ItemSheet from '../components/ItemSheet'
 const PRIORITY_AREAS = AREAS.filter((a) => a.habitBucket)
 const QUOTE_INTERVAL_MS = 8000
 const ACADEMIA_LIMIT = 5
-const PROJECT_NOTES_LIMIT = 5
+const RECENT_ACADEMIA_LIMIT = 10
 
 function priorityItemsFor(area, items) {
   return items.filter(
@@ -94,33 +94,45 @@ function AcademiaSection({ items, onOpen }) {
   )
 }
 
-/** Up to PROJECT_NOTES_LIMIT most recent notes across every project, newest first. */
-function ProjectNotesSection({ items, notes }) {
-  const recentNotes = notes
-    .filter((n) => !n.deletedAt && n.areaId === 'projects' && n.itemId != null)
-    .sort((a, b) => b.createdAt - a.createdAt)
+/**
+ * Up to RECENT_ACADEMIA_LIMIT Academia topics most recently talked about —
+ * by the topic itself or any entry filed under it, newest first.
+ */
+function RecentAcademiaSection({ items, onOpen }) {
+  const topics = items.filter(
+    (i) => !i.deletedAt && i.areaId === 'academia' && i.bucket === TOPIC_BUCKET && i.status !== 'archived',
+  )
+  const lastTouched = (topic) => {
+    const entryTimes = items
+      .filter((i) => !i.deletedAt && i.parentId === topic.id)
+      .map((i) => i.updatedAt)
+    return Math.max(topic.updatedAt, ...entryTimes)
+  }
+  const recentTopics = [...topics].sort((a, b) => lastTouched(b) - lastTouched(a))
 
   return (
     <>
       <div className="section-header">
-        <div className="column-title">Last Project Notes</div>
-        {recentNotes.length > 0 && (
-          <Link to="/projects" className="view-all">{recentNotes.length} notes · View all</Link>
-        )}
+        <div className="column-title">Recent Academia</div>
+        {topics.length > 0 && <Link to="/academia" className="view-all">View all</Link>}
       </div>
-      {recentNotes.length === 0 ? (
-        <div className="empty-note">No project notes yet.</div>
+      {recentTopics.length === 0 ? (
+        <div className="empty-note">No topics yet — add one in Academia.</div>
       ) : (
         <div className="item-list">
-          {recentNotes.slice(0, PROJECT_NOTES_LIMIT).map((note) => {
-            const project = items.find((i) => i.id === note.itemId)
-            return (
-              <Link key={note.id} to={`/projects/${note.itemId}`} className="card note-card clickable">
-                <div className="note-date">{project?.title ?? 'Deleted project'} · {new Date(note.createdAt).toLocaleDateString()}</div>
-                <div className="note-text">{note.text}</div>
-              </Link>
-            )
-          })}
+          {recentTopics.slice(0, RECENT_ACADEMIA_LIMIT).map((topic) => (
+            <div
+              key={topic.id}
+              className="item-row clickable"
+              role="button"
+              tabIndex={0}
+              onClick={() => onOpen(topic)}
+              onKeyDown={(e) => e.key === 'Enter' && onOpen(topic)}
+            >
+              <div className="item-title">{topic.title}</div>
+              <ChevronRight className="detail-btn" size={17} strokeWidth={1.75} aria-hidden="true" />
+            </div>
+          ))}
         </div>
       )}
     </>
@@ -184,7 +196,7 @@ export default function Dashboard({ onAdd }) {
           </div>
 
           <button className="dash-add" onClick={onAdd}>
-            <Plus size={16} strokeWidth={2} />Quick add
+            <Plus size={16} strokeWidth={2} />Add journal entry
           </button>
 
           <ActivityChart logs={logs} notes={notes} />
@@ -194,7 +206,7 @@ export default function Dashboard({ onAdd }) {
               <AcademiaSection items={items} onOpen={setOpen} />
             </div>
             <div className="dash-col">
-              <ProjectNotesSection items={items} notes={notes} />
+              <RecentAcademiaSection items={items} onOpen={setOpen} />
             </div>
           </div>
         </div>
