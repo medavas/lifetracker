@@ -48,4 +48,9 @@ if (fs.existsSync(distDir)) {
 }
 
 const PORT = process.env.PORT || 3001
-app.listen(PORT, () => console.log(`Assistant server on :${PORT}`))
+// Loopback-only: this server is meant to be reached exclusively through the
+// Tailscale tunnel described in BACKEND_SETUP.md, which forwards to
+// 127.0.0.1 locally. Binding to all interfaces would expose the unauthenticated
+// /api/assist route to the LAN or any misconfigured port-forward.
+const HOST = process.env.HOST || '127.0.0.1'
+app.listen(PORT, HOST, () => console.log(`Assistant server on ${HOST}:${PORT}`))

@@ -131,9 +131,11 @@ pnpm run server    # Express + assistant on :3001 -> "Assistant server on :3001"
 ```
 
 This one stays on your machine — it's the whole point of subscription auth
-(see [Why the assistant stays local](#why-the-assistant-stays-local)). To
-reach it from your phone, expose it over a private
-[Tailscale](https://tailscale.com) tunnel:
+(see [Why the assistant stays local](#why-the-assistant-stays-local)). It
+binds to `127.0.0.1` only (loopback), since `/api/assist` has no auth of its
+own — the Tailscale tunnel below is what makes it reachable at all, and only
+to devices signed into your tailnet. To reach it from your phone, expose it
+over a private [Tailscale](https://tailscale.com) tunnel:
 
 1. Install Tailscale on this machine and your phone; sign both into the same
    account. (https://tailscale.com/download)

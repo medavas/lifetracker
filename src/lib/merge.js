@@ -2,7 +2,7 @@
  * Pure sync primitives — shared by the client and the sync API.
  * Entity: { kind: 'item'|'note'|'log', id, updatedAt, deletedAt, data }.
  */
-const KINDS = ['item', 'note', 'log']
+export const KINDS = ['item', 'note', 'log']
 const plural = { item: 'items', note: 'notes', log: 'logs' }
 
 const asEntity = (kind, o) => ({

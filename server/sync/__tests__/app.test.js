@@ -26,4 +26,11 @@ describe('sync API', () => {
     expect(res.body.entities[0].data.v).toBe(2)
     expect(typeof res.body.serverTime).toBe('number')
   })
+  it('drops entities with a non-string id or unknown kind instead of passing them to the store', async () => {
+    const a = app()
+    const res = await request(a).post('/sync').set('Authorization', `Bearer ${TOKEN}`)
+      .send({ entities: [ent({ id: { $ne: null } }), ent({ kind: 'admin' }), ent({ id: 'ok' })] }).expect(200)
+    expect(res.body.entities).toHaveLength(1)
+    expect(res.body.entities[0].id).toBe('ok')
+  })
 })
