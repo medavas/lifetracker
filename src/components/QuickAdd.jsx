@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { BookOpen } from 'lucide-react'
 import { useStore } from '../lib/store'
 import { useBackDismiss } from '../lib/useBackDismiss'
 import { suggestAreas } from '../lib/fuzzy'
@@ -60,12 +61,27 @@ export default function QuickAdd({ onClose }) {
     }
   }
 
+  // A way out for "I actually just want the journal", not a capture --
+  // files whatever's typed first (same as the Add button) so switching to
+  // the full page never drops a draft, then always lands on Journal itself
+  // rather than wherever fileTo would route a filed item.
+  const openJournal = () => {
+    if (text.trim()) addNote('journal', text)
+    onClose()
+    navigate(routeFor(journalArea))
+  }
+
   return (
     <>
       <div className="sheet-backdrop" onClick={onClose} />
       <div className="sheet" role="dialog" aria-label="Quick add">
         <div className="sheet-grab" />
-        <h2>Capture</h2>
+        <div className="sheet-head">
+          <h2>Capture</h2>
+          <button className="view-all" onClick={openJournal}>
+            <BookOpen size={13} strokeWidth={2} /> Open Journal
+          </button>
+        </div>
         <div className="field">
           <textarea
             autoFocus

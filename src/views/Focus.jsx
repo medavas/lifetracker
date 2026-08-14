@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { Pause, Play, RotateCcw } from 'lucide-react'
 import { useStore } from '../lib/store'
 import { todayKey } from '../lib/rewards'
 import { notifyPermission, requestNotifyPermission, fireNotification } from '../lib/notify'
@@ -69,7 +70,14 @@ export default function Focus() {
       // starting it.
       await requestNotifyPermission()
     }
-    applyState(startPhase(stateRef.current, settingsRef.current, Date.now()))
+    // `clock` only otherwise moves once a second, on the tick interval below.
+    // Anchoring runningSince to `now` but leaving `clock` stale makes
+    // computeRemainingMs subtract a *negative* elapsed time on the very next
+    // render, which counts the displayed time UP for an instant before the
+    // next tick corrects it. Moving clock to the same `now` here closes that gap.
+    const now = Date.now()
+    applyState(startPhase(stateRef.current, settingsRef.current, now))
+    setClock(now)
   }
 
   const onPause = () => applyState(pausePhase(stateRef.current, Date.now()))
@@ -116,11 +124,11 @@ export default function Focus() {
         </div>
         <div className="focus-controls">
           {state.status === 'running' ? (
-            <button className="focus-btn primary" onClick={onPause}>Pause</button>
+            <button className="focus-btn primary" onClick={onPause}><Pause size={16} strokeWidth={2.25} />Pause</button>
           ) : (
-            <button className="focus-btn primary" onClick={onStart}>{state.status === 'paused' ? 'Resume' : 'Start'}</button>
+            <button className="focus-btn primary" onClick={onStart}><Play size={16} strokeWidth={2.25} />{state.status === 'paused' ? 'Resume' : 'Start'}</button>
           )}
-          <button className="focus-btn" onClick={onReset}>Reset</button>
+          <button className="focus-btn" onClick={onReset}><RotateCcw size={16} strokeWidth={2.25} />Reset</button>
         </div>
         <div className="focus-today">{sessionsToday} session{sessionsToday === 1 ? '' : 's'} today</div>
       </div>

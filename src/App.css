@@ -137,7 +137,7 @@ button.hero-quote { cursor: pointer; background: none; border: none; width: 100%
 button.hero-quote:active { color: var(--text-primary); }
 
 .dash-add {
-  margin: 12px 0; width: 100%;
+  margin: 20px 0; width: 100%;
   display: flex; align-items: center; justify-content: center;
   gap: 8px; padding: 12px; border-radius: var(--radius-sm);
   background: var(--surface-2); color: var(--text-primary); border: 1px solid var(--border);
@@ -149,6 +149,10 @@ button.hero-quote:active { color: var(--text-primary); }
 .dash-grid { display: block; }
 .dash-row { display: flex; flex-direction: column; gap: 20px; margin-top: 20px; }
 .dash-col { flex: 1; min-width: 0; }
+/* On mobile dash-main and dash-side stack, so dash-side needs its own
+   top gap; on desktop they sit side by side in the grid row instead, so
+   this is zeroed there to keep both columns top-aligned. */
+.dash-side { margin-top: 20px; }
 .column-title { font-size: 15px; font-weight: 700; margin: 0 0 12px; }
 .dash-side .column-title:first-child { margin-top: 0; }
 .section-header { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
@@ -293,6 +297,9 @@ a.note-card { display: block; text-decoration: none; color: inherit; }
 @keyframes sheet-up { from { transform: translate(-50%, 24px); opacity: 0; } to { transform: translate(-50%, 0); opacity: 1; } }
 .sheet-grab { width: 40px; height: 4px; border-radius: 2px; background: var(--border); margin: 0 auto 14px; }
 .sheet h2 { display: flex; align-items: center; gap: 8px; font-size: 16px; font-weight: 600; margin: 0 0 12px; }
+.sheet-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.sheet-head h2 { margin: 0 0 12px; }
+.sheet-head button.view-all { display: inline-flex; align-items: center; gap: 4px; flex: none; padding: 0; margin: 0 0 12px; background: none; border: none; }
 .field { margin-bottom: 12px; }
 .field label { display: block; font-size: 11px; font-weight: 600; color: var(--text-muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.07em; }
 .field input, .field textarea { width: 100%; padding: 10px 12px; }
@@ -399,6 +406,7 @@ a.note-card { display: block; text-decoration: none; color: inherit; }
   .area-grid { grid-template-columns: repeat(3, 1fr); gap: 12px; }
   .dash-grid { display: grid; grid-template-columns: 1fr 340px; gap: 20px; align-items: start; }
   .dash-row { flex-direction: row; }
+  .dash-side { margin-top: 0; }
 }
 @media (min-width: 1200px) {
   .area-grid { grid-template-columns: repeat(4, 1fr); }
@@ -776,8 +784,16 @@ a.st-card { text-decoration: none; color: inherit; }
 .focus-dot.done { background: var(--trim-v); }
 .focus-controls { display: flex; gap: 10px; }
 .focus-btn {
-  padding: 8px 22px; border-radius: 999px; border: 1px solid var(--border);
-  background: var(--surface-2); color: var(--text-primary); font-size: 13px; font-weight: 600;
+  display: flex; align-items: center; gap: 7px;
+  padding: 11px 26px; border-radius: 999px; border: 1px solid var(--border);
+  background: var(--surface-2); color: var(--text-primary); font-size: 14px; font-weight: 600;
+  transition: transform 0.1s ease, background 0.12s ease;
 }
-.focus-btn.primary { background: var(--text-primary); color: var(--bg); border-color: var(--text-primary); }
+.focus-btn:active { transform: scale(0.96); }
+.focus-btn:hover { background: var(--surface-3); }
+.focus-btn.primary {
+  padding: 12px 30px;
+  background: var(--text-primary); color: var(--bg); border-color: var(--text-primary);
+}
+.focus-btn.primary:hover { background: var(--text-primary); opacity: 0.9; }
 .focus-today { color: var(--text-muted); font-size: 12px; }

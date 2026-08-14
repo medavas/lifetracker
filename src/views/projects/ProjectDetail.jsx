@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { ChevronLeft, Check, Plus, GripVertical, Trash2 } from 'lucide-react'
 import {
@@ -46,14 +46,16 @@ function SortableSubTask({ item, onToggle, onDelete }) {
 }
 
 /**
- * A single project: title, details, bucket, its sub-task checklist, and
- * its notes feed. Fully replaces what ItemSheet gave a project -- ItemSheet
- * is not used here. A project with any live sub-task has no checkbox of
- * its own; completion is derived (see store.js's syncParentCompletion) and
- * only ever changes by finishing the sub-tasks.
+ * A single project: title, an overall notes box, bucket, its sub-task
+ * checklist, and its entries feed. Fully replaces what ItemSheet gave a
+ * project -- ItemSheet is not used here. A project with any live sub-task
+ * has no checkbox of its own; completion is derived (see store.js's
+ * syncParentCompletion) and only ever changes by finishing the sub-tasks.
  *
- * Title/details auto-save on blur rather than an explicit Save button --
- * a deliberate choice for a full page rather than a dismissable sheet.
+ * Title/notes auto-save on blur, plus on unmount (see the `latest` ref
+ * below) so the system/hardware back button -- which unmounts this
+ * component without ever blurring a focused field -- doesn't drop whatever
+ * was just typed.
  */
 export default function ProjectDetail() {
   const { projectId } = useParams()
@@ -103,6 +105,22 @@ export default function ProjectDetail() {
     if (project) {
       setTitle(project.title)
       setDetails(project.details)
+    }
+  }, [project?.id])
+
+  // Always holds the latest typed values so the unmount save below never
+  // reads stale state from the render the effect was set up on.
+  const latest = useRef({ title, details })
+  latest.current = { title, details }
+
+  // Covers the exit paths that never blur the field first -- the system/
+  // hardware back button and any other route change unmount this component
+  // while a textarea can still be focused, which would otherwise drop
+  // whatever was typed since the last blur (see AcademiaDetail for the same
+  // pattern).
+  useEffect(() => () => {
+    if (project) {
+      updateItem(project.id, { title: latest.current.title.trim() || project.title, details: latest.current.details })
     }
   }, [project?.id])
 
@@ -161,7 +179,7 @@ export default function ProjectDetail() {
       </div>
 
       <div className="field">
-        <label>Details</label>
+        <label>Notes</label>
         <textarea rows={3} value={details} onChange={(e) => setDetails(e.target.value)} onBlur={save} placeholder="Notes, links, context…" />
       </div>
 
@@ -209,7 +227,7 @@ export default function ProjectDetail() {
       </div>
 
       <div className="field">
-        <label>Notes ({notes.length})</label>
+        <label>Entries ({notes.length})</label>
         {notes.map((n) => (
           <div key={n.id} className="card note-card">
             <div className="note-date">{new Date(n.createdAt).toLocaleString()}</div>
