@@ -134,7 +134,13 @@ export default function Nudges() {
     const wasDefault = notifyPermission() === 'default'
     const perm = await ensureNotifyPermission(setPermission)
     if (wasDefault && perm !== 'granted') return
-    seedAnchor(n.id)
+    // seedAnchor only makes sense for an interval nudge (start counting from
+    // now). A daily nudge's anchor means "already fired today" -- seeding it
+    // to now would wrongly mark today's occurrence as done and push the
+    // first fire to tomorrow even when today's time hasn't passed yet.
+    // Disabling already cleared any stale anchor above, so a fresh daily
+    // nudge just starts anchor-less and dailyPlan decides today vs. tomorrow.
+    if (n.intervalMin != null) seedAnchor(n.id)
     updateItem(n.id, { enabled: true })
   }
 
