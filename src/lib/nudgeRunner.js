@@ -5,28 +5,59 @@
  * tested under the node environment with plain objects. The localStorage-backed
  * wiring below it is only reached from `startNudges()`, which tests never call.
  */
-import { tickPlan, DEFAULT_QUIET } from './timers.js'
+import { tickPlan, dailyPlan, philosophyPlan, DEFAULT_QUIET } from './timers.js'
 import { fireNotification } from './notify.js'
-import { useStore, selectAreaItems } from './store.js'
+import { useStore, selectAreaItems, selectPhilosophyNudgeItems } from './store.js'
 
 /** Polling cadence. Correctness comes from timestamp comparison, not this. */
 export const TICK_MS = 15_000
 
-export function createRunner({ getNudges, getLastFired, setLastFired, getQuiet, fire, now }) {
+/** Notification tag for the philosophy rotation -- not a real item id, just a stable dedup key. */
+export const PHILOSOPHY_TAG = 'philosophy-rotation'
+
+const philosophyBody = (item) => (item.details ? `${item.title} — ${item.details}` : item.title)
+
+/**
+ * `getPhilosophyOn`/`getPhilosophyEnabled`/`getPhilosophyRotation`/
+ * `setPhilosophyRotation` are optional so existing callers/tests that only
+ * exercise interval nudges keep working unchanged.
+ */
+export function createRunner({
+  getNudges, getLastFired, setLastFired, getQuiet, fire, now,
+  getPhilosophyOn, getPhilosophyEnabled, getPhilosophyRotation, setPhilosophyRotation,
+}) {
   return {
     tick() {
       const nudges = getNudges()
       const lastFired = getLastFired()
-      const plan = tickPlan(nudges, lastFired, getQuiet(), now())
-      if (Object.keys(plan.anchors).length === 0) return plan
+      const quiet = getQuiet()
+      const t = now()
+
+      const interval = tickPlan(nudges, lastFired, quiet, t)
+      const daily = dailyPlan(nudges, lastFired, t)
+      const anchors = { ...interval.anchors, ...daily.anchors }
       // Persist BEFORE firing: if `fire` throws or the permission was revoked,
       // the anchor has still moved, so the next tick cannot re-fire in a loop.
-      setLastFired({ ...lastFired, ...plan.anchors })
+      if (Object.keys(anchors).length > 0) setLastFired({ ...lastFired, ...anchors })
+
       const byId = new Map(nudges.map((n) => [n.id, n]))
-      for (const id of plan.fire) {
+      const fire_ = [...interval.fire, ...daily.fire]
+      for (const id of fire_) {
         Promise.resolve(fire(byId.get(id).title, id)).catch(() => {})
       }
-      return plan
+
+      if (getPhilosophyOn?.()) {
+        const items = getPhilosophyEnabled()
+        const plan = philosophyPlan(items.map((i) => i.id), getPhilosophyRotation(), quiet, t)
+        setPhilosophyRotation(plan.state)
+        if (plan.fire) {
+          const item = items.find((i) => i.id === plan.fire)
+          Promise.resolve(fire(philosophyBody(item), PHILOSOPHY_TAG)).catch(() => {})
+          fire_.push(plan.fire)
+        }
+      }
+
+      return { fire: fire_, anchors }
     },
   }
 }
@@ -85,6 +116,18 @@ export const readQuiet = () => {
 }
 export const writeQuiet = (quiet) => writeJson(QUIET_KEY, quiet)
 
+const PHIL_ON_KEY = 'stoa.nudge.philosophyOn'
+const PHIL_ROTATION_KEY = 'stoa.nudge.philosophyRotation'
+
+export const readPhilosophyOn = () => readJson(PHIL_ON_KEY, false)
+export const writePhilosophyOn = (on) => writeJson(PHIL_ON_KEY, on)
+
+export const readPhilosophyRotation = () => readJson(PHIL_ROTATION_KEY, {})
+export const writePhilosophyRotation = (state) => writeJson(PHIL_ROTATION_KEY, state)
+
+const enabledPhilosophyItems = () =>
+  selectPhilosophyNudgeItems(useStore.getState()).filter((i) => i.nudgeOn !== false)
+
 /** Start the single app-wide tick. Returns a cleanup function. */
 export function startNudges() {
   const runner = createRunner({
@@ -94,6 +137,10 @@ export function startNudges() {
     getQuiet: readQuiet,
     fire: fireNotification,
     now: Date.now,
+    getPhilosophyOn: readPhilosophyOn,
+    getPhilosophyEnabled: enabledPhilosophyItems,
+    getPhilosophyRotation: readPhilosophyRotation,
+    setPhilosophyRotation: writePhilosophyRotation,
   })
   const id = setInterval(() => runner.tick(), TICK_MS)
   return () => clearInterval(id)

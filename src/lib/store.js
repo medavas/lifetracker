@@ -5,7 +5,12 @@
  *  Item  - anything listed: task, habit, book, bill…   { id, areaId, bucket,
  *          title, details, type, status, order, createdAt, updatedAt,
  *          completedAt }
- *          Nudge timers additionally carry { intervalMin, enabled }.
+ *          Nudge timers additionally carry { intervalMin, enabled } (repeat
+ *          every N minutes) OR { timeMin, enabled } (fire once daily at that
+ *          clock time) — mutually exclusive, never both on one item.
+ *          A Quotes/Principles item additionally carries { nudgeOn }, an
+ *          opt-OUT flag for the Philosophy nudge rotation — absent/true means
+ *          included, false means the user excluded it.
  *          A finance spending category additionally carries { color }, its
  *          --series-* slot (1..8), stored so it never shifts under the user.
  *          A project sub-task additionally carries { parentId }, one level
@@ -84,6 +89,13 @@ export const useStore = create(
           // object through, so both fields sync with no sync-layer change.
           ...(extra.intervalMin != null && {
             intervalMin: extra.intervalMin,
+            enabled: extra.enabled ?? false,
+          }),
+          // Nudge timers only, the fixed-time alternative to intervalMin
+          // above (a daily reminder like a wake-up or bedtime prompt) —
+          // same conditional-attachment pattern, mutually exclusive with it.
+          ...(extra.timeMin != null && {
+            timeMin: extra.timeMin,
             enabled: extra.enabled ?? false,
           }),
           // Finance items only (money area kind). Same conditional-attachment
@@ -602,6 +614,12 @@ export const useStore = create(
 export const selectAreaItems = (areaId, showArchived = false) => (s) =>
   s.items
     .filter((i) => !i.deletedAt && i.areaId === areaId && (showArchived ? i.status === 'archived' : i.status !== 'archived'))
+    .sort((a, b) => a.order - b.order)
+
+/** Quotes + Principles items eligible for the Philosophy nudge rotation — Essays are long-form, not nudge material. `nudgeOn` filtering happens at the call site so this also serves the settings checklist, which must show every item including excluded ones. */
+export const selectPhilosophyNudgeItems = (s) =>
+  s.items
+    .filter((i) => !i.deletedAt && i.areaId === 'philosophy' && i.status !== 'archived' && (i.bucket === 'Quotes' || i.bucket === 'Principles'))
     .sort((a, b) => a.order - b.order)
 
 export const selectItemNotes = (itemId) => (s) =>

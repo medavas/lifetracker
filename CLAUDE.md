@@ -23,7 +23,12 @@ really just filtered views over 4 data primitives:
    `{ id, areaId, bucket, title, details, type, status: 'open'|'done'|'archived',
      order, createdAt, updatedAt, completedAt }`
    Nudge timers (`kind: 'timers'`) additionally carry `{ intervalMin, enabled }`
-   — a deliberate two-scalar concession on ITEM rather than a 5th primitive.
+   (repeat every N minutes) OR `{ timeMin, enabled }` (fire once at that clock
+   time daily, e.g. a wake-up or bedtime reminder) — mutually exclusive, the
+   same two-scalar concession on ITEM rather than a 5th primitive either way.
+   A Philosophy Quotes/Principles item additionally carries `{ nudgeOn }`, an
+   opt-OUT flag for the Philosophy nudge rotation (Nudges page): absent/true
+   means included, false means the user excluded it from the rotation.
    Finance (money) items additionally carry { amount, cadence, nextDue }
    and money LOGs carry { amount, note?, prevDue? } — the same deliberate
    concession, cents-integer amounts, no 5th primitive.
