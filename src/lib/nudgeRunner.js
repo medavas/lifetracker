@@ -27,25 +27,43 @@ export function createRunner({
   getPhilosophyOn, getPhilosophyEnabled, getPhilosophyRotation, setPhilosophyRotation,
 }) {
   return {
-    tick() {
+    async tick() {
       const nudges = getNudges()
       const lastFired = getLastFired()
       const quiet = getQuiet()
       const t = now()
+      const byId = new Map(nudges.map((n) => [n.id, n]))
 
       const interval = tickPlan(nudges, lastFired, quiet, t)
-      const daily = dailyPlan(nudges, lastFired, t)
-      const anchors = { ...interval.anchors, ...daily.anchors }
       // Persist BEFORE firing: if `fire` throws or the permission was revoked,
       // the anchor has still moved, so the next tick cannot re-fire in a loop.
-      if (Object.keys(anchors).length > 0) setLastFired({ ...lastFired, ...anchors })
-
-      const byId = new Map(nudges.map((n) => [n.id, n]))
-      const fire_ = [...interval.fire, ...daily.fire]
-      for (const id of fire_) {
+      // Safe for an interval nudge -- it gets another chance in `intervalMin`
+      // minutes regardless, so eating one occurrence isn't a real loss.
+      if (Object.keys(interval.anchors).length > 0) {
+        setLastFired({ ...getLastFired(), ...interval.anchors })
+      }
+      for (const id of interval.fire) {
         Promise.resolve(fire(byId.get(id).title, id)).catch(() => {})
       }
 
+      // A daily nudge only gets ONE chance a day, so it takes the opposite
+      // rule: the anchor is committed only once `fire` actually confirms the
+      // notification showed. A transient failure -- permission silently
+      // revoked, showNotification rejecting, the app closing mid-call -- must
+      // not burn the day's occurrence with no way to recover; leaving it
+      // unanchored means the very next tick (15s later) retries instead.
+      const daily = dailyPlan(nudges, lastFired, t)
+      const dailyFired = []
+      for (const id of daily.fire) {
+        const ok = await Promise.resolve(fire(byId.get(id).title, id)).catch(() => false)
+        if (ok) dailyFired.push(id)
+      }
+      const dailyAnchors = Object.fromEntries(dailyFired.map((id) => [id, daily.anchors[id]]))
+      if (Object.keys(dailyAnchors).length > 0) {
+        setLastFired({ ...getLastFired(), ...dailyAnchors })
+      }
+
+      let philFired = null
       if (getPhilosophyOn?.()) {
         const items = getPhilosophyEnabled()
         const plan = philosophyPlan(items.map((i) => i.id), getPhilosophyRotation(), quiet, t)
@@ -53,11 +71,14 @@ export function createRunner({
         if (plan.fire) {
           const item = items.find((i) => i.id === plan.fire)
           Promise.resolve(fire(philosophyBody(item), PHILOSOPHY_TAG)).catch(() => {})
-          fire_.push(plan.fire)
+          philFired = plan.fire
         }
       }
 
-      return { fire: fire_, anchors }
+      return {
+        fire: [...interval.fire, ...dailyFired, ...(philFired ? [philFired] : [])],
+        anchors: { ...interval.anchors, ...dailyAnchors },
+      }
     },
   }
 }

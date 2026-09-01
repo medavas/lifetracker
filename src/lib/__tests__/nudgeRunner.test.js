@@ -66,7 +66,7 @@ describe('createRunner', () => {
     expect(h.fired).toHaveLength(1)
   })
 
-  it('writes nothing and fires nothing when no nudge is due', () => {
+  it('writes nothing and fires nothing when no nudge is due', async () => {
     const now = at(12)
     const setLastFired = vi.fn()
     const runner = createRunner({
@@ -77,7 +77,7 @@ describe('createRunner', () => {
       fire: () => Promise.resolve(true),
       now: () => now,
     })
-    expect(runner.tick().fire).toEqual([])
+    expect((await runner.tick()).fire).toEqual([])
     expect(setLastFired).not.toHaveBeenCalled()
   })
 
@@ -116,14 +116,14 @@ describe('createRunner', () => {
     expect(anchors).toEqual({ a: now })
   })
 
-  it('fires a due daily nudge alongside interval nudges in the same tick', () => {
+  it('fires a due daily nudge alongside interval nudges in the same tick', async () => {
     const now = at(6, 30)
     const h = harness({
       nudges: [nudge('a', 45), daily('b', 6 * 60 + 30)],
       lastFired: { a: now - 45 * MIN },
       now,
     })
-    h.runner.tick()
+    await h.runner.tick()
     expect(h.fired.sort((x, y) => x.tag.localeCompare(y.tag))).toEqual([
       { body: 'a message', tag: 'a' },
       { body: 'b message', tag: 'b' },
@@ -131,7 +131,7 @@ describe('createRunner', () => {
     expect(h.anchors()).toEqual({ a: now, b: now })
   })
 
-  it('fires a daily nudge during quiet hours, unlike an interval nudge', () => {
+  it('fires a daily nudge during quiet hours, unlike an interval nudge', async () => {
     const now = at(23, 30)
     const h = harness({
       nudges: [nudge('a', 45), daily('b', 23 * 60 + 30)],
@@ -139,14 +139,48 @@ describe('createRunner', () => {
       quiet: DEFAULT_QUIET,
       now,
     })
-    h.runner.tick()
+    await h.runner.tick()
     expect(h.fired).toEqual([{ body: 'b message', tag: 'b' }])
   })
 
-  it('does nothing philosophy-related when the feature is off', () => {
+  it('does not commit a daily nudge\'s anchor when the notification fails to fire, so the next tick retries', async () => {
+    // The bug this guards: a daily nudge only gets one shot a day. If a
+    // transient failure (permission silently revoked, showNotification
+    // rejecting, etc.) burned the anchor anyway, that day's reminder would
+    // be silently lost with no way to recover until tomorrow.
+    const now = at(6, 30)
+    let anchors = {}
+    const runner = createRunner({
+      getNudges: () => [daily('b', 6 * 60 + 30)],
+      getLastFired: () => anchors,
+      setLastFired: (next) => { anchors = next },
+      getQuiet: () => OFF,
+      fire: () => Promise.resolve(false), // e.g. permission not granted
+      now: () => now,
+    })
+    const plan = await runner.tick()
+    expect(plan.fire).toEqual([])
+    expect(anchors).toEqual({})
+
+    // Permission comes back before the next tick (15s later) -- it must
+    // still be able to fire today, not have been marked done already.
+    const runner2 = createRunner({
+      getNudges: () => [daily('b', 6 * 60 + 30)],
+      getLastFired: () => anchors,
+      setLastFired: (next) => { anchors = next },
+      getQuiet: () => OFF,
+      fire: () => Promise.resolve(true),
+      now: () => now + 15_000,
+    })
+    const plan2 = await runner2.tick()
+    expect(plan2.fire).toEqual(['b'])
+    expect(anchors).toEqual({ b: now + 15_000 })
+  })
+
+  it('does nothing philosophy-related when the feature is off', async () => {
     const now = at(12)
     const h = harness({ nudges: [], now })
-    const plan = h.runner.tick()
+    const plan = await h.runner.tick()
     expect(plan.fire).toEqual([])
   })
 
