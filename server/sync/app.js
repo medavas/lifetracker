@@ -2,6 +2,7 @@ import express from 'express'
 import cors from 'cors'
 import { timingSafeEqual, createHash } from 'crypto'
 import { KINDS } from '../../src/lib/merge.js'
+import { MemoryPushStore } from './store.js'
 
 // Fixed-length digest comparison so a mismatched token takes the same time
 // regardless of where the first differing byte is (plain !== leaks that via
@@ -12,7 +13,7 @@ function tokensMatch(provided, expected) {
   return timingSafeEqual(a, b)
 }
 
-export function createApp({ store, token }) {
+export function createApp({ store, token, subStore = MemoryPushStore() }) {
   const app = express()
   app.use(cors())
   app.use(express.json({ limit: '5mb' }))
@@ -34,6 +35,22 @@ export function createApp({ store, token }) {
     const entities = incoming.filter((e) => e && KINDS.includes(e.kind) && typeof e.id === 'string')
     const merged = await store.merge(entities)
     res.json({ entities: merged, serverTime: Date.now() })
+  })
+
+  app.post('/push/subscribe', async (req, res) => {
+    const sub = req.body?.subscription
+    if (typeof sub?.endpoint !== 'string' || typeof sub?.keys?.p256dh !== 'string' || typeof sub?.keys?.auth !== 'string') {
+      return res.status(400).json({ error: 'bad subscription' })
+    }
+    await subStore.save({ endpoint: sub.endpoint, keys: { p256dh: sub.keys.p256dh, auth: sub.keys.auth } })
+    res.json({ ok: true })
+  })
+
+  app.post('/push/unsubscribe', async (req, res) => {
+    const endpoint = req.body?.endpoint
+    if (typeof endpoint !== 'string') return res.status(400).json({ error: 'bad endpoint' })
+    await subStore.remove(endpoint)
+    res.json({ ok: true })
   })
 
   return app

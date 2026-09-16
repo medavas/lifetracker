@@ -7,7 +7,9 @@
  *  - 'habits'  - recurring items with daily check-ins + streaks
  *  - 'journal' - dated notes
  *  - 'library' - items where each entry carries its own notes (books, videos…)
- *  - 'timers'  - interval nudges that fire a notification while the app is open
+ *  - 'timers'  - interval nudges; fire locally while the app is open, plus a
+ *                push notification from the sync server when it's not (if
+ *                the deploy has push configured -- see BACKEND_SETUP.md)
  *  - 'money'   - the finance dashboard: budget plan, bills, spending, goals
  *  - 'focus'   - a single Pomodoro-style countdown timer, its own page
  *

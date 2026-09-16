@@ -31,6 +31,9 @@ while the desktop's `pnpm run server` is running.
 - **Sync API** (`server/sync/index.js`) — Express + MongoDB. Stateless HTTP:
   each request carries the client's local entities, the server merges them
   (last-write-wins) and returns the merged set. No Claude, no sessions.
+  Optionally also runs a push-notification loop (see
+  [Push notifications](#push-notifications-optional) below) — same host,
+  same Mongo connection, but it's dormant unless VAPID keys are set.
 - **Assistant server** (`server.js`) — Express + the **Claude Agent SDK**
   (`@anthropic-ai/claude-agent-sdk`), which reuses the Claude Code login on
   this machine. It does not touch MongoDB or any other datastore — it's a
@@ -181,7 +184,58 @@ assistant server will also serve it if you drop `dist/` next to `server.js`
 and run `pnpm run server`, but that's optional — the three targets are
 independently deployable).
 
-### (d) The sync token — never baked into the build
+### (d) Push notifications — optional
+
+Without this, nudges (`views/Nudges.jsx`) only fire while a tab/PWA window is
+open — the app has to be running for `src/lib/nudgeRunner.js`'s in-page
+interval to tick. Setting this up adds real push: the sync API independently
+re-checks the same nudges every 30s and sends a push notification through
+the browser's own push service, so it still lands with the app fully closed.
+
+1. Generate a VAPID keypair (free, no third-party account needed):
+   ```bash
+   npx web-push generate-vapid-keys
+   ```
+2. On the sync API host, set as env vars (`server/sync/.env` locally, or the
+   host's env var config once deployed):
+   ```
+   VAPID_PUBLIC_KEY=<public key>
+   VAPID_PRIVATE_KEY=<private key>
+   VAPID_SUBJECT=mailto:you@example.com
+   ```
+   `server.js` logs `Push notifications enabled` on start once these are
+   set; leaving them unset just keeps push off, no error.
+3. On the frontend build, set `VITE_VAPID_PUBLIC_KEY` to the same public key
+   (see `.env.example`). This is the one that's safe to ship in the bundle —
+   the private key never leaves the sync host.
+4. Rebuild and redeploy the frontend. A "Notify me even when Stoa is closed"
+   toggle appears on the Nudges page once both are set; switching it on asks
+   for notification permission (if not already granted) and registers this
+   device's subscription with `POST /push/subscribe`.
+
+Costs nothing: VAPID keys are self-generated, `web-push` is open source, and
+delivery goes through each browser vendor's own free push relay (FCM,
+Mozilla, Apple) — no billed service involved. The only requirement is that
+the sync API host stays up, which it already needs to be for sync itself.
+
+Two deliberate limits, not oversights:
+- **No Philosophy-rotation push.** That rotation's on/off flag
+  (`readPhilosophyOn` in `src/lib/nudgeRunner.js`) is device-local by design
+  (like Quiet hours), so the server has no synced signal to read it from.
+  Interval and daily-time nudges (`kind: 'timers'` items) push; the
+  Philosophy rotation still only plays while a tab is open.
+- **Quiet hours don't sync either**, so the push runner uses its own
+  `QUIET_START_MIN`/`QUIET_END_MIN` env vars (default 23:00–07:00, same as
+  the client default) rather than reading whatever a given device has set.
+  Set them to match if you've changed Quiet hours locally.
+
+If the app is open AND push is set up, you may occasionally get the same
+nudge twice (once from the local tick, once from the server) — each side
+runs its own independent anchor, the same reason two devices each fire a
+nudge separately rather than one silently suppressing the other. Rare and
+harmless, not worth engineering around.
+
+### (e) The sync token — never baked into the build
 
 `SYNC_TOKEN` lives only in `server/sync/.env` (server-side) and in each
 device's browser storage (client-side) — it is never a `VITE_*` build-time
@@ -210,6 +264,23 @@ Anyone without the token can't read or write your sync data (`401` on every
 Client-side, this is driven by `syncNow()` / `startSync()` in
 [src/lib/sync.js](src/lib/sync.js) — debounced push on local change, pull on
 focus/online, silently a no-op if no token or `VITE_SYNC_URL` is unset.
+
+### Sync API — `POST /push/subscribe` / `POST /push/unsubscribe` (bearer auth)
+
+```json
+// POST /push/subscribe
+{ "subscription": { "endpoint": "...", "keys": { "p256dh": "...", "auth": "..." } } }
+
+// POST /push/unsubscribe
+{ "endpoint": "..." }
+
+// both respond
+{ "ok": true }
+```
+
+Client-side, driven by `subscribeToPush()` / `unsubscribeFromPush()` in
+[src/lib/push.js](src/lib/push.js), wired to the toggle on the Nudges page.
+See [Push notifications](#push-notifications-optional) above for setup.
 
 ### Assistant server — `POST /api/assist`
 

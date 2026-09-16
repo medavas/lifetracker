@@ -1,14 +1,21 @@
 import { useEffect, useState } from 'react'
-import { Moon, Plus, Trash2, Quote as QuoteIcon } from 'lucide-react'
+import { BellRing, Moon, Plus, Trash2, Quote as QuoteIcon } from 'lucide-react'
 import { useShallow } from 'zustand/react/shallow'
 import { useStore, selectAreaItems, selectPhilosophyNudgeItems } from '../lib/store'
 import { nextFireAt, nextDailyFireAt, nextPhilosophyFireAt } from '../lib/timers'
 import { notifyPermission, requestNotifyPermission } from '../lib/notify'
+import { pushSupported, currentPushSubscription, subscribeToPush, unsubscribeFromPush } from '../lib/push'
+import { getSyncToken } from '../lib/sync'
 import {
   readLastFired, seedAnchor, clearAnchor, readQuiet, writeQuiet,
   readPhilosophyOn, writePhilosophyOn, readPhilosophyRotation, writePhilosophyRotation,
 } from '../lib/nudgeRunner'
 import AreaIcon from '../components/AreaIcon'
+
+const VAPID_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY
+const SYNC_URL = import.meta.env.VITE_SYNC_URL
+// Silently absent, like sync itself, unless the deploy actually wired push up.
+const pushAvailable = pushSupported() && Boolean(VAPID_KEY) && Boolean(SYNC_URL)
 
 const PRESETS = [15, 30, 45, 60, 120]
 
@@ -94,11 +101,20 @@ export default function Nudges() {
   const [quiet, setQuiet] = useState(readQuiet)
   const [philOn, setPhilOn] = useState(readPhilosophyOn)
   const [now, setNow] = useState(() => Date.now())
+  const [pushOn, setPushOn] = useState(false)
+  const [pushBusy, setPushBusy] = useState(false)
 
   // Re-render once a minute so the countdowns stay honest.
   useEffect(() => {
     const id = setInterval(() => setNow(Date.now()), 60_000)
     return () => clearInterval(id)
+  }, [])
+
+  // Reflects the actual browser subscription, not a local flag, so a token
+  // change or a subscription the browser dropped on its own shows correctly.
+  useEffect(() => {
+    if (!pushAvailable) return
+    currentPushSubscription().then((sub) => setPushOn(Boolean(sub)))
   }, [])
 
   const saveQuiet = (next) => {
@@ -162,6 +178,26 @@ export default function Nudges() {
     setPhilOn(true)
   }
 
+  const togglePush = async () => {
+    if (pushBusy) return
+    setPushBusy(true)
+    try {
+      if (pushOn) {
+        await unsubscribeFromPush(SYNC_URL, getSyncToken())
+        setPushOn(false)
+        return
+      }
+      // Unlike a local nudge, a push subscription is useless without
+      // permission actually granted -- there's no "configure ahead of time".
+      const perm = await ensureNotifyPermission(setPermission)
+      if (perm !== 'granted') return
+      const ok = await subscribeToPush(VAPID_KEY, SYNC_URL, getSyncToken())
+      setPushOn(ok)
+    } finally {
+      setPushBusy(false)
+    }
+  }
+
   const lastFired = readLastFired()
   const philRotation = readPhilosophyRotation()
   const philDue = philOn ? countdown(nextPhilosophyFireAt(philRotation, quiet), now) : null
@@ -182,6 +218,26 @@ export default function Nudges() {
           {permission === 'unsupported' && 'This browser cannot show notifications. On iPhone, add Stoa to your home screen first.'}
           {permission === 'denied' && 'Notifications are blocked. Re-enable them for this site in your browser settings — nudges will not fire until you do.'}
           {permission === 'default' && 'Switching a nudge on will ask your browser for permission. Dismiss that prompt and the nudge stays off.'}
+        </div>
+      )}
+
+      {pushAvailable && (
+        <div className="card quiet-block">
+          <div className="quiet-head">
+            <BellRing size={15} strokeWidth={1.75} />
+            <span>Notify me even when Stoa is closed</span>
+            <button
+              className={`switch ${pushOn ? 'on' : ''}`}
+              role="switch"
+              aria-checked={pushOn}
+              aria-label="Push notifications"
+              onClick={togglePush}
+              disabled={pushBusy}
+            >
+              <span />
+            </button>
+          </div>
+          <p className="hint">Sends your nudges from the sync server too, so they still land if this device's app isn't open.</p>
         </div>
       )}
 

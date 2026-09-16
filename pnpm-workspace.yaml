@@ -1,3 +1,9 @@
+# Single-package repo -- 'packages' is only here because some pnpm versions
+# (Railway's build image among them) require it on any pnpm-workspace.yaml,
+# even when it's just holding an unrelated setting like allowBuilds below.
+packages:
+  - '.'
+
 allowBuilds:
   esbuild: false
   mongodb-memory-server: false
